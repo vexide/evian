@@ -1,0 +1,15 @@
+[package]
+name = "vexnav"
+description = "A library for autonomously controlling VEX robots."
+repository = "https://github.com/tropix126/vexnav/"
+authors = ["Tropical"]
+license-file = "LICENSE.md"
+categories = ["science::robotics", "no-std", "mathematics", "embedded"]
+keywords = ["vex", "vex-rt", "vex-robotics", "robotics", "autonomous"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libm = "0.2.7"
+vex-rt = "0.15.1"
+num-traits = { version = "0.2", default-features = false, features = ["libm"] }
