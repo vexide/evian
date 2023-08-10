@@ -2,7 +2,11 @@ use alloc::{sync::Arc, vec::Vec};
 use core::time::Duration;
 use num_traits::real::Real;
 
-use crate::{controller::FeedbackController, math::{Vec2, normalize_angle, normalize_motor_voltages}, tracking::Tracking};
+use crate::{
+    controller::FeedbackController,
+    math::{normalize_angle, normalize_motor_voltages, Vec2},
+    tracking::Tracking,
+};
 use vex_rt::{
     motor::Motor,
     rtos::{Loop, Mutex, Task},
@@ -22,14 +26,15 @@ impl Default for DrivetrainTarget {
 
 /// A struct internal to [`DifferentialDrivetrain`] that contains fields shared between the
 /// main thread and the drivetrain's background thread.
-struct ThreadedDifferentialDrivetrain<T: Tracking, U: FeedbackController, V: FeedbackController> {
+struct ThreadedDifferentialDrivetrain<T: Tracking, U: FeedbackController, V: FeedbackController>
+{
     motors: (Vec<Motor>, Vec<Motor>),
     tracking: T,
     thread_active: bool,
-    distance_controller: U,
-    heading_controller: V,
-    linear_tolerance: f64,
-    angular_tolerance: f64,
+    drive_controller: U,
+    turn_controller: V,
+    drive_tolerance: f64,
+    turn_tolerance: f64,
     lookahead_distance: f64,
     target: DrivetrainTarget,
     settled: bool,
@@ -41,18 +46,18 @@ pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: Feedbac
 }
 
 impl<
-        T: Tracking + Send + 'static,
-        U: FeedbackController + Send + 'static,
-        V: FeedbackController + Send + 'static,
+        T: Tracking + 'static,
+        U: FeedbackController + 'static,
+        V: FeedbackController + 'static,
     > DifferentialDrivetrain<T, U, V>
 {
     pub fn new(
         motors: (Vec<Motor>, Vec<Motor>),
         tracking: T,
-        distance_controller: U,
-        heading_controller: V,
-        linear_tolerance: f64,
-        angular_tolerance: f64,
+        drive_controller: U,
+        turn_controller: V,
+        drive_tolerance: f64,
+        turn_tolerance: f64,
         lookahead_distance: f64,
     ) -> Self {
         Self {
@@ -60,13 +65,13 @@ impl<
             inner: Arc::new(Mutex::new(ThreadedDifferentialDrivetrain {
                 motors,
                 tracking,
-                distance_controller,
-                heading_controller,
+                drive_controller,
+                turn_controller,
                 lookahead_distance,
-                linear_tolerance,
-                angular_tolerance,
+                drive_tolerance,
+                turn_tolerance,
+                target: DrivetrainTarget::default(),
                 thread_active: false,
-                target: DrivetrainTarget::DistanceAndHeading(0.0, 0.0),
                 settled: false,
             })),
         }
@@ -86,29 +91,30 @@ impl<
                 while inner.thread_active {
                     inner.tracking.update();
 
-                    let (distance_error, heading_error) = match inner.target {
+                    let (drive_error, turn_error) = match inner.target {
                         DrivetrainTarget::Point(point) => {
                             let local_target = point - inner.tracking.position();
-                            
-                            let heading_error = normalize_angle(inner.tracking.heading() - local_target.angle());
-                            let distance_error = local_target.length() * heading_error.cos();
 
-                            (distance_error, heading_error)
-                        },
+                            let turn_error =
+                                normalize_angle(inner.tracking.heading() - local_target.angle());
+                            let drive_error = local_target.length() * turn_error.cos();
+
+                            (drive_error, turn_error)
+                        }
                         DrivetrainTarget::DistanceAndHeading(distance, heading) => (
                             distance - inner.tracking.forward_travel(),
-                            normalize_angle(heading - inner.tracking.heading())
-                        )
+                            normalize_angle(heading - inner.tracking.heading()),
+                        ),
                     };
 
-                    let distance_output = inner.distance_controller.update(distance_error);
-                    let heading_output = inner.heading_controller.update(heading_error);
+                    let drive_output = inner.drive_controller.update(drive_error);
+                    let turn_output = inner.turn_controller.update(turn_error);
 
                     let (left_voltage, right_voltage) = normalize_motor_voltages((
-                        distance_output + heading_output,
-                        distance_output - heading_output
+                        drive_output + turn_output,
+                        drive_output - turn_output,
                     ), 128.0);
-                    
+
                     for motor in inner.motors.0.iter_mut() {
                         motor.move_voltage(left_voltage.round() as i32).unwrap();
                     }
@@ -116,12 +122,20 @@ impl<
                         motor.move_voltage(right_voltage.round() as i32).unwrap();
                     }
 
+                    if drive_error < inner.drive_tolerance && turn_error < inner.turn_tolerance {
+                        inner.settled = true;
+                    }
+
                     task_loop.delay();
                 }
 
                 // Stop motors once done.
-                for motor in inner.motors.0.iter_mut() { motor.move_voltage(0).unwrap(); }
-                for motor in inner.motors.1.iter_mut() { motor.move_voltage(0).unwrap(); }
+                for motor in inner.motors.0.iter_mut() {
+                    motor.move_voltage(0).unwrap();
+                }
+                for motor in inner.motors.1.iter_mut() {
+                    motor.move_voltage(0).unwrap();
+                }
             })
             .unwrap(),
         );
@@ -141,7 +155,7 @@ impl<
     }
 
     // pub fn tracking(&self) -> &impl Tracking {
-    //     &self.tracking
+    //     &Arc::clone(&self.inner).lock().tracking
     // }
 
     /// Moves the drivetrain in a straight line for a certain distance, then stops and holds
@@ -153,7 +167,7 @@ impl<
 
             inner.target = DrivetrainTarget::DistanceAndHeading(
                 inner.tracking.forward_travel() + distance,
-                inner.tracking.heading()
+                inner.tracking.heading(),
             );
         } else {
             panic!("Drivetrain task is not running. Consider running start_task() beforehand.");
@@ -166,15 +180,13 @@ impl<
             let inner = Arc::clone(&self.inner);
             let mut inner = inner.lock();
 
-            inner.target = DrivetrainTarget::DistanceAndHeading(
-                inner.tracking.forward_travel(),
-                angle
-            );
+            inner.target =
+                DrivetrainTarget::DistanceAndHeading(inner.tracking.forward_travel(), angle);
         } else {
             panic!("Drivetrain task is not running. Consider running start_task() beforehand.");
         }
     }
-    
+
     /// Turns the drivetrain in place to face a certain point.
     pub async fn turn_to_point(&self, _point: Vec2) {
         if self.thread.is_some() {
@@ -220,7 +232,7 @@ impl<
 
             inner.target = DrivetrainTarget::DistanceAndHeading(
                 inner.tracking.forward_travel(),
-                inner.tracking.heading()
+                inner.tracking.heading(),
             );
         } else {
             panic!("Drivetrain task is not running. Consider running start_task() beforehand.");

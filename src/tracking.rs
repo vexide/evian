@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// A system that tracks the absolute position and heading of a mobile robot.
-pub trait Tracking {
+pub trait Tracking: Send + Sync {
     fn forward_travel(&self) -> f64;
 
     fn heading(&self) -> f64;
@@ -21,7 +21,6 @@ pub trait Tracking {
 
 /// A struct representing a wheel attached to a rotary sensor.
 #[derive(Debug, Clone, PartialEq)]
-
 pub struct TrackingWheel<'a, T: RotarySensor> {
     pub sensor: &'a T,
     pub wheel_diameter: f64,

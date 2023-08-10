@@ -3,9 +3,10 @@ use num_traits::real::Real;
 
 use crate::math::Vec2;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub enum LineCircleIntersections {
 	/// The line segment does not intersect with the circle.
+	#[default]
 	None,
 
 	/// The line is a tangent line. It touches the circle's edge exactly once, and

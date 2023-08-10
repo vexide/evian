@@ -7,7 +7,7 @@ use vex_rt::{
 };
 
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
-pub trait RotarySensor {
+pub trait RotarySensor: Send + Sync {
     /// Get the device's measured rotation in radians.
     fn rotation(&self) -> f64;
 
@@ -63,7 +63,7 @@ impl RotarySensor for RotationSensor {
 }
 
 /// A sensor that can measure absolute orientation, for example a gyroscope or IMU
-pub trait Gyro {
+pub trait Gyro: Send + Sync {
     fn heading(&self) -> f64;
     fn reset_heading(&mut self);
 }

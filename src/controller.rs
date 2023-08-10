@@ -4,7 +4,8 @@
 /// given a desired value (a "setpoint") and a measurement of a system's current state. The goal
 /// of a feedback controller is to stabilize the system's measured state to match the setpoint as
 /// close as possible.
-pub trait FeedbackController {
+pub trait FeedbackController: Send + Sync {
+    
     /// Produce an output value given an `error` value, which is the difference between the measured state
     /// and the desired state (setpoint).
     ///
@@ -17,6 +18,7 @@ pub trait FeedbackController {
     /// fn update(&mut self, error: f64) -> f64 {
     /// 	error * 2.0
     /// }
+    /// ```
     fn update(&mut self, error: f64) -> f64;
 }
 
