@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// A system that tracks the absolute position and heading of a mobile robot.
-pub trait Tracking: Send + Sync {
+pub trait Tracking {
     fn forward_travel(&self) -> f64;
 
     fn heading(&self) -> f64;

@@ -46,9 +46,9 @@ pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: Feedbac
 }
 
 impl<
-        T: Tracking + 'static,
-        U: FeedbackController + 'static,
-        V: FeedbackController + 'static,
+        T: Tracking + Send + Sync + 'static,
+        U: FeedbackController + Send + Sync + 'static,
+        V: FeedbackController + Send + Sync + 'static,
     > DifferentialDrivetrain<T, U, V>
 {
     pub fn new(
