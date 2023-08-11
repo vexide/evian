@@ -21,14 +21,14 @@ pub trait Tracking {
 
 /// A struct representing a wheel attached to a rotary sensor.
 #[derive(Debug, Clone, PartialEq)]
-pub struct TrackingWheel<'a, T: RotarySensor> {
-    pub sensor: &'a T,
+pub struct TrackingWheel<T: RotarySensor> {
+    pub sensor: T,
     pub wheel_diameter: f64,
     pub gearing: Option<f64>,
 }
 
-impl<'a, T: RotarySensor> TrackingWheel<'a, T> {
-    pub fn new(sensor: &'a T, wheel_diameter: f64, gearing: Option<f64>) -> Self {
+impl<T: RotarySensor> TrackingWheel<T> {
+    pub fn new(sensor: T, wheel_diameter: f64, gearing: Option<f64>) -> Self {
         Self {
             sensor,
             wheel_diameter,
@@ -37,7 +37,7 @@ impl<'a, T: RotarySensor> TrackingWheel<'a, T> {
     }
 }
 
-impl<'a, T: RotarySensor> TrackingWheel<'a, T> {
+impl<T: RotarySensor> TrackingWheel<T> {
     fn travel(&self) -> f64 {
         let wheel_circumference = self.wheel_diameter * PI;
 
@@ -54,21 +54,21 @@ pub enum HeadingMethod<T: Gyro> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ParallelWheelTracking<'a, 'b, T: RotarySensor, U: RotarySensor, V: Gyro> {
+pub struct ParallelWheelTracking<T: RotarySensor, U: RotarySensor, V: Gyro> {
     position: Vec2,
-    left_wheel: TrackingWheel<'a, T>,
-    right_wheel: TrackingWheel<'b, U>,
+    left_wheel: TrackingWheel<T>,
+    right_wheel: TrackingWheel<U>,
     heading_method: HeadingMethod<V>,
     heading_offset: f64,
     prev_forward_travel: f64,
 }
 
-impl<'a, 'b, T: RotarySensor, U: RotarySensor, V: Gyro> ParallelWheelTracking<'a, 'b, T, U, V> {
+impl<T: RotarySensor, U: RotarySensor, V: Gyro> ParallelWheelTracking<T, U, V> {
     pub fn new(
         origin: Vec2,
         heading: f64,
-        left_wheel: TrackingWheel<'a, T>,
-        right_wheel: TrackingWheel<'b, U>,
+        left_wheel: TrackingWheel<T>,
+        right_wheel: TrackingWheel<U>,
         heading_method: HeadingMethod<V>,
     ) -> Self {
         Self {
@@ -82,8 +82,8 @@ impl<'a, 'b, T: RotarySensor, U: RotarySensor, V: Gyro> ParallelWheelTracking<'a
     }
 }
 
-impl<'a, 'b, T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
-    for ParallelWheelTracking<'a, 'b, T, U, V>
+impl<T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
+    for ParallelWheelTracking<T, U, V>
 {
     fn position(&self) -> Vec2 {
         self.position
@@ -107,8 +107,17 @@ impl<'a, 'b, T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
             } % FRAC_2_PI
     }
 
-    fn set_heading(&mut self, _heading: f64) {
-        todo!();
+    fn set_heading(&mut self, heading: f64) {
+        self.heading_offset = heading;
+        
+        match &mut self.heading_method {
+            HeadingMethod::Gyro(gyro) => gyro.reset_heading(),
+            HeadingMethod::TrackWidth(_) => {
+                self.left_wheel.sensor.reset_rotation();
+                self.right_wheel.sensor.reset_rotation();
+                self.prev_forward_travel = 0.0;
+            }
+        };
     }
 
     fn update(&mut self) {
