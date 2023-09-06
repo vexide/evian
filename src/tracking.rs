@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// A system that tracks the absolute position and heading of a mobile robot.
-pub trait Tracking {
+pub trait Tracking: Send + Sync {
     fn forward_travel(&self) -> f64;
 
     fn heading(&self) -> f64;
@@ -45,12 +45,10 @@ impl<T: RotarySensor> TrackingWheel<T> {
             * self.gearing.unwrap_or(1.0 / 1.0)
             * wheel_circumference;
     }
-}
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum HeadingMethod<T: Gyro> {
-    Gyro(T),
-    TrackWidth(f64),
+    fn reset(&mut self) {
+        
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,7 +56,8 @@ pub struct ParallelWheelTracking<T: RotarySensor, U: RotarySensor, V: Gyro> {
     position: Vec2,
     left_wheel: TrackingWheel<T>,
     right_wheel: TrackingWheel<U>,
-    heading_method: HeadingMethod<V>,
+    gyro: Option<V>,
+    track_width: f64,
     heading_offset: f64,
     prev_forward_travel: f64,
 }
@@ -69,13 +68,15 @@ impl<T: RotarySensor, U: RotarySensor, V: Gyro> ParallelWheelTracking<T, U, V> {
         heading: f64,
         left_wheel: TrackingWheel<T>,
         right_wheel: TrackingWheel<U>,
-        heading_method: HeadingMethod<V>,
+        gyro: Option<V>,
+        track_width: f64,
     ) -> Self {
         Self {
             position: origin,
             left_wheel,
             right_wheel,
-            heading_method,
+            gyro,
+            track_width,
             heading_offset: heading,
             prev_forward_travel: 0.0,
         }
@@ -99,25 +100,24 @@ impl<T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
 
     fn heading(&self) -> f64 {
         self.heading_offset
-            + match &self.heading_method {
-                HeadingMethod::Gyro(gyro) => FRAC_2_PI - gyro.heading(),
-                HeadingMethod::TrackWidth(track_width) => {
-                    self.right_wheel.travel() - self.left_wheel.travel() / track_width
-                }
+            + match &self.gyro {
+                Some(gyro) => FRAC_2_PI - gyro.heading(),
+                None => self.right_wheel.travel() - self.left_wheel.travel() / self.track_width
             } % FRAC_2_PI
     }
 
     fn set_heading(&mut self, heading: f64) {
         self.heading_offset = heading;
         
-        match &mut self.heading_method {
-            HeadingMethod::Gyro(gyro) => gyro.reset_heading(),
-            HeadingMethod::TrackWidth(_) => {
-                self.left_wheel.sensor.reset_rotation();
-                self.right_wheel.sensor.reset_rotation();
-                self.prev_forward_travel = 0.0;
-            }
-        };
+        // match &mut self.heading_method {
+        //     HeadingMethod::Gyro(_) => todo!(),
+        //     HeadingMethod::TrackWidth(_) => {
+        //         todo!()
+        //         // self.left_wheel.reset_rotation();
+        //         // self.right_wheel.reset_rotation();
+        //         // self.prev_forward_travel = 0.0;
+        //     }
+        // };
     }
 
     fn update(&mut self) {
@@ -166,12 +166,12 @@ mod tests {
         let left_wheel = TrackingWheel::new(left_sensor, 3.25, Some(1.0));
         let right_wheel = left_wheel.clone();
 
-        let tracking = ParallelWheelTracking::new(
-            Vec2::default(),
-            90.0,
-            left_wheel,
-            right_wheel,
-            HeadingMethod::TrackWidth(10.0),
-        );
+        // let tracking = ParallelWheelTracking::new(
+        //     Vec2::default(),
+        //     90.0,
+        //     left_wheel,
+        //     right_wheel,
+        //     HeadingMethod::TrackWidth(10.0),
+        // );
     }
 }
