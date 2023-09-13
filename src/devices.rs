@@ -1,5 +1,4 @@
-use alloc::vec::Vec;
-use alloc::sync::Arc;
+use alloc::{vec::Vec, sync::Arc};
 use vex_rt::{
     adi::{AdiEncoder, AdiGyro},
     imu::InertialSensor,
@@ -8,8 +7,10 @@ use vex_rt::{
     rtos::Mutex,
 };
 
+pub type MotorGroup = Vec<Arc<Mutex<Motor>>>;
+
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
-pub trait RotarySensor: Send + Sync {
+pub trait RotarySensor: Send + Sync + 'static {
     /// Get the device's measured rotation in radians.
     fn rotation(&self) -> f64;
 }
