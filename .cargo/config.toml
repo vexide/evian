@@ -5,4 +5,4 @@ target = "build/armv7a-vex-eabi.json"
 build-std = ["core", "alloc"]
 
 [target.armv7a-vex-eabi]
-runner = "build/upload.sh"
+runner = "bash build/upload.sh"
