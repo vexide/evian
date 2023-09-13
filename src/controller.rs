@@ -69,7 +69,7 @@ pub struct PIDController {
     pub kd: f64,
 
     integral: f64,
-    prev_error: f64,
+    previous_error: f64,
 }
 
 impl PIDController {
@@ -99,9 +99,9 @@ impl PIDController {
 impl FeedbackController for PIDController {
     fn update(&mut self, error: f64) -> f64 {
         self.integral += error * self.ki;
-        let derivative = error - self.prev_error;
+        let derivative = error - self.previous_error;
 
-        self.prev_error = error;
+        self.previous_error = error;
 
         (error * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
     }

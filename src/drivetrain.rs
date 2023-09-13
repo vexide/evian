@@ -1,7 +1,9 @@
-use alloc::{sync::Arc, vec::Vec, boxed::Box};
-use core::sync::atomic::AtomicBool;
-use core::{time::Duration, sync::atomic::Ordering};
-use core::ops::Drop;
+use alloc::{vec::Vec, sync::Arc};
+use core::{
+    time::Duration,
+    sync::atomic::{Ordering, AtomicBool},
+    ops::Drop,
+};
 use num_traits::real::Real;
 
 use crate::{
@@ -10,10 +12,7 @@ use crate::{
     tracking::Tracking,
     devices::MotorGroup,
 };
-use vex_rt::{
-    motor::Motor,
-    rtos::{Loop, Mutex, Task},
-};
+use vex_rt::rtos::{Loop, Mutex, Task};
 
 #[derive(Debug, Clone, PartialEq)]
 enum DrivetrainTarget {
@@ -138,7 +137,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     /// Moves the drivetrain in a straight line for a certain distance.
-    pub async fn drive_distance(&mut self, distance: f64) {
+    pub fn drive_distance(&mut self, distance: f64) {
         self.settled.swap(false, Ordering::Relaxed);
 
         let target = Arc::clone(&self.target);
@@ -154,7 +153,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     /// Turns the drivetrain in place to face a certain angle.
-    pub async fn turn_to_angle(&self, angle: f64) {
+    pub fn turn_to_angle(&self, angle: f64) {
         self.settled.swap(false, Ordering::Relaxed);
 
         let target = Arc::clone(&self.target);
@@ -170,7 +169,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     /// Turns the drivetrain in place to face the direction of a certain point.
-    pub async fn turn_to_point(&self, point: Vec2) { 
+    pub fn turn_to_point(&self, point: Vec2) { 
         self.settled.swap(false, Ordering::Relaxed);
            
         let target = Arc::clone(&self.target);
@@ -188,7 +187,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     /// Moves the drivetrain to a certain point by turning and driving at the same time.
-    pub async fn move_to_point(&self, point: Vec2) {
+    pub fn move_to_point(&self, point: Vec2) {
         self.settled.swap(false, Ordering::Relaxed);
        
         let target = Arc::clone(&self.target);
@@ -199,12 +198,12 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     /// Moves the drivertain along a path defined by a series of waypoints.
-    pub async fn follow_path(&self, _path: Vec<Vec2>) {
+    pub fn follow_path(&self, _path: Vec<Vec2>) {
         todo!();
     }
 
     // Holds the current angle and position of the drivetrain.
-    pub async fn hold_position(&self) {
+    pub fn hold_position(&self) {
         self.settled.swap(false, Ordering::Relaxed);
 
         let target = Arc::clone(&self.target);
@@ -217,6 +216,26 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             tracking.forward_travel(),
             tracking.heading(),
         );
+    }
+
+    pub fn tracking(&self) -> Arc<Mutex<T>> {
+        Arc::clone(&self.tracking)
+    }
+
+    pub fn drive_controller(&self) -> Arc<Mutex<U>> {
+        Arc::clone(&self.drive_controller)
+    }
+
+    pub fn turn_controller(&self) -> Arc<Mutex<V>> {
+        Arc::clone(&self.turn_controller)
+    }
+
+    pub fn drive_tolerance(&self) -> f64 {
+        *Arc::clone(&self.drive_tolerance)
+    }
+
+    pub fn turn_tolerance(&self) -> f64 {
+        *Arc::clone(&self.turn_tolerance)
     }
 }
 

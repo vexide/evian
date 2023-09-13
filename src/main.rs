@@ -56,6 +56,12 @@ impl Robot for Robor {
             ),
         }
     }
+
+    fn autonomous(&mut self, _ctx: Context) {
+        self.drivetrain.enable();
+
+        self.drivetrain.drive_distance(10.0);
+    }
 }
 
 entry!(Robor);
