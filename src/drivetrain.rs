@@ -12,7 +12,11 @@ use crate::{
     tracking::Tracking,
     devices::MotorGroup,
 };
-use vex_rt::rtos::{Loop, Mutex, Task};
+#[allow(unused_imports)]
+use vex_rt::{
+    rtos::{Loop, Mutex, Task},
+    io::*
+};
 
 #[derive(Debug, Clone, PartialEq)]
 enum DrivetrainTarget {
@@ -43,7 +47,8 @@ pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: Feedbac
 
 impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDrivetrain<T, U, V> {
     pub fn new(
-        motors: (MotorGroup, MotorGroup),
+        left_motors: MotorGroup,
+        right_motors: MotorGroup,
         tracking: T,
         drive_controller: U,
         turn_controller: V,
@@ -51,7 +56,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         turn_tolerance: f64,
         // lookahead_distance: f64,
     ) -> Self {
-        let motors = Arc::new(motors);
+        let motors = Arc::new((left_motors, right_motors));
         let drive_controller = Arc::new(Mutex::new(drive_controller));
         let turn_controller = Arc::new(Mutex::new(turn_controller));
         let tracking = Arc::new(Mutex::new(tracking));
@@ -60,7 +65,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         let target = Arc::new(Mutex::new(DrivetrainTarget::default()));
         let settled = Arc::new(AtomicBool::new(false));
         let enabled = Arc::new(AtomicBool::new(false));
-        let started = Arc::new(AtomicBool::new(false));
+        let started = Arc::new(AtomicBool::new(true));
 
         Self {
             _motors: Arc::clone(&motors),
@@ -75,15 +80,18 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             started: Arc::clone(&started),
             target: Arc::clone(&target),
             task: Some(Task::spawn(move || {
-                let mut tracking = tracking.lock();
-                let mut drive_controller = drive_controller.lock();
-                let mut turn_controller = turn_controller.lock();
-                let target = target.lock();
-
                 let mut task_loop = Loop::new(Duration::from_millis(10));
-    
+                
                 while started.load(Ordering::Relaxed) {
+                    let mut tracking = tracking.lock();
+                    let mut drive_controller = drive_controller.lock();
+                    let mut turn_controller = turn_controller.lock();
+                    let target = target.lock();
+
+                    println!("{:?}", target);
+
                     tracking.update();
+                    println!("Target: {:?}, Position: {:?}, Heading: {:?}", *target, tracking.position(), tracking.heading());
     
                     let (drive_error, turn_error) = match *target {
                         DrivetrainTarget::Point(point) => {
@@ -150,6 +158,8 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             tracking.forward_travel() + distance,
             tracking.heading(),
         );
+
+        println!("{:?}", self.target);
     }
 
     /// Turns the drivetrain in place to face a certain angle.
@@ -216,6 +226,8 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             tracking.forward_travel(),
             tracking.heading(),
         );
+
+        
     }
 
     pub fn tracking(&self) -> Arc<Mutex<T>> {

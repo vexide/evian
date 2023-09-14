@@ -123,7 +123,7 @@ impl<T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
     fn update(&mut self) {
         let forward_travel = self.forward_travel();
         let delta_forward_travel = forward_travel - self.prev_forward_travel;
-
+        
         // Find a position delta.
         // This is a vector relative to the previous position, and can be found by creating a vector with our
         // average forward travel as the y-axis, then rotating the y-axis about our current heading. This gives

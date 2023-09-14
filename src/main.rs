@@ -13,51 +13,29 @@ struct Robor {
 
 impl Robot for Robor {
     fn new(peripherals: Peripherals) -> Self {
-        let m1 = Arc::new(Mutex::new(
-            peripherals
-                .port01
-                .into_motor(Gearset::EighteenToOne, EncoderUnits::Degrees, false)
-                .unwrap(),
-        ));
-        let m2 = Arc::new(Mutex::new(
-            peripherals
-                .port02
-                .into_motor(Gearset::EighteenToOne, EncoderUnits::Degrees, false)
-                .unwrap(),
-        ));
-        let m3 = Arc::new(Mutex::new(
-            peripherals
-                .port03
-                .into_motor(Gearset::EighteenToOne, EncoderUnits::Degrees, false)
-                .unwrap(),
-        ));
-        let m4 = Arc::new(Mutex::new(
-            peripherals
-                .port04
-                .into_motor(Gearset::EighteenToOne, EncoderUnits::Degrees, false)
-                .unwrap(),
-        ));
+        let m1 = Arc::new(Mutex::new(peripherals.port01.into_motor(Gearset::EighteenToOne, EncoderUnits::Degrees, false).unwrap()));
+        let m2 = Arc::new(Mutex::new(peripherals.port02.into_motor(Gearset::EighteenToOne, EncoderUnits::Degrees, false).unwrap()));
 
         Self {
             drivetrain: DifferentialDrivetrain::new(
-                (vec![m1.clone(), m2.clone()], vec![m3.clone(), m4.clone()]),
+                vec![m1.clone()], vec![m2.clone()],
                 ParallelWheelTracking::new(
                     Vec2::new(0., 0.),
                     90.,
-                    TrackingWheel::new(vec![m1.clone(), m2.clone()], 4., Some(84. / 60.)),
-                    TrackingWheel::new(vec![m3.clone(), m4.clone()], 4., Some(84. / 60.)),
-                    Some(peripherals.port08.into_imu()),
+                    TrackingWheel::new(vec![m1.clone()], 4., Some(1.0)),
+                    TrackingWheel::new(vec![m2.clone()], 4., Some(1.0)),
+                    None,
                     14.0,
                 ),
-                PIDController::new(0., 0., 0.),
-                PIDController::new(0., 0., 0.),
+                PIDController::new(5., 0., 0.),
+                PIDController::new(5., 0., 0.),
                 0.3,
                 0.3,
             ),
         }
     }
 
-    fn autonomous(&mut self, _ctx: Context) {
+    fn opcontrol(&mut self, _ctx: Context) {
         self.drivetrain.enable();
 
         self.drivetrain.drive_distance(10.0);
