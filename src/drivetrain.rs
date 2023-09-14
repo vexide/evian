@@ -32,7 +32,6 @@ impl Default for DrivetrainTarget {
 
 pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: FeedbackController> {
     task: Option<Task>,
-    _motors: Arc<(MotorGroup, MotorGroup)>,
     tracking: Arc<Mutex<T>>,
     drive_controller: Arc<Mutex<U>>,
     turn_controller: Arc<Mutex<V>>,
@@ -42,7 +41,6 @@ pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: Feedbac
     settled: Arc<AtomicBool>,
     enabled: Arc<AtomicBool>,
     started: Arc<AtomicBool>
-    // lookahead_distance: f64,
 }
 
 impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDrivetrain<T, U, V> {
@@ -54,7 +52,6 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         turn_controller: V,
         drive_tolerance: f64,
         turn_tolerance: f64,
-        // lookahead_distance: f64,
     ) -> Self {
         let motors = Arc::new((left_motors, right_motors));
         let drive_controller = Arc::new(Mutex::new(drive_controller));
@@ -68,13 +65,11 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         let started = Arc::new(AtomicBool::new(true));
 
         Self {
-            _motors: Arc::clone(&motors),
             tracking: Arc::clone(&tracking),
             drive_controller: Arc::clone(&drive_controller),
             turn_controller: Arc::clone(&turn_controller),
             drive_tolerance: Arc::clone(&drive_tolerance),
             turn_tolerance: Arc::clone(&turn_tolerance),
-            // lookahead_distance,
             settled: Arc::clone(&settled),
             enabled: Arc::clone(&enabled),
             started: Arc::clone(&started),
@@ -226,8 +221,6 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             tracking.forward_travel(),
             tracking.heading(),
         );
-
-        
     }
 
     pub fn tracking(&self) -> Arc<Mutex<T>> {
@@ -253,7 +246,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
 
 impl<T: Tracking, U: FeedbackController, V: FeedbackController> Drop for DifferentialDrivetrain<T, U, V> {
     fn drop(&mut self) {
-        if let Some(task) = &self.task {
+        if let Some(task) = self.task.take() {
             self.started.swap(false, Ordering::Relaxed);
 
             unsafe {

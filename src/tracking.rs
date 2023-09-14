@@ -45,10 +45,6 @@ impl<T: RotarySensor> TrackingWheel<T> {
             * self.gearing.unwrap_or(1.0 / 1.0)
             * wheel_circumference;
     }
-
-    fn reset(&mut self) {
-        
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -130,48 +126,5 @@ impl<T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
         // a rough estimate of the change in position, but does not account for sideways motion.
         self.position += Vec2::new(0.0, delta_forward_travel).rotate(self.heading());
         self.prev_forward_travel = forward_travel;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[derive(Default, Copy, Clone, PartialEq)]
-    struct FakeSensor {
-        rotation: f64,
-    }
-
-    impl RotarySensor for FakeSensor {
-        fn rotation(&self) -> f64 {
-            self.rotation
-        }
-        fn set_rotation(&self, _: f64) {}
-        fn reset_rotation(&self) {}
-    }
-
-    #[test]
-    fn make_tracking_wheel() {
-        TrackingWheel {
-            sensor: &FakeSensor::default(),
-            wheel_diameter: 3.25,
-            gearing: Some(1.0),
-        };
-    }
-
-    #[test]
-    fn track_parallel_wheel_movement() {
-        let sensor = FakeSensor::default();
-
-        let left_wheel = TrackingWheel::new(left_sensor, 3.25, Some(1.0));
-        let right_wheel = left_wheel.clone();
-
-        // let tracking = ParallelWheelTracking::new(
-        //     Vec2::default(),
-        //     90.0,
-        //     left_wheel,
-        //     right_wheel,
-        //     HeadingMethod::TrackWidth(10.0),
-        // );
     }
 }

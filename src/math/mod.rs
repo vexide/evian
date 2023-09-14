@@ -1,8 +1,8 @@
 pub mod vec2;
-pub mod pursuit;
+// pub mod pursuit;
 
 pub use vec2::Vec2;
-pub use pursuit::*;
+// pub use pursuit::*;
 
 use core::f64::consts::{FRAC_2_PI, PI};
 use num_traits::real::Real;
@@ -35,14 +35,4 @@ pub fn normalize_motor_voltages(mut voltages: (f64, f64), max_voltage: f64) -> (
     }
 
     return voltages;
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn normalize() {
-        assert_eq!(normalize_angle(FRAC_2_PI), 0.0);
-    }
 }

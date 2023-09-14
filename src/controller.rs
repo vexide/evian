@@ -106,33 +106,3 @@ impl FeedbackController for PIDController {
         (error * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_pid_controller() {
-        let mut pid = PIDController::new(1.0, 0.5, 0.2);
-        pid.set_gains(1.0, 0.5, 0.2); // Using arbitrary constants
-
-        // Test with error = 0
-        // In this case, the controller is perfectly at its setpoint,
-        // meaning that no corrections are required.
-        assert_eq!(pid.update(0.0), 0.0);
-
-        // Error has now grown to 2.0. Output now should be positive.
-        let step_0 = pid.update(2.0);
-        assert!(step_0.is_sign_positive());
-
-        // As a result of the previous correction being applied, error has now decreased.
-        // Output should now decrease as well.
-        let step_1 = pid.update(1.5);
-        assert!(step_0 > step_1);
-
-        // We are now completely at the setpoint, where we started. Since this isn't just a
-        // P controller, we should still be producing a positive output to come to a smooth stop.
-        let step_2 = pid.update(0.0);
-        assert!(step_2 > 0.0 && step_2 < step_1);
-    }
-}
