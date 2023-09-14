@@ -103,17 +103,7 @@ impl<T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
     }
 
     fn set_heading(&mut self, heading: f64) {
-        self.heading_offset = heading;
-        
-        // match &mut self.heading_method {
-        //     HeadingMethod::Gyro(_) => todo!(),
-        //     HeadingMethod::TrackWidth(_) => {
-        //         todo!()
-        //         // self.left_wheel.reset_rotation();
-        //         // self.right_wheel.reset_rotation();
-        //         // self.prev_forward_travel = 0.0;
-        //     }
-        // };
+        self.heading_offset = heading - self.heading();
     }
 
     fn update(&mut self) {

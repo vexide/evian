@@ -83,10 +83,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                     let mut turn_controller = turn_controller.lock();
                     let target = target.lock();
 
-                    println!("{:?}", target);
-
                     tracking.update();
-                    println!("Target: {:?}, Position: {:?}, Heading: {:?}", *target, tracking.position(), tracking.heading());
     
                     let (drive_error, turn_error) = match *target {
                         DrivetrainTarget::Point(point) => {

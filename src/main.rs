@@ -6,9 +6,10 @@ extern crate alloc;
 use alloc::{sync::Arc, vec};
 use vex_rt::prelude::*;
 use vexnav::prelude::*;
+use num_traits::real::Real;
 
 struct Robor {
-    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<MotorGroup, MotorGroup, InertialSensor>, PIDController, PIDController>,
+    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<Arc<Mutex<Motor>>, Arc<Mutex<Motor>>, InertialSensor>, PIDController, PIDController>,
 }
 
 impl Robot for Robor {
@@ -18,24 +19,24 @@ impl Robot for Robor {
 
         Self {
             drivetrain: DifferentialDrivetrain::new(
-                vec![m1.clone()], vec![m2.clone()],
+                vec![Arc::clone(&m1)], vec![Arc::clone(&m2)],
                 ParallelWheelTracking::new(
-                    Vec2::new(0., 0.),
-                    90.,
-                    TrackingWheel::new(vec![m1.clone()], 4., Some(1.0)),
-                    TrackingWheel::new(vec![m2.clone()], 4., Some(1.0)),
+                    Vec2::new(0.0, 0.0),
+                    90.0.to_radians(),
+                    TrackingWheel::new(Arc::clone(&m1), 4.0, Some(1.0)),
+                    TrackingWheel::new(Arc::clone(&m2), 4.0, Some(1.0)),
                     None,
                     14.0,
                 ),
-                PIDController::new(5., 0., 0.),
-                PIDController::new(5., 0., 0.),
+                PIDController::new(5.0, 0.0, 0.0),
+                PIDController::new(5.0, 0.0, 0.0),
                 0.3,
                 0.3,
             ),
         }
     }
 
-    fn opcontrol(&mut self, _ctx: Context) {
+    fn autonomous(&mut self, _ctx: Context) {
         self.drivetrain.enable();
 
         self.drivetrain.drive_distance(10.0);

@@ -15,9 +15,10 @@ pub trait RotarySensor: Send + Sync + 'static {
     fn rotation(&self) -> f64;
 }
 
-impl RotarySensor for Motor {
+impl RotarySensor for Arc<Mutex<Motor>> {
     fn rotation(&self) -> f64 {
-        (self.get_position().unwrap()).to_radians()
+        let motor = self.lock();
+        motor.get_position().unwrap().to_radians()
     }
 }
 
@@ -25,7 +26,7 @@ impl RotarySensor for Vec<Arc<Mutex<Motor>>> {
     fn rotation(&self) -> f64 {
         let mut sum = 0.0;
         for motor in self.iter() {
-            sum += motor.lock().rotation();
+            sum += motor.lock().get_position().unwrap().to_radians();
         }
 
         f64::from(sum) / (self.len() as f64)
