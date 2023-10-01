@@ -7,7 +7,7 @@ use vex_rt::{
     rtos::Mutex,
 };
 
-pub type MotorGroup = Vec<Arc<Mutex<Motor>>>;
+pub type MotorGroup = Arc<Mutex<Vec<Motor>>>;
 
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
 pub trait RotarySensor: Send + Sync + 'static {
@@ -22,14 +22,16 @@ impl RotarySensor for Arc<Mutex<Motor>> {
     }
 }
 
-impl RotarySensor for Vec<Arc<Mutex<Motor>>> {
+impl RotarySensor for MotorGroup {
     fn rotation(&self) -> f64 {
+        let group = self.lock();
+
         let mut sum = 0.0;
-        for motor in self.iter() {
-            sum += motor.lock().get_position().unwrap().to_radians();
+        for motor in group.iter() {
+            sum += motor.get_position().unwrap().to_radians();
         }
 
-        f64::from(sum) / (self.len() as f64)
+        f64::from(sum) / (group.len() as f64)
     }
 }
 

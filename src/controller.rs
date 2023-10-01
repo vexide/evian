@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 /// A closed-loop feedback controller.
 ///
 /// At its core, a feedback controller is a simple function that produces an output value
@@ -19,7 +21,7 @@ pub trait FeedbackController: Send + Sync + 'static {
     /// 	error * 2.0
     /// }
     /// ```
-    fn update(&mut self, error: f64) -> f64;
+    fn update(&mut self, error: f64, dt: Duration) -> f64;
 }
 
 /// A proportional-integral-derivative (PID) feedback controller.
@@ -97,12 +99,12 @@ impl PIDController {
 }
 
 impl FeedbackController for PIDController {
-    fn update(&mut self, error: f64) -> f64 {
-        self.integral += error * self.ki;
-        let derivative = error - self.previous_error;
+    fn update(&mut self, error: f64, dt: Duration) -> f64 {
+        self.integral += error * self.ki * dt.as_secs_f64();
+        let derivative = error - self.previous_error / dt.as_secs_f64();
 
         self.previous_error = error;
 
-        (error * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
+        (error * self.kp) + (self.integral) + (derivative * self.kd)
     }
 }

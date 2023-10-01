@@ -26,7 +26,7 @@ pub fn normalize_angle(mut angle: f64) -> f64 {
 /// 
 /// If either motor is over a `max_voltage`, limit both voltages to preserve
 /// the ratio between left and right power.
-pub fn normalize_motor_voltages(mut voltages: (f64, f64), max_voltage: f64) -> (f64, f64) {
+pub fn normalize_motor_power(mut voltages: (f64, f64), max_voltage: f64) -> (f64, f64) {
     let largest_voltage = voltages.0.abs().max(voltages.1.abs()) / max_voltage;
 
     if largest_voltage > 1.0 {
