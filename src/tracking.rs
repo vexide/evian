@@ -47,8 +47,8 @@ impl<T: RotarySensor> TrackingWheel<T> {
     fn travel(&self) -> f64 {
         let wheel_circumference = self.wheel_diameter * PI;
 
-        return (self.sensor.rotation() / FRAC_2_PI)
-            * self.gearing.unwrap_or(1.0 / 1.0)
+        return (self.sensor.rotation().unwrap() / FRAC_2_PI)
+            * self.gearing.unwrap_or(1.0)
             * wheel_circumference;
     }
 }
@@ -100,7 +100,7 @@ impl<T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
     fn heading(&self) -> f64 {
         self.heading_offset
             + match &self.heading_mode {
-                HeadingMode::Gyro(gyro) => FRAC_2_PI - gyro.heading(),
+                HeadingMode::Gyro(gyro) => FRAC_2_PI - gyro.heading().unwrap(),
                 HeadingMode::Wheel(track_width) => (self.right_wheel.travel() - self.left_wheel.travel()) / track_width
             } % FRAC_2_PI
     }

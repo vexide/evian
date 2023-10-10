@@ -9,7 +9,7 @@ use vexnav::prelude::*;
 use num_traits::real::Real;
 
 struct Robor {
-    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<MotorGroup, MotorGroup, InertialSensor>, PIDController, PIDController>,
+    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<Arc<Mutex<Vec<Motor>>>, Arc<Mutex<Vec<Motor>>>, InertialSensor>, PIDController, PIDController>,
 }
 
 impl Robot for Robor {
