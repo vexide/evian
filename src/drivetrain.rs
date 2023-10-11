@@ -10,7 +10,7 @@ use crate::{
     controller::FeedbackController,
     math::{normalize_angle, normalize_motor_power, Vec2},
     tracking::Tracking,
-    devices::MotorGroup,
+    devices::ThreadsafeMotorGroup,
 };
 #[allow(unused_imports)]
 use vex_rt::{
@@ -30,112 +30,144 @@ impl Default for DrivetrainTarget {
     }
 }
 
-pub struct ThreadedDifferentialDrivetrain<T: Tracking, U: FeedbackController, V: FeedbackController> {
-    tracking: T,
-    drive_controller: U,
-    drive_tolerance: f64,
+#[derive(Clone, PartialEq, Debug, Copy, Default)]
+pub struct SettleCondition {
+    pub error_tolerance: f64,
+    pub output_tolerance: f64,
+    pub duration: Duration,
+    pub timeout: Duration
+}
+
+impl SettleCondition {
+    pub fn new(error_tolerance: f64, output_tolerance: f64, duration: Duration, timeout: Duration) -> Self {
+        Self {
+            error_tolerance,
+            output_tolerance,
+            duration,
+            timeout
+        }
+    }
+
+    pub fn is_settled(&self, error: f64, output: f64, elapsed: Duration) -> bool {
+        // if error < self.error_tolerance && output < self.output_tolerance && 
+        false // yeah
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct DifferentialDrivetrainState {
     drive_error: f64,
-    turn_controller: V,
-    turn_tolerance: f64,
     turn_error: f64,
+    drive_settle_condition: SettleCondition,
+    turn_settle_condition: SettleCondition,
     target: DrivetrainTarget,
     settled: bool,
-    enabled: bool,
 }
 
 pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: FeedbackController> {
     task: Option<Task>,
-    inner: Arc<Mutex<ThreadedDifferentialDrivetrain<T, U, V>>>,
+    tracking: Arc<Mutex<T>>,
+    drive_controller: Arc<Mutex<U>>,
+    turn_controller: Arc<Mutex<V>>,
+    state: Arc<Mutex<DifferentialDrivetrainState>>,
     started: Arc<AtomicBool>,
 }
 
 impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDrivetrain<T, U, V> {
     pub fn new(
-        motors: (MotorGroup, MotorGroup),
+        motors: (ThreadsafeMotorGroup, ThreadsafeMotorGroup),
         tracking: T,
         drive_controller: U,
         turn_controller: V,
-        drive_tolerance: f64,
-        turn_tolerance: f64,
+        drive_settle_condition: SettleCondition,
+        turn_settle_condition: SettleCondition,
     ) -> Self {
-        let started = Arc::new(AtomicBool::new(false));
-        let inner = Arc::new(Mutex::new(ThreadedDifferentialDrivetrain {
-            tracking,
-            drive_controller,
-            turn_controller,
-            drive_error: 0.0,
-            drive_tolerance,
-            turn_tolerance,
-            turn_error: 0.0,
-            target: DrivetrainTarget::default(),
-            settled: false,
-            enabled: false,
+        let tracking = Arc::new(Mutex::new(tracking));
+        let drive_controller = Arc::new(Mutex::new(drive_controller));
+        let turn_controller = Arc::new(Mutex::new(turn_controller));
+        let state = Arc::new(Mutex::new(DifferentialDrivetrainState {
+            drive_settle_condition,
+            turn_settle_condition,
+            ..Default::default()
         }));
-
+        let started = Arc::new(AtomicBool::new(false));
+        
         Self {
-            inner: Arc::clone(&inner),
+            state: Arc::clone(&state),
+            tracking: Arc::clone(&tracking),
+            drive_controller: Arc::clone(&drive_controller),
+            turn_controller: Arc::clone(&turn_controller),
             started: Arc::clone(&started),
             task: Some(Task::spawn(move || {
                 let sample_rate = Duration::from_millis(10);
                 let mut task_loop = Loop::new(sample_rate);
 
                 while started.load(Ordering::Relaxed) {
-                    let mut inner = inner.lock();
+                    let mut state = state.lock();
+                    let mut tracking = tracking.lock();
 
-                    inner.tracking.update();
+                    tracking.update();
 
-                    let heading = inner.tracking.heading();
-                    let position = inner.tracking.position();
-                    let forward_travel = inner.tracking.forward_travel();
+                    let heading = tracking.heading();
+                    let position = tracking.position();
+                    let forward_travel = tracking.forward_travel();
+
+                    drop(tracking);
     
                     let mut is_point_target = false;
-                    let (drive_error, turn_error) = match inner.target {
+                    let (drive_error, turn_error) = match state.target {
                         DrivetrainTarget::Point(point) => {
                             is_point_target = true;
 
                             let displacement = point - position;
 
-                            inner.turn_error = normalize_angle(heading - displacement.angle());
-                            inner.drive_error = displacement.length();
+                            state.turn_error = normalize_angle(heading - displacement.angle());
+                            state.drive_error = displacement.length();
 
-                            (inner.drive_error, inner.turn_error)
+                            (state.drive_error, state.turn_error)
                         },
                         DrivetrainTarget::DistanceAndHeading(target_distance, target_heading) => {
-                            inner.drive_error = target_distance - forward_travel;
-                            inner.turn_error = normalize_angle(heading - target_heading);
+                            state.drive_error = target_distance - forward_travel;
+                            state.turn_error = normalize_angle(heading - target_heading);
 
-                            (inner.drive_error, inner.turn_error)
+                            (state.drive_error, state.turn_error)
                         },
                     };
 
-                    if !inner.enabled {
+                    if state.settled {
                         continue;
                     }
 
-                    let mut drive_output = inner.drive_controller.update(drive_error, sample_rate);
-                    let turn_output = inner.turn_controller.update(turn_error, sample_rate);
+                    let mut drive_controller = drive_controller.lock();
+                    let mut turn_controller = turn_controller.lock();
+
+                    let mut drive_output = drive_controller.update(drive_error, sample_rate);
+                    let turn_output = turn_controller.update(turn_error, sample_rate);
                     
+                    drop(drive_controller);
+                    drop(turn_controller);
+
                     if is_point_target {
-                        drive_output *= inner.turn_error.cos();
+                        drive_output *= state.turn_error.cos();
                     }
                     
-                    let (left_voltage, right_voltage) = normalize_motor_power((
+                    let (left_power, right_power) = normalize_motor_power((
                         drive_output + turn_output,
                         drive_output - turn_output,
-                    ), 128.0);
+                    ), 12000.0);
     
                     let mut left_motors = motors.0.lock();
                     for motor in left_motors.iter_mut() {
-                        motor.move_i8(left_voltage.round() as i8).unwrap();
+                        motor.move_voltage((12000.0 * left_power / 100.0).round() as i32).unwrap();
                     }
     
                     let mut right_motors = motors.1.lock();
                     for motor in right_motors.iter_mut() {
-                        motor.move_i8(right_voltage.round() as i8).unwrap();
+                        motor.move_voltage((12000.0 * right_power / 100.0).round() as i32).unwrap();
                     }
     
-                    if inner.drive_error < inner.drive_tolerance && (inner.turn_error < inner.turn_tolerance || is_point_target) {
-                        inner.settled = true;
+                    if drive_settle_condition.settled(drive_error, drive_output, 0.0.into()) && (state.turn_error < state.turn_tolerance || is_point_target) {
+                        state.settled = true;
                     }
                     
                     task_loop.delay();
@@ -144,58 +176,51 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         }
     }
 
-    pub fn enable(&self) {
-        let mut inner = self.inner.lock();
-        inner.enabled = true;
-    }
-
-    pub fn disable(&self) {
-        let mut inner = self.inner.lock();
-        inner.enabled = false;
-    }
-
     /// Moves the drivetrain in a straight line for a certain distance.
     pub fn drive_distance(&mut self, distance: f64) {
-        let mut inner = self.inner.lock();
-        inner.settled = false;
+        let mut state = self.state.lock();
+        let tracking = self.tracking.lock();
+        state.settled = false;
 
         // Add `distance` to the drivetrain's target distance.
-        inner.target = DrivetrainTarget::DistanceAndHeading(
-            inner.tracking.forward_travel() + distance,
-            match inner.target {
+        state.target = DrivetrainTarget::DistanceAndHeading(
+            tracking.forward_travel() + distance,
+            match state.target {
                 DrivetrainTarget::DistanceAndHeading(_, heading) => heading,
-                DrivetrainTarget::Point(_) => inner.tracking.heading(),
+                DrivetrainTarget::Point(_) => tracking.heading(),
             },
         );
     }
 
     /// Turns the drivetrain in place to face a certain angle.
     pub fn turn_to_angle(&self, angle: f64) {
-        let mut inner = self.inner.lock();
-        inner.settled = false;
+        let mut state = self.state.lock();
+        let tracking = self.tracking.lock();
+        state.settled = false;
 
         // Add `distance` to the drivetrain's target distance.
-        inner.target = DrivetrainTarget::DistanceAndHeading(
-            match inner.target {
+        state.target = DrivetrainTarget::DistanceAndHeading(
+            match state.target {
                 DrivetrainTarget::DistanceAndHeading(distance, _) => distance,
-                DrivetrainTarget::Point(_) => inner.tracking.forward_travel(),
+                DrivetrainTarget::Point(_) => tracking.forward_travel(),
             },
             angle,
         );
     }
 
     /// Turns the drivetrain in place to face the direction of a certain point.
-    pub fn turn_to_point(&self, point: Vec2) { 
-        let mut inner = self.inner.lock();
-        inner.settled = false;
+    pub fn turn_to_point(&self, point: Vec2) {
+        let mut state = self.state.lock();
+        let tracking = self.tracking.lock();
+        state.settled = false;
 
-        let displacement = point - inner.tracking.position();
+        let displacement = point - tracking.position();
         
         // Set target heading, keeping the current forward position.
-        inner.target = DrivetrainTarget::DistanceAndHeading(
-            match inner.target {
+        state.target = DrivetrainTarget::DistanceAndHeading(
+            match state.target {
                 DrivetrainTarget::DistanceAndHeading(distance, _) => distance,
-                DrivetrainTarget::Point(_) => inner.tracking.forward_travel(),
+                DrivetrainTarget::Point(_) => tracking.forward_travel(),
             },
             displacement.angle(),
         );
@@ -203,11 +228,11 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
 
     /// Moves the drivetrain to a certain point by turning and driving at the same time.
     pub fn move_to_point(&self, point: impl Into<Vec2>) {
-        let mut inner = self.inner.lock();
-        inner.settled = false;
+        let mut state = self.state.lock();
+        state.settled = false;
         
         // Set target heading, keeping the current forward position.
-        inner.target = DrivetrainTarget::Point(point.into());
+        state.target = DrivetrainTarget::Point(point.into());
     }
 
     /// Moves the drivetrain along a path defined by a series of waypoints.
@@ -217,11 +242,48 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
 
     // Holds the current angle and position of the drivetrain.
     pub fn hold_position(&self) {
-        let mut inner = self.inner.lock();
-        inner.target = DrivetrainTarget::DistanceAndHeading(
-            inner.tracking.forward_travel(),
-            inner.tracking.heading()
+        let tracking = self.tracking.lock();
+
+        self.state.lock().target = DrivetrainTarget::DistanceAndHeading(
+            tracking.forward_travel(),
+            tracking.heading()
         );
+    }
+
+    pub fn position(&self) -> Vec2 {
+        self.tracking.lock().position()
+    }
+
+    pub fn heading(&self) -> f64 {
+        self.tracking.lock().heading()
+    }
+
+    pub fn forward_travel(&self) -> f64 {
+        self.tracking.lock().forward_travel()
+    }
+
+    pub fn drive_error(&self) -> f64 {
+        self.state.lock().drive_error
+    }
+
+    pub fn turn_error(&self) -> f64 {
+        self.state.lock().turn_error
+    }
+
+    pub fn settled(&self) -> bool {
+        self.state.lock().settled
+    }
+
+    pub fn tracking(&self) -> Arc<Mutex<T>> {
+        Arc::clone(&self.tracking)
+    }
+
+    pub fn drive_controller(&self) -> Arc<Mutex<U>> {
+        Arc::clone(&self.drive_controller)
+    }
+    
+    pub fn turn_controller(&self) -> Arc<Mutex<V>> {
+        Arc::clone(&self.turn_controller)
     }
 }
 

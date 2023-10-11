@@ -1,3 +1,4 @@
+use core::f64::consts::FRAC_2_PI;
 use alloc::{vec::Vec, sync::Arc};
 use vex_rt::{
     adi::{AdiEncoder, AdiGyro},
@@ -7,7 +8,8 @@ use vex_rt::{
     rtos::Mutex,
 };
 
-pub type MotorGroup = Arc<Mutex<Vec<Motor>>>;
+pub type ThreadsafeMotor = Arc<Mutex<Motor>>;
+pub type ThreadsafeMotorGroup = Arc<Mutex<Vec<Motor>>>;
 
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
 pub trait RotarySensor: Send + Sync + 'static {
@@ -26,7 +28,7 @@ impl RotarySensor for Arc<Mutex<Motor>> {
     }
 }
 
-impl RotarySensor for MotorGroup {
+impl RotarySensor for ThreadsafeMotorGroup {
     fn rotation(&self) -> Result<f64, RotarySensorError> {
         let group = self.lock();
 
@@ -62,12 +64,12 @@ pub struct GyroError;
 
 impl Gyro for InertialSensor {
     fn heading(&self) -> Result<f64, GyroError> {
-        Ok(self.get_heading().map_err(|_| GyroError)?.to_radians())
+        Ok(FRAC_2_PI - self.get_heading().map_err(|_| GyroError)?.to_radians())
     }
 }
 
 impl Gyro for AdiGyro {
     fn heading(&self) -> Result<f64, GyroError> {
-        Ok(self.get().map_err(|_| GyroError)?.to_radians())
+        Ok(FRAC_2_PI - self.get().map_err(|_| GyroError)?.to_radians())
     }
 }

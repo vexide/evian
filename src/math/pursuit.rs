@@ -11,10 +11,10 @@ pub enum LineCircleIntersections {
 
 	/// The line is a tangent line. It touches the circle's edge exactly once, and
 	/// therefore has one intersection. 
-	OneIntersection(Vec2),
+	Tangent(Vec2),
 
 	/// The line is a secant line. It crosses the circle, intersecting at two points.
-	TwoIntersections(Vec2, Vec2),
+	Secant(Vec2, Vec2),
 }
 
 impl LineCircleIntersections {

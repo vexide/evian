@@ -100,11 +100,11 @@ impl PIDController {
 
 impl FeedbackController for PIDController {
     fn update(&mut self, error: f64, dt: Duration) -> f64 {
-        self.integral += error * self.ki * dt.as_secs_f64();
-        let derivative = error - self.previous_error / dt.as_secs_f64();
-
+        self.integral += error;
+        
+        let derivative = error - self.previous_error;
         self.previous_error = error;
 
-        (error * self.kp) + (self.integral) + (derivative * self.kd)
+        (error * self.kp) + (self.integral * kI * dt.as_secs_f64()) + (derivative * self.kd / dt.as_secs_f64())
     }
 }
