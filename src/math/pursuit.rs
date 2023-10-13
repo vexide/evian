@@ -24,17 +24,18 @@ impl LineCircleIntersections {
 	/// 
 	/// The result is returned as an instance of [`Self`], having either no intersections ([`Self::None`]),
 	/// one intersection as a tangent line ([`Self::OneIntersection`]), or two intersections as a secant line ([`Self::TwoIntersections`]).
-	fn compute(line: (Vec2, Vec2), circle: (Vec2, f64)) {
-		let (start, end) = line;
-		let (center, radius) = circle;
-			
-		let d = end - start;
-		let f = line.0 - circle.1;
+	pub fn compute(line: (Vec2, Vec2), circle: (Vec2, f64)) -> Self {
+		// let (start, end) = line;
+		// let (center, radius) = circle;
 		
-		let a = Vec2::new(d.x.powi(2), d.y.powi(2));
-		let b = Vec2::new(d.x * f.x, d.y * f.y) * 2.0;
-		let c = Vec2::new(f.x.powi(2), f.y.powi(2)) * circle.1.powi(2);
-		// let discriminant = b
+		// let d = end - start;
+		// let f = line.0 - circle.1;
+		
+		// let a = Vec2::new(d.x.powi(2), d.y.powi(2));
+		// let b = Vec2::new(d.x * f.x, d.y * f.y) * 2.0;
+		// let c = Vec2::new(f.x.powi(2), f.y.powi(2)) * circle.1.powi(2);
+		
+		Self::None
 	}
 
 	/// Compute the points of intersection between a line segment formed by two points
@@ -45,5 +46,7 @@ impl LineCircleIntersections {
 	/// 
 	/// This differs from [`LineCircleIntersections::compute`] in that it performs a bounds check to ensure that
 	/// the intersections are contained within the line segment, which has a defined start and endpoint.
-	fn compute_bounded(line: (Vec2, Vec2), circle: (Vec2, f64)) {}
+	pub fn compute_bounded(line: (Vec2, Vec2), circle: (Vec2, f64)) -> Self {
+		Self::None
+	}
 }

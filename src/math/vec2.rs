@@ -49,6 +49,10 @@ impl Vec2 {
         (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
 
+    pub fn distance(&self, other: &Vec2) -> f64 {
+        (*self - *other).length()
+    }
+
     /// Compute the dot product between this vector and another `Vec2`.
     ///
     /// The dot product is the sum of the products of each vector's components,

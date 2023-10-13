@@ -1,8 +1,8 @@
 pub mod vec2;
-// pub mod pursuit;
+pub mod pursuit;
 
 pub use vec2::Vec2;
-// pub use pursuit::*;
+pub use pursuit::*;
 
 use core::f64::consts::{FRAC_2_PI, PI};
 use num_traits::real::Real;

@@ -105,6 +105,6 @@ impl FeedbackController for PIDController {
         let derivative = error - self.previous_error;
         self.previous_error = error;
 
-        (error * self.kp) + (self.integral * kI * dt.as_secs_f64()) + (derivative * self.kd / dt.as_secs_f64())
+        (error * self.kp) + (self.integral * self.ki * dt.as_secs_f64()) + (derivative * self.kd / dt.as_secs_f64())
     }
 }

@@ -10,9 +10,9 @@ use num_traits::real::Real;
 use core::time::Duration;
 
 struct Robor {
-    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<ThreadsafeMotorGroup, ThreadsafeMotorGroup, InertialSensor>, PIDController, PIDController>,
     left_motors: ThreadsafeMotorGroup,
     right_motors: ThreadsafeMotorGroup,
+    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<ThreadsafeMotorGroup, ThreadsafeMotorGroup, InertialSensor>, PIDController, PIDController>
 }
 
 impl Robot for Robor {
@@ -37,6 +37,7 @@ impl Robot for Robor {
                 PIDController::new(3.0, 0.0, 0.0),
                 SettleCondition::new(0.3, 0.3, Duration::from_millis(200), Duration::from_secs(20)),
                 SettleCondition::new(0.3, 0.3, Duration::from_millis(200), Duration::from_secs(20)),
+                0.3,
             ),
             left_motors,
             right_motors
