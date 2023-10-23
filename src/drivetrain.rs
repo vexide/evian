@@ -14,11 +14,11 @@ use crate::{
 };
 #[allow(unused_imports)]
 use vex_rt::{
-    rtos::{Loop, Mutex, Task, Promise},
+    rtos::{Loop, Mutex, Task, Promise, Instant},
     io::*
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum DrivetrainTarget {
     Point(Vec2),
     DistanceAndHeading(f64, f64),
@@ -35,7 +35,9 @@ pub struct SettleCondition {
     pub error_tolerance: f64,
     pub output_tolerance: f64,
     pub duration: Duration,
-    pub timeout: Duration
+    pub timeout: Duration,
+    timeout_timestamp: Instant,
+    timestamp: Instant,
 }
 
 impl SettleCondition {
@@ -44,13 +46,23 @@ impl SettleCondition {
             error_tolerance,
             output_tolerance,
             duration,
-            timeout
+            timeout,
+            timestamp: Instant::now(),
+            timeout_timestamp: Instant::now(),
         }
     }
+    
+    pub fn is_settled(&self, error: f64, output: f64) -> bool {
+        if error > error_tolerance || output > output_tolerance {
+            self.timestamp = Instant::now();
+        }
+        
+        self.timestamp.elapsed() > duration || self.timeout_timestamp > timeout
+    }
 
-    pub fn is_settled(&self, error: f64, output: f64, elapsed: Duration) -> bool {
-        // if error < self.error_tolerance && output < self.output_tolerance && 
-        false // yeah
+    pub fn reset(&mut self) {
+        self.timestamp = Instant::now();
+        self.timeout_timestamp = Instant::now();
     }
 }
 
@@ -119,18 +131,20 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                     
                     let mut state = state.lock();
 
+                    let mut is_point_target = false;
+                    
                     // Calculate feedback controller error values.
-                    let (drive_error, turn_error, is_point_target) = match state.target {
+                    match state.target {
 
                         // If we're targeting a specific point, then the drive error is our distance to that point,
                         // and our turn error is the angle required to face that point.
                         DrivetrainTarget::Point(point) => {
+                            is_point_target = true;
+                            
                             let displacement = point - position; // Displacement vector from our current position to the target
 
                             state.turn_error = normalize_angle(heading - displacement.angle());
                             state.drive_error = displacement.length();
-
-                            (state.drive_error, state.turn_error, true)
                         },
 
                         // Otherwise, we're targeting a specific travel distance and heading, where error is defined
@@ -138,19 +152,12 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                         DrivetrainTarget::DistanceAndHeading(target_distance, target_heading) => {
                             state.drive_error = target_distance - forward_travel;
                             state.turn_error = normalize_angle(heading - target_heading);
-
-                            (state.drive_error, state.turn_error, false)
                         },
                     };
-
-                    // Drivetrain has already settled, so we'll return control over the motors to the user.
-                    if state.settled {
-                        continue;
-                    }
                     
                     // Update feedback controllers
-                    let mut drive_power = drive_controller.lock().update(drive_error, SAMPLE_RATE);
-                    let turn_power = turn_controller.lock().update(turn_error, SAMPLE_RATE);
+                    let mut drive_power = drive_controller.lock().update(state.drive_error, SAMPLE_RATE);
+                    let turn_power = turn_controller.lock().update(state.turn_error, SAMPLE_RATE);
 
                     // If we're targeting a specific point, bias angular (turn) power over linear (drive) power
                     // through scaling drive power by the cosine turn error.
@@ -168,18 +175,23 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                         drive_power + turn_power,
                         drive_power - turn_power,
                     ), 12000.0);
+
+                    // Set settled state if settle conditions are satisfied
+                    if drive_settle_condition.is_settled(state.drive_error, drive_power) && (turn_settle_condition.is_settled(state.turn_error, turn_power) || is_point_target) {
+                        state.settled = true;
+                    }
     
+                    // If the drivetrain has already settled, so we'll return control over the motors to the user.
+                    if (state.settled) {
+                        continue;
+                    }
+
                     // Set the motor voltages
                     for motor in motors.0.lock().iter_mut() {
                         motor.move_voltage((12000.0 * left_power / 100.0).round() as i32).unwrap();
                     }
                     for motor in motors.1.lock().iter_mut() {
                         motor.move_voltage((12000.0 * right_power / 100.0).round() as i32).unwrap();
-                    }
-    
-                    // Settling logic
-                    if state.drive_settle_condition.is_settled(drive_error, drive_power, Duration::from_secs_f64(0.0)) && (state.turn_settle_condition.is_settled(turn_error, turn_power, Duration::from_secs_f64(0.0)) || is_point_target) {
-                        state.settled = true;
                     }
 
                     // Release state mutex before delaying to allow other locks
@@ -191,71 +203,82 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         }
     }
 
+    /// Helper for setting asynchronous drivetrain targets.
+    /// Essentially:
+    /// - Resets drivetrain settle condition timers, since they now have a new target to get to.
+    /// - Obtains a lock on the drivetrain state and sets it to a new value.
+    fn set_target(&mut self, target: DrivetrainTarget) {
+        let mut state = self.state.lock();
+
+        // Reset settled state
+        state.drive_settle_condition.reset();
+        state.turn_settle_condition.reset();
+        state.settled = false;
+        
+        // Set new target
+        state.target = target;
+    }
+
     /// Moves the drivetrain in a straight line for a certain distance.
     pub fn drive_distance(&mut self, distance: f64) {
-        let mut state = self.state.lock();
         let tracking = self.tracking.lock();
-        state.settled = false;
 
         // Add `distance` to the drivetrain's target distance.
-        state.target = DrivetrainTarget::DistanceAndHeading(
+        self.set_target(DrivetrainTarget::DistanceAndHeading(
             tracking.forward_travel() + distance,
-            match state.target {
+            match state.lock().target {
                 DrivetrainTarget::DistanceAndHeading(_, heading) => heading,
                 DrivetrainTarget::Point(_) => tracking.heading(),
             },
-        );
+        ));
+
+        self.wait_until_settled();
     }
 
     /// Turns the drivetrain in place to face a certain angle.
     pub fn turn_to_angle(&self, angle: f64) {
-        let mut state = self.state.lock();
         let tracking = self.tracking.lock();
-        state.settled = false;
 
-        // Add `distance` to the drivetrain's target distance.
-        state.target = DrivetrainTarget::DistanceAndHeading(
-            match state.target {
+        // Set target heading, keeping the current forward position.
+        self.set_target(DrivetrainTarget::DistanceAndHeading(
+            match state.lock().target {
                 DrivetrainTarget::DistanceAndHeading(distance, _) => distance,
                 DrivetrainTarget::Point(_) => tracking.forward_travel(),
             },
             angle,
-        );
+        ));
+
+        self.wait_until_settled();
     }
 
     /// Turns the drivetrain in place to face the direction of a certain point.
     pub fn turn_to_point(&self, point: Vec2) {
-        let mut state = self.state.lock();
         let tracking = self.tracking.lock();
-        state.settled = false;
 
         let displacement = point - tracking.position();
         
         // Set target heading, keeping the current forward position.
-        state.target = DrivetrainTarget::DistanceAndHeading(
-            match state.target {
+        self.set_target(DrivetrainTarget::DistanceAndHeading(
+            match state.lock().target {
                 DrivetrainTarget::DistanceAndHeading(distance, _) => distance,
                 DrivetrainTarget::Point(_) => tracking.forward_travel(),
             },
             displacement.angle(),
-        );
+        ));
+
+        self.wait_until_settled();
     }
 
     /// Moves the drivetrain to a certain point by turning and driving at the same time.
     pub fn move_to_point(&self, point: impl Into<Vec2>) {
-        let mut state = self.state.lock();
-        state.settled = false;
-        
-        // Set target heading, keeping the current forward position.
-        state.target = DrivetrainTarget::Point(point.into());
+        self.set_target(DrivetrainTarget::Point(point.into()));
+
+        self.wait_until_settled();
     }
 
     /// Moves the drivetrain along a path defined by a series of waypoints.
     pub fn follow_path(&self, mut path: Vec<Vec2>) {
-        let mut state = self.state.lock();
-        state.settled = false;
-        let lookahead_distance = state.lookahead_distance.clone();
-        drop(state);
+        let lookahead_distance = state.lock().lookahead_distance;
 
         let mut path_loop = Loop::new(Duration::from_millis(10));
     
@@ -280,7 +303,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                     (self.tracking.lock().position(), lookahead_distance) // Lookahead circle
                 );
 
-                self.state.lock().target = DrivetrainTarget::Point(match intersections {
+                self.set_target(DrivetrainTarget::Point(match intersections {
                     // The line segment has secant intersections with the lookahead circle, resulting in two points of intersection.
                     // Choose the one cloeset to the next waypoint to ensure we go forward and not backwards on the path.
                     LineCircleIntersections::Secant(point_1, point_2) => if point_1.distance(next_waypoint) < point_2.distance(next_waypoint) {
@@ -296,21 +319,25 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                     // Presumably, the robot has been greatly knocked off course, so we'll keep the last known intersection
                     // as our target to allow the drivetrain to get back on the path.
                     LineCircleIntersections::None => continue,
-                });
+                }));
 
                 path_loop.delay();
             }
         }
+
+        self.wait_until_settled();
     }
 
     // Holds the current angle and position of the drivetrain.
     pub fn hold_position(&self) {
         let tracking = self.tracking.lock();
 
-        self.state.lock().target = DrivetrainTarget::DistanceAndHeading(
+        self.set_target(DrivetrainTarget::DistanceAndHeading(
             tracking.forward_travel(),
             tracking.heading()
-        );
+        ));
+
+        self.wait_until_settled();
     }
 
     pub fn wait_until_settled(&self) {
@@ -345,7 +372,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         self.state.lock().lookahead_distance
     }
 
-    pub fn settled(&self) -> bool {
+    pub fn is_settled(&self) -> bool {
         self.state.lock().settled
     }
 

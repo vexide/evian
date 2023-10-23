@@ -11,15 +11,8 @@ use num_traits::real::Real;
 ///
 /// This preserves the angle's direction while keeping it within minimum constrains,
 /// allowing certain operations to be performed easier.
-pub fn normalize_angle(mut angle: f64) -> f64 {
-    angle = angle % FRAC_2_PI;
-    angle = (angle + FRAC_2_PI) % FRAC_2_PI;
-
-    if angle > PI {
-        angle -= FRAC_2_PI;
-    }
-
-    angle
+pub fn normalize_angle(angle: f64) -> f64 {
+    angle % FRAC_2_PI
 }
 
 /// Normalizes the ratio of voltages between two motors.

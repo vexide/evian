@@ -33,8 +33,8 @@ impl Robot for Robor {
                     TrackingWheel::new(Arc::clone(&right_motors), 4.0, 6.25, Some(1.0)),
                     None
                 ),
-                PIDController::new(3.0, 0.0, 0.0),
-                PIDController::new(3.0, 0.0, 0.0),
+                PIDController::new((3.0, 0.0, 0.0), 0.3),
+                PIDController::new((3.0, 0.0, 0.0), 0.3),
                 SettleCondition::new(0.3, 0.3, Duration::from_millis(200), Duration::from_secs(20)),
                 SettleCondition::new(0.3, 0.3, Duration::from_millis(200), Duration::from_secs(20)),
                 0.3,

@@ -70,17 +70,20 @@ pub struct PIDController {
     /// The derivative gain constant.
     pub kd: f64,
 
+    pub integral_threshold: f64,
+
     integral: f64,
     previous_error: f64,
 }
 
 impl PIDController {
     /// Construct a new [`PIDController`] from gain constants.
-    pub fn new(kp: f64, ki: f64, kd: f64) -> Self {
+    pub fn new(gains: (f64, f64, f64), integral_threshold: f64) -> Self {
         Self {
             kp,
             ki,
             kd,
+            integral_threshold,
             ..Default::default()
         }
     }
@@ -89,18 +92,32 @@ impl PIDController {
     pub fn gains(&self) -> (f64, f64, f64) {
         (self.kp, self.ki, self.kd)
     }
+    
+    pub fn integral_threshold(&self) -> f64 {
+        self.integral_threshold
+    }
 
     /// Sets the PID gains to provided values.
-    pub fn set_gains(&mut self, kp: f64, ki: f64, kd: f64) {
-        self.kp = kp;
-        self.ki = ki;
-        self.kd = kd;
+    pub fn set_gains(&mut self, gains: (f64, f64, f64)) {
+        self.kp = gains.0;
+        self.ki = gains.1;
+        self.kd = gains.2;
+    }
+
+    pub fn set_integral_threshold(&mut self, threshold: f64) {
+        self.integral_threshold = threshold;
     }
 }
 
 impl FeedbackController for PIDController {
     fn update(&mut self, error: f64, dt: Duration) -> f64 {
-        self.integral += error;
+        if error.abs() < self.integral_threshold {
+            self.integral += error;
+        }
+
+        if self.error.signum() != self.previous_error.signum() {
+            self.integral = 0.0;
+        }
         
         let derivative = error - self.previous_error;
         self.previous_error = error;
