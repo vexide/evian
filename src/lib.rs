@@ -8,7 +8,8 @@ pub mod drivetrain;
 pub mod math;
 pub mod devices;
 pub mod tracking;
+pub mod timer;
 
 pub mod prelude {
-    pub use crate::{controller::*, drivetrain::*, math::*, devices::*, tracking::*};
+    pub use crate::{controller::*, drivetrain::*, math::Vec2, devices::*, tracking::*};
 }

@@ -46,11 +46,16 @@ impl Vec2 {
 
     /// Determine this vector's distance (magnitude) from the origin (0, 0).
     pub fn length(&self) -> f64 {
-        (self.x.powi(2) + self.y.powi(2)).sqrt()
+        self.x.hypot(self.y)
     }
 
-    pub fn distance(&self, other: &Vec2) -> f64 {
-        (*self - *other).length()
+    pub fn distance(&self, other: Vec2) -> f64 {
+        (*self - other).length()
+    }
+
+    /// Linearly interpolate between two vectors.
+    pub fn lerp(self, other: Vec2, t: f64) -> Vec2 {
+        self + ((other - self) * t)
     }
 
     /// Compute the dot product between this vector and another `Vec2`.
@@ -58,12 +63,12 @@ impl Vec2 {
     /// The dot product is the sum of the products of each vector's components,
     /// and represents a measurement of how closely two vectors align with respect
     /// to angle.
-    pub fn dot(&self, other: &Vec2) -> f64 {
+    pub fn dot(&self, other: Vec2) -> f64 {
         self.x * other.x + self.y * other.y
     }
 
     /// Compute the cross product between this vector and another `Vec2`.
-    pub fn cross(&self, other: &Vec2) -> f64 {
+    pub fn cross(&self, other: Vec2) -> f64 {
         self.x * other.y - self.y * other.x
     }
 
@@ -72,31 +77,12 @@ impl Vec2 {
     /// This function creates a `Vec2` with a length of 1.0 while retaining the
     /// angle of its original input.
     pub fn unit(&self) -> Self {
-        let magnitude = self.length();
-
-        if magnitude == 0.0 {
-            *self
-        } else {
-            Self {
-                x: self.x / magnitude,
-                y: self.y / magnitude,
-            }
-        }
+        *self / self.length()
     }
 
     /// Project one `Vec2` onto onto another.
-    pub fn project(&self, onto: &Vec2) -> Self {
-        let dot_product = self.dot(onto);
-        let onto_mag = onto.length();
-
-        if onto_mag == 0.0 {
-            *self
-        } else {
-            Self {
-                x: onto.x * (dot_product / onto_mag.powi(2)),
-                y: onto.y * (dot_product / onto_mag.powi(2)),
-            }
-        }
+    pub fn project(&self, onto: Vec2) -> Self {
+        onto * (self.dot(onto) / onto.length().powi(2))
     }
 
     /// Create a new vector with its coordinates rotated by a given angle
@@ -129,7 +115,7 @@ impl fmt::Display for Vec2 {
 impl ops::Add for Vec2 {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, other: Vec2) -> Self {
         Self {
             x: self.x + other.x,
             y: self.y + other.y,
@@ -151,7 +137,7 @@ impl ops::Add<f64> for Vec2 {
 impl ops::Sub for Vec2 {
     type Output = Self;
 
-    fn sub(self, other: Self) -> Self {
+    fn sub(self, other: Vec2) -> Self {
         Self {
             x: self.x - other.x,
             y: self.y - other.y,

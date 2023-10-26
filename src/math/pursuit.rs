@@ -25,15 +25,30 @@ impl LineCircleIntersections {
 	/// The result is returned as an instance of [`Self`], having either no intersections ([`Self::None`]),
 	/// one intersection as a tangent line ([`Self::OneIntersection`]), or two intersections as a secant line ([`Self::TwoIntersections`]).
 	pub fn compute(line: (Vec2, Vec2), circle: (Vec2, f64)) -> Self {
-		// let (start, end) = line;
-		// let (center, radius) = circle;
-		
-		// let d = end - start;
-		// let f = line.0 - circle.1;
-		
-		// let a = Vec2::new(d.x.powi(2), d.y.powi(2));
-		// let b = Vec2::new(d.x * f.x, d.y * f.y) * 2.0;
-		// let c = Vec2::new(f.x.powi(2), f.y.powi(2)) * circle.1.powi(2);
+		let (start, end) = line;
+		let (center, radius) = circle;
+
+		let offset_1 = start - center;
+		let offset_2 = end - center;
+
+		let dx = offset_2.x - offset_1.x;
+		let dy = offset_2.y - offset_1.y;
+		let dr = offset_1.distance(offset_2);
+		let d = offset_1.cross(offset_2);
+		let discriminant = radius.powi(2) * dr.powi(2) - d.powi(2);
+
+		if discriminant >= 0.0 {
+			let solution_1 = Vec2::new(
+				(d * dy + dy.signum() * dx * discriminant.sqrt()) / dr.powi(2),
+				(-d * dx + dy.abs() * discriminant.sqrt()) / dr.powi(2)
+			) + center;
+			let solution_2 = Vec2::new(
+				(d * dy - dy.signum() * dx * discriminant.sqrt()) / dr.powi(2),
+				(-d * dx - dy.abs() * discriminant.sqrt()) / dr.powi(2)
+			);
+
+			
+		}
 		
 		Self::None
 	}

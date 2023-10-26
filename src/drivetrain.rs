@@ -11,6 +11,7 @@ use crate::{
     math::{normalize_angle, normalize_motor_power, Vec2, LineCircleIntersections},
     tracking::Tracking,
     devices::ThreadsafeMotorGroup,
+    timer::Timer,
 };
 #[allow(unused_imports)]
 use vex_rt::{
@@ -22,15 +23,16 @@ use vex_rt::{
 enum DrivetrainTarget {
     Point(Vec2),
     DistanceAndHeading(f64, f64),
+    MotorPower(f64, f64),
 }
 
 impl Default for DrivetrainTarget {
     fn default() -> Self {
-        DrivetrainTarget::DistanceAndHeading(0.0, 0.0)
+        DrivetrainTarget::MotorPower(0.0, 0.0)
     }
 }
 
-#[derive(Clone, PartialEq, Debug, Copy, Default)]
+#[derive(Clone, PartialEq, Debug, Copy)]
 pub struct SettleCondition {
     pub error_tolerance: f64,
     pub output_tolerance: f64,
@@ -38,6 +40,19 @@ pub struct SettleCondition {
     pub timeout: Duration,
     timeout_timestamp: Instant,
     timestamp: Instant,
+}
+
+impl Default for SettleCondition {
+    fn default() -> Self {
+        Self {
+            error_tolerance: f64::default(),
+            output_tolerance: f64::default(),
+            duration: Duration::default(),
+            timeout: Duration::default(),
+            timeout_timestamp: Instant::now(),
+            timestamp: Instant::now(),
+        }
+    }
 }
 
 impl SettleCondition {
@@ -52,12 +67,12 @@ impl SettleCondition {
         }
     }
     
-    pub fn is_settled(&self, error: f64, output: f64) -> bool {
-        if error > error_tolerance || output > output_tolerance {
+    pub fn is_settled(&mut self, error: f64, output: f64) -> bool {
+        if error > self.error_tolerance || output > self.output_tolerance {
             self.timestamp = Instant::now();
         }
         
-        self.timestamp.elapsed() > duration || self.timeout_timestamp > timeout
+        self.timestamp.elapsed() > self.duration || self.timeout_timestamp.elapsed() > self.timeout
     }
 
     pub fn reset(&mut self) {
@@ -120,10 +135,8 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                 while started.load(Ordering::Relaxed) {
                     let mut tracking = tracking.lock();
 
-                    // Update tracking
-                    tracking.update();
-
                     // Get updated tracking data
+                    tracking.update();
                     let heading = tracking.heading();
                     let position = tracking.position();
                     let forward_travel = tracking.forward_travel();
@@ -131,61 +144,55 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                     
                     let mut state = state.lock();
 
-                    let mut is_point_target = false;
-                    
-                    // Calculate feedback controller error values.
-                    match state.target {
-
-                        // If we're targeting a specific point, then the drive error is our distance to that point,
-                        // and our turn error is the angle required to face that point.
+                    // Calculate left and right wheel power based on target type.
+                    let (left_power, right_power) = match state.target {
                         DrivetrainTarget::Point(point) => {
-                            is_point_target = true;
-                            
                             let displacement = point - position; // Displacement vector from our current position to the target
 
                             state.turn_error = normalize_angle(heading - displacement.angle());
                             state.drive_error = displacement.length();
+
+                            let drive_power = drive_controller.lock().update(state.drive_error, SAMPLE_RATE) * state.turn_error.cos();
+                            let turn_power = turn_controller.lock().update(state.turn_error, SAMPLE_RATE);
+
+                            let drive_error = state.drive_error;
+                            if state.drive_settle_condition.is_settled(drive_error, drive_power) {
+                                state.settled = true;
+                            }
+
+                            normalize_motor_power((
+                                drive_power + turn_power,
+                                drive_power - turn_power,
+                            ), 12000.0)
                         },
 
-                        // Otherwise, we're targeting a specific travel distance and heading, where error is defined
-                        // as the difference between the target value and current value.
                         DrivetrainTarget::DistanceAndHeading(target_distance, target_heading) => {
                             state.drive_error = target_distance - forward_travel;
                             state.turn_error = normalize_angle(heading - target_heading);
+
+                            let drive_power = drive_controller.lock().update(state.drive_error, SAMPLE_RATE);
+                            let turn_power = turn_controller.lock().update(state.turn_error, SAMPLE_RATE);
+
+                            let (drive_error, turn_error) = (state.drive_error, state.turn_error);
+                            if state.drive_settle_condition.is_settled(drive_error, drive_power) && state.turn_settle_condition.is_settled(turn_error, turn_power) {
+                                state.settled = true;
+                            }
+
+                            normalize_motor_power((
+                                drive_power + turn_power,
+                                drive_power - turn_power,
+                            ), 12000.0)
+                        },
+
+                        DrivetrainTarget::MotorPower(left_power, right_power) => {
+                            state.drive_error = 0.0;
+                            state.turn_error = 0.0;
+                            state.settled = true;
+
+                            (left_power, right_power)
                         },
                     };
-                    
-                    // Update feedback controllers
-                    let mut drive_power = drive_controller.lock().update(state.drive_error, SAMPLE_RATE);
-                    let turn_power = turn_controller.lock().update(state.turn_error, SAMPLE_RATE);
-
-                    // If we're targeting a specific point, bias angular (turn) power over linear (drive) power
-                    // through scaling drive power by the cosine turn error.
-                    //
-                    // When turn error is high (approaching 90 degrees), drive power will be scaled down greatly,
-                    // while a turn error of 0 will allow the full drive output. Doing this allows the final heading
-                    // of the movement to be somewhat predictable, and prevents a "spiraling" motion when settling.
-                    if is_point_target {
-                        drive_power *= state.turn_error.cos();
-                    }
-                    
-                    // Convert drive and turn power to left and right motor voltages and normalize the voltage ratios
-                    // between each side to prevent oversaturation.
-                    let (left_power, right_power) = normalize_motor_power((
-                        drive_power + turn_power,
-                        drive_power - turn_power,
-                    ), 12000.0);
-
-                    // Set settled state if settle conditions are satisfied
-                    if drive_settle_condition.is_settled(state.drive_error, drive_power) && (turn_settle_condition.is_settled(state.turn_error, turn_power) || is_point_target) {
-                        state.settled = true;
-                    }
     
-                    // If the drivetrain has already settled, so we'll return control over the motors to the user.
-                    if (state.settled) {
-                        continue;
-                    }
-
                     // Set the motor voltages
                     for motor in motors.0.lock().iter_mut() {
                         motor.move_voltage((12000.0 * left_power / 100.0).round() as i32).unwrap();
@@ -194,7 +201,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                         motor.move_voltage((12000.0 * right_power / 100.0).round() as i32).unwrap();
                     }
 
-                    // Release state mutex before delaying to allow other locks
+                    // Release state mutex before delaying to allow for other locks
                     drop(state);
 
                     task_loop.delay();
@@ -221,14 +228,18 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
 
     /// Moves the drivetrain in a straight line for a certain distance.
     pub fn drive_distance(&mut self, distance: f64) {
-        let tracking = self.tracking.lock();
+        let target = self.state.lock().target;
+        let (forward_travel, heading) = {
+            let tracking = self.tracking.lock();
+            (tracking.forward_travel(), tracking.heading())
+        };
 
         // Add `distance` to the drivetrain's target distance.
         self.set_target(DrivetrainTarget::DistanceAndHeading(
-            tracking.forward_travel() + distance,
-            match state.lock().target {
+            forward_travel + distance,
+            match target {
                 DrivetrainTarget::DistanceAndHeading(_, heading) => heading,
-                DrivetrainTarget::Point(_) => tracking.heading(),
+                _ => heading,
             },
         ));
 
@@ -236,14 +247,15 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     /// Turns the drivetrain in place to face a certain angle.
-    pub fn turn_to_angle(&self, angle: f64) {
-        let tracking = self.tracking.lock();
+    pub fn turn_to_angle(&mut self, angle: f64) {
+        let target = self.state.lock().target;
+        let forward_travel = self.tracking.lock().forward_travel();
 
         // Set target heading, keeping the current forward position.
         self.set_target(DrivetrainTarget::DistanceAndHeading(
-            match state.lock().target {
+            match target {
                 DrivetrainTarget::DistanceAndHeading(distance, _) => distance,
-                DrivetrainTarget::Point(_) => tracking.forward_travel(),
+                _ => forward_travel,
             },
             angle,
         ));
@@ -252,16 +264,20 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     /// Turns the drivetrain in place to face the direction of a certain point.
-    pub fn turn_to_point(&self, point: Vec2) {
-        let tracking = self.tracking.lock();
+    pub fn turn_to_point(&mut self, point: Vec2) {
+        let target = self.state.lock().target;
+        let (position, forward_travel) = {
+            let tracking = self.tracking.lock();
+            (tracking.position(), tracking.forward_travel())
+        };
 
-        let displacement = point - tracking.position();
+        let displacement = point - position;
         
         // Set target heading, keeping the current forward position.
         self.set_target(DrivetrainTarget::DistanceAndHeading(
-            match state.lock().target {
+            match target {
                 DrivetrainTarget::DistanceAndHeading(distance, _) => distance,
-                DrivetrainTarget::Point(_) => tracking.forward_travel(),
+                _ => forward_travel
             },
             displacement.angle(),
         ));
@@ -270,15 +286,15 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     /// Moves the drivetrain to a certain point by turning and driving at the same time.
-    pub fn move_to_point(&self, point: impl Into<Vec2>) {
+    pub fn move_to_point(&mut self, point: impl Into<Vec2>) {
         self.set_target(DrivetrainTarget::Point(point.into()));
 
         self.wait_until_settled();
     }
 
     /// Moves the drivetrain along a path defined by a series of waypoints.
-    pub fn follow_path(&self, mut path: Vec<Vec2>) {
-        let lookahead_distance = state.lock().lookahead_distance;
+    pub fn follow_path(&mut self, mut path: Vec<Vec2>) {
+        let lookahead_distance = self.state.lock().lookahead_distance;
 
         let mut path_loop = Loop::new(Duration::from_millis(10));
     
@@ -291,11 +307,11 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         for (i, waypoint) in path.iter().enumerate() {
             // Find the next waypoint after the current one. This will form our line segment.
             // If there isn't a next waypoint, then we are targeting the final point and can stop.
-            let next_waypoint = path.get(i + 1).unwrap_or(continue);
+            let next_waypoint = if let Some(waypoint) = path.get(i + 1) { waypoint } else { continue };
 
             // Move to the intersection point between the lookahead circle and the line segment formed between
             // the current and next waypoint until the lookahead circle encompasses the next waypoint.
-            while self.tracking.lock().position().distance(next_waypoint) > lookahead_distance {
+            while self.tracking.lock().position().distance(*next_waypoint) > lookahead_distance {
 
                 // Find intersections using the line segment + circle intersection formula.
                 let intersections = LineCircleIntersections::compute_bounded(
@@ -306,7 +322,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                 self.set_target(DrivetrainTarget::Point(match intersections {
                     // The line segment has secant intersections with the lookahead circle, resulting in two points of intersection.
                     // Choose the one cloeset to the next waypoint to ensure we go forward and not backwards on the path.
-                    LineCircleIntersections::Secant(point_1, point_2) => if point_1.distance(next_waypoint) < point_2.distance(next_waypoint) {
+                    LineCircleIntersections::Secant(point_1, point_2) => if point_1.distance(*next_waypoint) < point_2.distance(*next_waypoint) {
                         point_1  
                     } else {
                         point_2
@@ -329,15 +345,19 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     }
 
     // Holds the current angle and position of the drivetrain.
-    pub fn hold_position(&self) {
-        let tracking = self.tracking.lock();
+    pub fn hold_position(&mut self) {
+        let (forward_travel, heading) = {
+            let tracking = self.tracking.lock();
+            (tracking.forward_travel(), tracking.heading())
+        };
 
-        self.set_target(DrivetrainTarget::DistanceAndHeading(
-            tracking.forward_travel(),
-            tracking.heading()
-        ));
+        self.set_target(DrivetrainTarget::DistanceAndHeading(forward_travel, heading));
 
         self.wait_until_settled();
+    }
+
+    pub fn control_tank(&mut self, left_power: f64, right_power: f64) {
+        self.set_target(DrivetrainTarget::MotorPower(left_power, right_power));
     }
 
     pub fn wait_until_settled(&self) {

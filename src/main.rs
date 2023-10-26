@@ -10,9 +10,8 @@ use num_traits::real::Real;
 use core::time::Duration;
 
 struct Robor {
-    left_motors: ThreadsafeMotorGroup,
-    right_motors: ThreadsafeMotorGroup,
-    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<ThreadsafeMotorGroup, ThreadsafeMotorGroup, InertialSensor>, PIDController, PIDController>
+    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<ThreadsafeMotorGroup, ThreadsafeMotorGroup, InertialSensor>, PIDController, PIDController>,
+    controller: Controller,
 }
 
 impl Robot for Robor {
@@ -25,6 +24,7 @@ impl Robot for Robor {
         ]));
 
         Self {
+            controller: peripherals.master_controller,
             drivetrain: DifferentialDrivetrain::new(
                 (Arc::clone(&left_motors), Arc::clone(&right_motors)),
                 ParallelWheelTracking::new(
@@ -39,13 +39,18 @@ impl Robot for Robor {
                 SettleCondition::new(0.3, 0.3, Duration::from_millis(200), Duration::from_secs(20)),
                 0.3,
             ),
-            left_motors,
-            right_motors
         }
     }
 
-    fn opcontrol(&mut self, _ctx: Context) {
+    fn autonomous(&mut self, _ctx: Context) {
         self.drivetrain.drive_distance(10.0);
+    }
+
+    fn opcontrol(&mut self, _ctx: Context) {
+        self.drivetrain.control_tank(
+            f64::from(self.controller.left_stick.get_y().unwrap()),
+            f64::from(self.controller.right_stick.get_y().unwrap())
+        );
     }
 }
 

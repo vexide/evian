@@ -1,4 +1,5 @@
 use core::time::Duration;
+use num_traits::real::Real;
 
 /// A closed-loop feedback controller.
 ///
@@ -80,9 +81,9 @@ impl PIDController {
     /// Construct a new [`PIDController`] from gain constants.
     pub fn new(gains: (f64, f64, f64), integral_threshold: f64) -> Self {
         Self {
-            kp,
-            ki,
-            kd,
+            kp: gains.0,
+            ki: gains.1,
+            kd: gains.2,
             integral_threshold,
             ..Default::default()
         }
@@ -115,7 +116,7 @@ impl FeedbackController for PIDController {
             self.integral += error;
         }
 
-        if self.error.signum() != self.previous_error.signum() {
+        if error.signum() != self.previous_error.signum() {
             self.integral = 0.0;
         }
         
