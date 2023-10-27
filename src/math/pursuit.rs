@@ -1,4 +1,3 @@
-use alloc::vec::Vec;
 use num_traits::real::Real;
 
 use crate::math::Vec2;
@@ -46,11 +45,9 @@ impl LineCircleIntersections {
 				(d * dy - dy.signum() * dx * discriminant.sqrt()) / dr.powi(2),
 				(-d * dx - dy.abs() * discriminant.sqrt()) / dr.powi(2)
 			);
-
-			
 		}
-		
-		Self::None
+
+		todo!()
 	}
 
 	/// Compute the points of intersection between a line segment formed by two points
@@ -62,6 +59,6 @@ impl LineCircleIntersections {
 	/// This differs from [`LineCircleIntersections::compute`] in that it performs a bounds check to ensure that
 	/// the intersections are contained within the line segment, which has a defined start and endpoint.
 	pub fn compute_bounded(line: (Vec2, Vec2), circle: (Vec2, f64)) -> Self {
-		Self::None
+		todo!()
 	}
 }

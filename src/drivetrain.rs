@@ -5,18 +5,14 @@ use core::{
     ops::Drop,
 };
 use num_traits::real::Real;
+use vex_rt::rtos::{Loop, Mutex, Task, Instant};
 
 use crate::{
     controller::FeedbackController,
     math::{normalize_angle, normalize_motor_power, Vec2, LineCircleIntersections},
     tracking::Tracking,
-    devices::ThreadsafeMotorGroup,
+    devices::MotorGroup,
     timer::Timer,
-};
-#[allow(unused_imports)]
-use vex_rt::{
-    rtos::{Loop, Mutex, Task, Promise, Instant},
-    io::*
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -103,7 +99,7 @@ pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: Feedbac
 
 impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDrivetrain<T, U, V> {
     pub fn new(
-        motors: (ThreadsafeMotorGroup, ThreadsafeMotorGroup),
+        motors: (MotorGroup, MotorGroup),
         tracking: T,
         drive_controller: U,
         turn_controller: V,

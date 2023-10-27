@@ -4,9 +4,8 @@ pub mod pursuit;
 pub use vec2::Vec2;
 pub use pursuit::*;
 
-use core::f64::consts::{FRAC_2_PI, PI};
+use core::f64::consts::FRAC_2_PI;
 use num_traits::real::Real;
-
 /// Constrain an angle in radians from -π to +π.
 ///
 /// This preserves the angle's direction while keeping it within minimum constrains,

@@ -9,7 +9,7 @@ use vex_rt::{
 };
 
 pub type ThreadsafeMotor = Arc<Mutex<Motor>>;
-pub type ThreadsafeMotorGroup = Arc<Mutex<Vec<Motor>>>;
+pub type MotorGroup = Arc<Mutex<Vec<Motor>>>;
 
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
 pub trait RotarySensor: Send + Sync + 'static {
@@ -28,7 +28,7 @@ impl RotarySensor for Arc<Mutex<Motor>> {
     }
 }
 
-impl RotarySensor for ThreadsafeMotorGroup {
+impl RotarySensor for MotorGroup {
     fn rotation(&self) -> Result<f64, RotarySensorError> {
         let group = self.lock();
 
@@ -73,3 +73,23 @@ impl Gyro for AdiGyro {
         Ok(FRAC_2_PI - self.get().map_err(|_| GyroError)?.to_radians())
     }
 }
+
+#[macro_export]
+macro_rules! motor_group {
+    ( $( $x:expr ),* ) => {
+        {
+            use alloc::{sync::Arc, vec::Vec};
+            use vex_rt::rtos::Mutex;
+
+            let mut temp_vec: Arc<Mutex<Vec<vex_rt::motor::Motor>>> = Arc::new(Mutex::new(Vec::new()));
+
+            $(
+                temp_vec.lock().push($x);
+            )*
+            
+            temp_vec
+        }
+    };
+}
+
+pub use motor_group;
