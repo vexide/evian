@@ -104,7 +104,7 @@ impl<T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
 
     fn heading(&self) -> f64 {
         self.heading_offset + if let Some(gyro) = &self.gyro {
-            gyro.heading().unwrap_or_else(move |_| {
+            gyro.heading().unwrap_or_else(|_| {
                 (self.right_wheel.travel() - self.left_wheel.travel()) / self.track_width()
             })
         } else {
@@ -127,7 +127,10 @@ impl<T: RotarySensor, U: RotarySensor, V: Gyro> Tracking
         // This is a vector relative to the previous position, and can be found by creating a vector with our
         // average forward travel as the y-axis, then rotating the y-axis about our current heading. This gives
         // a rough estimate of the change in position, but does not account for sideways motion.
-        self.position += Vec2::from_polar(2.0 * (delta_forward_travel / delta_heading) * (heading / 2.0).sin(), heading);
+        self.position += Vec2::from_polar(
+            2.0 * (delta_forward_travel / delta_heading) * (heading / 2.0).sin(),
+            (self.prev_heading + delta_heading) / 2.0
+        );
         self.prev_forward_travel = forward_travel;
     }
 }

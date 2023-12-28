@@ -21,7 +21,8 @@
     },
     "upload_options": {
       "icon": "X",
-      "description": "autonomous navigation library for VEX robots"
+      "description": "autonomous navigation library for VEX robots",
+      "slot": 4
     }
   }
 }

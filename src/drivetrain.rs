@@ -7,6 +7,9 @@ use core::{
 use num_traits::real::Real;
 use vex_rt::rtos::{Loop, Mutex, Task, Instant};
 
+#[allow(unused_imports)]
+use vex_rt::io::*;
+
 use crate::{
     controller::FeedbackController,
     math::{normalize_angle, normalize_motor_power, Vec2, LineCircleIntersections},
@@ -137,6 +140,8 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                     let position = tracking.position();
                     let forward_travel = tracking.forward_travel();
                     drop(tracking);
+
+                    println!("{:?}", position); // debug
                     
                     let mut state = state.lock();
 
@@ -191,10 +196,10 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     
                     // Set the motor voltages
                     for motor in motors.0.lock().iter_mut() {
-                        motor.move_voltage((12000.0 * left_power / 100.0).round() as i32).unwrap();
+                        motor.move_voltage((12000.0 * left_power / 100.0).round() as i32).unwrap_or(());
                     }
                     for motor in motors.1.lock().iter_mut() {
-                        motor.move_voltage((12000.0 * right_power / 100.0).round() as i32).unwrap();
+                        motor.move_voltage((12000.0 * right_power / 100.0).round() as i32).unwrap_or(());
                     }
 
                     // Release state mutex before delaying to allow for other locks
@@ -238,8 +243,6 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
                 _ => heading,
             },
         ));
-
-        self.wait_until_settled();
     }
 
     /// Turns the drivetrain in place to face a certain angle.
@@ -255,8 +258,6 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             },
             angle,
         ));
-
-        self.wait_until_settled();
     }
 
     /// Turns the drivetrain in place to face the direction of a certain point.
@@ -277,15 +278,11 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             },
             displacement.angle(),
         ));
-
-        self.wait_until_settled();
     }
 
     /// Moves the drivetrain to a certain point by turning and driving at the same time.
     pub fn move_to_point(&mut self, point: impl Into<Vec2>) {
         self.set_target(DrivetrainTarget::Point(point.into()));
-
-        self.wait_until_settled();
     }
 
     /// Moves the drivetrain along a path defined by a series of waypoints.
@@ -348,18 +345,31 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         };
 
         self.set_target(DrivetrainTarget::DistanceAndHeading(forward_travel, heading));
-
-        self.wait_until_settled();
     }
 
     pub fn control_tank(&mut self, left_power: f64, right_power: f64) {
         self.set_target(DrivetrainTarget::MotorPower(left_power, right_power));
+    }
+    
+    pub fn control_arcade(&mut self, drive_power: f64, turn_power: f64) {
+        self.set_target(DrivetrainTarget::MotorPower(
+            drive_power + turn_power,
+            drive_power - turn_power
+        ));
     }
 
     pub fn wait_until_settled(&self) {
         let mut spinlock = Loop::new(Duration::from_millis(10));
 
         while !self.state.lock().settled {
+            spinlock.delay();
+        }
+    }
+
+    pub fn wait_until(&self, condition: bool) {
+        let mut spinlock = Loop::new(Duration::from_millis(10));
+
+        while !condition {
             spinlock.delay();
         }
     }

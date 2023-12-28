@@ -16,17 +16,22 @@ struct Robor {
 impl Robot for Robor {
     fn new(peripherals: Peripherals) -> Self {
         let left_motors = motor_group![
-            peripherals.port01.into_motor(Gearset::EighteenToOne, EncoderUnits::Degrees, true).unwrap()
+            peripherals.port01.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, true).unwrap(),
+            peripherals.port02.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, true).unwrap(),
+            peripherals.port03.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, false).unwrap()
         ];
         let right_motors = motor_group![
-            peripherals.port02.into_motor(Gearset::EighteenToOne, EncoderUnits::Degrees, false).unwrap()
+            peripherals.port04.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, false).unwrap(),
+            peripherals.port05.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, false).unwrap(),
+            peripherals.port06.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, true).unwrap()
         ];
 
         let tracking = ParallelWheelTracking::new(
-            Vec2::new(0.0, 0.0), 90.0.to_radians(),
-            TrackingWheel::new(left_motors.clone(), 4.0, 6.25, Some(1.0)),
-            TrackingWheel::new(right_motors.clone(), 4.0, 6.25, Some(1.0)),
-            None::<InertialSensor>
+            Vec2::new(0.0, 0.0),
+            90.0.to_radians(),
+            TrackingWheel::new(left_motors.clone(), 3.25, 6.25, Some(36.0 / 60.0)),
+            TrackingWheel::new(right_motors.clone(), 3.25, 6.25, Some(36.0 / 60.0)),
+            Some(peripherals.port08.into_imu()),
         );
 
         Self {
@@ -44,7 +49,12 @@ impl Robot for Robor {
     }
 
     fn autonomous(&mut self, _ctx: Context) {
-        self.drivetrain.drive_distance(10.0);
+        let dt = &mut self.drivetrain;
+
+        dt.drive_distance(10.0);
+        dt.wait_until_settled();
+        dt.turn_to_angle(90.0.to_degrees());
+        dt.wait_until_settled();
     }
 
     fn opcontrol(&mut self, _ctx: Context) {
