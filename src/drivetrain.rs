@@ -207,7 +207,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
 
                     task_loop.delay();
                 }
-            }).unwrap()),
+            }).expect("Could not spawn DifferentialDrivetrain task.")),
         }
     }
 

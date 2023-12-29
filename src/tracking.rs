@@ -44,7 +44,7 @@ impl<T: RotarySensor> TrackingWheel<T> {
     fn travel(&self) -> f64 {
         let wheel_circumference = self.wheel_diameter * PI;
 
-        return (self.sensor.rotation().unwrap() / FRAC_2_PI)
+        return (self.sensor.rotation().expect("Could not measure TrackingWheel sensor rotation.") / FRAC_2_PI)
             * self.gearing.unwrap_or(1.0)
             * wheel_circumference;
     }
