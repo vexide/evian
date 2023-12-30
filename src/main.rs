@@ -18,12 +18,12 @@ impl Robot for Robor {
         let left_motors = motor_group![
             peripherals.port01.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, true).unwrap(),
             peripherals.port02.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, true).unwrap(),
-            peripherals.port03.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, false).unwrap()
+            peripherals.port03.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, false).unwrap(),
         ];
         let right_motors = motor_group![
             peripherals.port04.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, false).unwrap(),
             peripherals.port05.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, false).unwrap(),
-            peripherals.port06.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, true).unwrap()
+            peripherals.port06.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, true).unwrap(),
         ];
 
         let tracking = ParallelWheelTracking::new(

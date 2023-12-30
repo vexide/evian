@@ -54,7 +54,7 @@ impl RotarySensor for RotationSensor {
     }
 }
 
-/// A sensor that can measure absolute orientation, for example a gyroscope or IMU
+/// A sensor that can measure absolute angular orientation, for example a gyroscope or IMU
 pub trait Gyro: Send + Sync + 'static {
     fn heading(&self) -> Result<f64, GyroError>;
 }
@@ -76,7 +76,7 @@ impl Gyro for AdiGyro {
 
 #[macro_export]
 macro_rules! motor_group {
-    ( $( $x:expr ),* ) => {
+    ( $( $x:expr ),* $(,)?) => {
         {
             use alloc::{sync::Arc, vec::Vec};
             use vex_rt::rtos::Mutex;

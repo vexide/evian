@@ -1,21 +1,21 @@
-use alloc::{vec::Vec, sync::Arc};
+use alloc::{sync::Arc, vec::Vec};
 use core::{
-    time::Duration,
-    sync::atomic::{Ordering, AtomicBool},
     ops::Drop,
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
 };
 use num_traits::real::Real;
-use vex_rt::rtos::{Loop, Mutex, Task, Instant};
+use vex_rt::rtos::{Instant, Loop, Mutex, Task};
 
 #[allow(unused_imports)]
 use vex_rt::io::*;
 
 use crate::{
     controller::FeedbackController,
-    math::{normalize_angle, normalize_motor_power, Vec2, LineCircleIntersections},
-    tracking::Tracking,
     devices::MotorGroup,
+    math::{normalize_angle, normalize_motor_power, LineCircleIntersections, Vec2},
     timer::Timer,
+    tracking::Tracking,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -55,7 +55,12 @@ impl Default for SettleCondition {
 }
 
 impl SettleCondition {
-    pub fn new(error_tolerance: f64, output_tolerance: f64, duration: Duration, timeout: Duration) -> Self {
+    pub fn new(
+        error_tolerance: f64,
+        output_tolerance: f64,
+        duration: Duration,
+        timeout: Duration,
+    ) -> Self {
         Self {
             error_tolerance,
             output_tolerance,
@@ -65,12 +70,12 @@ impl SettleCondition {
             timeout_timestamp: Instant::now(),
         }
     }
-    
+
     pub fn is_settled(&mut self, error: f64, output: f64) -> bool {
         if error > self.error_tolerance || output > self.output_tolerance {
             self.timestamp = Instant::now();
         }
-        
+
         self.timestamp.elapsed() > self.duration || self.timeout_timestamp.elapsed() > self.timeout
     }
 
@@ -91,7 +96,11 @@ pub struct DifferentialDrivetrainState {
     settled: bool,
 }
 
-pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: FeedbackController> {
+pub struct DifferentialDrivetrain<
+    T: Tracking,
+    U: FeedbackController<Input = f64, Output = f64>,
+    V: FeedbackController<Input = f64, Output = f64>,
+> {
     task: Option<Task>,
     tracking: Arc<Mutex<T>>,
     drive_controller: Arc<Mutex<U>>,
@@ -100,7 +109,12 @@ pub struct DifferentialDrivetrain<T: Tracking, U: FeedbackController, V: Feedbac
     started: Arc<AtomicBool>,
 }
 
-impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDrivetrain<T, U, V> {
+impl<
+        T: Tracking,
+        U: FeedbackController<Input = f64, Output = f64>,
+        V: FeedbackController<Input = f64, Output = f64>,
+    > DifferentialDrivetrain<T, U, V>
+{
     pub fn new(
         motors: (MotorGroup, MotorGroup),
         tracking: T,
@@ -120,94 +134,121 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             ..Default::default()
         }));
         let started = Arc::new(AtomicBool::new(false));
-        
+
         Self {
             state: Arc::clone(&state),
             tracking: Arc::clone(&tracking),
             drive_controller: Arc::clone(&drive_controller),
             turn_controller: Arc::clone(&turn_controller),
             started: Arc::clone(&started),
-            task: Some(Task::spawn(move || {
-                const SAMPLE_RATE: Duration = Duration::from_millis(10);
-                let mut task_loop = Loop::new(SAMPLE_RATE);
+            task: Some(
+                Task::spawn(move || {
+                    const SAMPLE_RATE: Duration = Duration::from_millis(10);
+                    let mut task_loop = Loop::new(SAMPLE_RATE);
 
-                while started.load(Ordering::Relaxed) {
-                    let mut tracking = tracking.lock();
+                    while started.load(Ordering::Relaxed) {
+                        let mut tracking = tracking.lock();
 
-                    // Get updated tracking data
-                    tracking.update();
-                    let heading = tracking.heading();
-                    let position = tracking.position();
-                    let forward_travel = tracking.forward_travel();
-                    drop(tracking);
+                        // Get updated tracking data
+                        tracking.update();
+                        let heading = tracking.heading();
+                        let position = tracking.position();
+                        let forward_travel = tracking.forward_travel();
+                        drop(tracking);
 
-                    println!("{:?}", position); // debug
-                    
-                    let mut state = state.lock();
+                        println!("{:?}", position); // debug
 
-                    // Calculate left and right wheel power based on target type.
-                    let (left_power, right_power) = match state.target {
-                        DrivetrainTarget::Point(point) => {
-                            let displacement = point - position; // Displacement vector from our current position to the target
+                        let mut state = state.lock();
 
-                            state.turn_error = normalize_angle(heading - displacement.angle());
-                            state.drive_error = displacement.length();
+                        // Calculate left and right wheel power based on target type.
+                        let (left_power, right_power) = match state.target {
+                            DrivetrainTarget::Point(point) => {
+                                let displacement = point - position; // Displacement vector from our current position to the target
 
-                            let drive_power = drive_controller.lock().update(state.drive_error, SAMPLE_RATE) * state.turn_error.cos();
-                            let turn_power = turn_controller.lock().update(state.turn_error, SAMPLE_RATE);
+                                state.turn_error = normalize_angle(heading - displacement.angle());
+                                state.drive_error = displacement.length();
 
-                            let drive_error = state.drive_error;
-                            if state.drive_settle_condition.is_settled(drive_error, drive_power) {
-                                state.settled = true;
+                                let drive_power = drive_controller
+                                    .lock()
+                                    .update(state.drive_error, SAMPLE_RATE)
+                                    * state.turn_error.cos();
+                                let turn_power =
+                                    turn_controller.lock().update(state.turn_error, SAMPLE_RATE);
+
+                                let drive_error = state.drive_error;
+                                if state
+                                    .drive_settle_condition
+                                    .is_settled(drive_error, drive_power)
+                                {
+                                    state.settled = true;
+                                }
+
+                                normalize_motor_power(
+                                    (drive_power + turn_power, drive_power - turn_power),
+                                    12000.0,
+                                )
                             }
 
-                            normalize_motor_power((
-                                drive_power + turn_power,
-                                drive_power - turn_power,
-                            ), 12000.0)
-                        },
+                            DrivetrainTarget::DistanceAndHeading(
+                                target_distance,
+                                target_heading,
+                            ) => {
+                                state.drive_error = target_distance - forward_travel;
+                                state.turn_error = normalize_angle(heading - target_heading);
 
-                        DrivetrainTarget::DistanceAndHeading(target_distance, target_heading) => {
-                            state.drive_error = target_distance - forward_travel;
-                            state.turn_error = normalize_angle(heading - target_heading);
+                                let drive_power = drive_controller
+                                    .lock()
+                                    .update(state.drive_error, SAMPLE_RATE);
+                                let turn_power =
+                                    turn_controller.lock().update(state.turn_error, SAMPLE_RATE);
 
-                            let drive_power = drive_controller.lock().update(state.drive_error, SAMPLE_RATE);
-                            let turn_power = turn_controller.lock().update(state.turn_error, SAMPLE_RATE);
+                                let (drive_error, turn_error) =
+                                    (state.drive_error, state.turn_error);
+                                if state
+                                    .drive_settle_condition
+                                    .is_settled(drive_error, drive_power)
+                                    && state
+                                        .turn_settle_condition
+                                        .is_settled(turn_error, turn_power)
+                                {
+                                    state.settled = true;
+                                }
 
-                            let (drive_error, turn_error) = (state.drive_error, state.turn_error);
-                            if state.drive_settle_condition.is_settled(drive_error, drive_power) && state.turn_settle_condition.is_settled(turn_error, turn_power) {
-                                state.settled = true;
+                                normalize_motor_power(
+                                    (drive_power + turn_power, drive_power - turn_power),
+                                    12000.0,
+                                )
                             }
 
-                            normalize_motor_power((
-                                drive_power + turn_power,
-                                drive_power - turn_power,
-                            ), 12000.0)
-                        },
+                            DrivetrainTarget::MotorPower(left_power, right_power) => {
+                                state.drive_error = 0.0;
+                                state.turn_error = 0.0;
+                                state.settled = true;
 
-                        DrivetrainTarget::MotorPower(left_power, right_power) => {
-                            state.drive_error = 0.0;
-                            state.turn_error = 0.0;
-                            state.settled = true;
+                                (left_power, right_power)
+                            }
+                        };
 
-                            (left_power, right_power)
-                        },
-                    };
-    
-                    // Set the motor voltages
-                    for motor in motors.0.lock().iter_mut() {
-                        motor.move_voltage((12000.0 * left_power / 100.0).round() as i32).unwrap_or(());
+                        // Set the motor voltages
+                        for motor in motors.0.lock().iter_mut() {
+                            motor
+                                .move_voltage((12000.0 * left_power / 100.0).round() as i32)
+                                .unwrap_or(());
+                        }
+                        for motor in motors.1.lock().iter_mut() {
+                            motor
+                                .move_voltage((12000.0 * right_power / 100.0).round() as i32)
+                                .unwrap_or(());
+                        }
+
+                        // Release state mutex before delaying to allow for other locks
+                        drop(state);
+
+                        task_loop.delay();
                     }
-                    for motor in motors.1.lock().iter_mut() {
-                        motor.move_voltage((12000.0 * right_power / 100.0).round() as i32).unwrap_or(());
-                    }
-
-                    // Release state mutex before delaying to allow for other locks
-                    drop(state);
-
-                    task_loop.delay();
-                }
-            }).expect("Could not spawn DifferentialDrivetrain task.")),
+                })
+                .expect("Could not spawn DifferentialDrivetrain task."),
+            ),
         }
     }
 
@@ -222,7 +263,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         state.drive_settle_condition.reset();
         state.turn_settle_condition.reset();
         state.settled = false;
-        
+
         // Set new target
         state.target = target;
     }
@@ -269,12 +310,12 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         };
 
         let displacement = point - position;
-        
+
         // Set target heading, keeping the current forward position.
         self.set_target(DrivetrainTarget::DistanceAndHeading(
             match target {
                 DrivetrainTarget::DistanceAndHeading(distance, _) => distance,
-                _ => forward_travel
+                _ => forward_travel,
             },
             displacement.angle(),
         ));
@@ -290,7 +331,7 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         let lookahead_distance = self.state.lock().lookahead_distance;
 
         let mut path_loop = Loop::new(Duration::from_millis(10));
-    
+
         // Ensure that there is an initial intersection by inserting the current position at the start of the path.
         // This effectively creates a big starting line segment between the robot's current location and the first waypoint,
         // meaning the robot will target the first waypoint in the path even if the lookahead circle is far from it.
@@ -300,26 +341,31 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
         for (i, waypoint) in path.iter().enumerate() {
             // Find the next waypoint after the current one. This will form our line segment.
             // If there isn't a next waypoint, then we are targeting the final point and can stop.
-            let next_waypoint = if let Some(waypoint) = path.get(i + 1) { waypoint } else { continue };
+            let next_waypoint = if let Some(waypoint) = path.get(i + 1) {
+                waypoint
+            } else {
+                continue;
+            };
 
             // Move to the intersection point between the lookahead circle and the line segment formed between
             // the current and next waypoint until the lookahead circle encompasses the next waypoint.
             while self.tracking.lock().position().distance(*next_waypoint) > lookahead_distance {
-
                 // Find intersections using the line segment + circle intersection formula.
                 let intersections = LineCircleIntersections::compute_bounded(
                     (*waypoint, *next_waypoint), // Line segment from waypoint to next_waypoint
-                    (self.tracking.lock().position(), lookahead_distance) // Lookahead circle
+                    (self.tracking.lock().position(), lookahead_distance), // Lookahead circle
                 );
 
                 self.set_target(DrivetrainTarget::Point(match intersections {
                     // The line segment has secant intersections with the lookahead circle, resulting in two points of intersection.
                     // Choose the one cloeset to the next waypoint to ensure we go forward and not backwards on the path.
-                    LineCircleIntersections::Secant(point_1, point_2) => if point_1.distance(*next_waypoint) < point_2.distance(*next_waypoint) {
-                        point_1  
-                    } else {
-                        point_2
-                    },
+                    LineCircleIntersections::Secant(point_1, point_2) => {
+                        if point_1.distance(*next_waypoint) < point_2.distance(*next_waypoint) {
+                            point_1
+                        } else {
+                            point_2
+                        }
+                    }
 
                     // There is one intersection (a tangent line). Move to it.
                     LineCircleIntersections::Tangent(point) => point,
@@ -344,17 +390,20 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
             (tracking.forward_travel(), tracking.heading())
         };
 
-        self.set_target(DrivetrainTarget::DistanceAndHeading(forward_travel, heading));
+        self.set_target(DrivetrainTarget::DistanceAndHeading(
+            forward_travel,
+            heading,
+        ));
     }
 
     pub fn control_tank(&mut self, left_power: f64, right_power: f64) {
         self.set_target(DrivetrainTarget::MotorPower(left_power, right_power));
     }
-    
+
     pub fn control_arcade(&mut self, drive_power: f64, turn_power: f64) {
         self.set_target(DrivetrainTarget::MotorPower(
             drive_power + turn_power,
-            drive_power - turn_power
+            drive_power - turn_power,
         ));
     }
 
@@ -409,13 +458,18 @@ impl<T: Tracking, U: FeedbackController, V: FeedbackController> DifferentialDriv
     pub fn drive_controller(&self) -> Arc<Mutex<U>> {
         Arc::clone(&self.drive_controller)
     }
-    
+
     pub fn turn_controller(&self) -> Arc<Mutex<V>> {
         Arc::clone(&self.turn_controller)
     }
 }
 
-impl<T: Tracking, U: FeedbackController, V: FeedbackController> Drop for DifferentialDrivetrain<T, U, V> {
+impl<
+        T: Tracking,
+        U: FeedbackController<Input = f64, Output = f64>,
+        V: FeedbackController<Input = f64, Output = f64>,
+    > Drop for DifferentialDrivetrain<T, U, V>
+{
     fn drop(&mut self) {
         if let Some(task) = self.task.take() {
             self.started.swap(false, Ordering::Relaxed);

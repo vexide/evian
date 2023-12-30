@@ -8,6 +8,8 @@ use num_traits::real::Real;
 /// of a feedback controller is to stabilize the system's measured state to match the setpoint as
 /// close as possible.
 pub trait FeedbackController: Send + Sync + 'static {
+    type Input;
+    type Output;
     
     /// Produce an output value given an `error` value, which is the difference between the measured state
     /// and the desired state (setpoint).
@@ -22,7 +24,7 @@ pub trait FeedbackController: Send + Sync + 'static {
     /// 	error * 2.0
     /// }
     /// ```
-    fn update(&mut self, error: f64, dt: Duration) -> f64;
+    fn update(&mut self, error: Self::Input, dt: Duration) -> Self::Output;
 }
 
 /// A proportional-integral-derivative (PID) feedback controller.
@@ -111,7 +113,10 @@ impl PIDController {
 }
 
 impl FeedbackController for PIDController {
-    fn update(&mut self, error: f64, dt: Duration) -> f64 {
+    type Input = f64;
+    type Output = f64;
+
+    fn update(&mut self, error: Self::Input, dt: Duration) -> Self::Output {
         if error.abs() < self.integral_threshold {
             self.integral += error;
         }
