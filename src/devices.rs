@@ -76,15 +76,15 @@ impl Gyro for AdiGyro {
 
 #[macro_export]
 macro_rules! motor_group {
-    ( $( $x:expr ),* $(,)?) => {
+    ( $( $item:expr ),* $(,)?) => {
         {
-            use alloc::{sync::Arc, vec::Vec};
-            use vex_rt::rtos::Mutex;
+            use ::alloc::{sync::Arc, vec::Vec};
+            use ::vex_rt::{rtos::Mutex, motor::Motor};
 
-            let mut temp_vec: Arc<Mutex<Vec<vex_rt::motor::Motor>>> = Arc::new(Mutex::new(Vec::new()));
+            let mut temp_vec: Arc<Mutex<Vec<Motor>>> = Arc::new(Mutex::new(Vec::new()));
 
             $(
-                temp_vec.lock().push($x);
+                temp_vec.lock().push($item);
             )*
             
             temp_vec

@@ -17,7 +17,7 @@ pub trait FeedbackController: Send + Sync + 'static {
     /// # Example
     ///
     /// ```
-    /// /// A basic proportional controller that multiplies the error value by a constant.
+    /// /// A basic proportional controller that multiplies the error value by a constant (2.0).
     /// /// This effectively means that the correction will increase proportional to the growth
     /// /// of the error. A high error value will produce a higher output than a lower error.
     /// fn update(&mut self, error: f64) -> f64 {
