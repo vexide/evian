@@ -1,95 +1,83 @@
-use core::f64::consts::FRAC_2_PI;
-use alloc::{vec::Vec, sync::Arc};
-use vex_rt::{
-    adi::{AdiEncoder, AdiGyro},
-    imu::InertialSensor,
-    motor::Motor,
-    rotation::RotationSensor,
-    rtos::Mutex,
+use alloc::{sync::Arc, vec::Vec};
+use pros::{
+    core::{error::PortError, sync::Mutex},
+    devices::{
+        adi::{AdiEncoder, AdiError},
+        smart::{
+            motor::{Motor, MotorError},
+            rotation::RotationSensor,
+        },
+        Position,
+    },
 };
 
-pub type ThreadsafeMotor = Arc<Mutex<Motor>>;
-pub type MotorGroup = Arc<Mutex<Vec<Motor>>>;
+/// Internal alias so I don't have to type this shit out a million times.
+pub type DriveMotors = Arc<Mutex<Vec<Motor>>>;
 
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
-pub trait RotarySensor: Send + Sync + 'static {
-    /// Get the device's measured rotation in radians.
-    fn rotation(&self) -> Result<f64, RotarySensorError>;
+pub trait RotarySensor: Send + 'static {
+    type Error;
+
+    fn position(&self) -> Result<Position, Self::Error>;
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct RotarySensorError;
+macro_rules! impl_rotary_sensor {
+    ( $struct:ident, $method:ident, $err:ty) => {
+        impl RotarySensor for $struct {
+            type Error = $err;
 
-impl RotarySensor for Arc<Mutex<Motor>> {
-    fn rotation(&self) -> Result<f64, RotarySensorError> {
-        let motor = self.lock();
-
-        Ok(motor.get_position().map_err(|_| RotarySensorError)?.to_radians())
-    }
-}
-
-impl RotarySensor for MotorGroup {
-    fn rotation(&self) -> Result<f64, RotarySensorError> {
-        let group = self.lock();
-
-        let mut sum = 0.0;
-        for motor in group.iter() {
-            sum += motor.get_position().map_err(|_| RotarySensorError)?.to_radians();
-        }
-
-        Ok(sum / (group.len() as f64))
-    }
-}
-
-impl RotarySensor for AdiEncoder {
-    fn rotation(&self) -> Result<f64, RotarySensorError> {
-        
-        Ok((self.get().map_err(|_| RotarySensorError)? as f64).to_radians())
-    }
-}
-
-impl RotarySensor for RotationSensor {
-    fn rotation(&self) -> Result<f64, RotarySensorError> {
-        Ok((self.get_position().map_err(|_| RotarySensorError)? as f64 / 100.0).to_radians())
-    }
-}
-
-/// A sensor that can measure absolute angular orientation, for example a gyroscope or IMU
-pub trait Gyro: Send + Sync + 'static {
-    fn heading(&self) -> Result<f64, GyroError>;
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct GyroError;
-
-impl Gyro for InertialSensor {
-    fn heading(&self) -> Result<f64, GyroError> {
-        Ok(FRAC_2_PI - self.get_heading().map_err(|_| GyroError)?.to_radians())
-    }
-}
-
-impl Gyro for AdiGyro {
-    fn heading(&self) -> Result<f64, GyroError> {
-        Ok(FRAC_2_PI - self.get().map_err(|_| GyroError)?.to_radians())
-    }
-}
-
-#[macro_export]
-macro_rules! motor_group {
-    ( $( $item:expr ),* $(,)?) => {
-        {
-            use ::alloc::{sync::Arc, vec::Vec};
-            use ::vex_rt::{rtos::Mutex, motor::Motor};
-
-            let mut temp_vec: Arc<Mutex<Vec<Motor>>> = Arc::new(Mutex::new(Vec::new()));
-
-            $(
-                temp_vec.lock().push($item);
-            )*
-            
-            temp_vec
+            fn position(&self) -> Result<Position, Self::Error> {
+                $struct::$method(&self)
+            }
         }
     };
 }
 
-pub use motor_group;
+impl_rotary_sensor!(Motor, position, MotorError);
+impl_rotary_sensor!(RotationSensor, position, PortError);
+impl_rotary_sensor!(AdiEncoder, position, AdiError);
+// impl_rotary_sensor!(AdiPotentiometer, angle, AdiError); // TODO: Consider this in the future.
+
+impl RotarySensor for Vec<Motor> {
+    type Error = MotorError;
+
+    fn position(&self) -> Result<Position, Self::Error> {
+        let mut degree_sum = 0.0;
+
+        for motor in self.iter() {
+            degree_sum += motor.position()?.into_degrees();
+        }
+
+        Ok(Position::from_degrees(degree_sum / (self.len() as f64)))
+    }
+}
+
+/// Blanket implementation for all Arc<Mutex<T>> wrappers of already implemented sensors.
+impl<T: RotarySensor> RotarySensor for Arc<Mutex<T>> {
+    type Error = <T as RotarySensor>::Error;
+
+    fn position(&self) -> Result<Position, Self::Error> {
+        self.lock().position()
+    }
+}
+
+#[macro_export]
+macro_rules! drive_motors {
+    ( $( $item:expr ),* $(,)?) => {
+        {
+            use ::alloc::{sync::Arc, vec::Vec};
+            use ::pros::{core::sync::Mutex, devices::smart::Motor};
+
+            let mut temp_vec: Vec<Motor> = Vec::new();
+
+            $(
+				if let Ok(motor) = $item {
+					temp_vec.push(motor);
+				}
+            )*
+
+            Arc::new(Mutex::new(temp_vec))
+        }
+    };
+}
+pub use drive_motors;

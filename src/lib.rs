@@ -1,15 +1,22 @@
-#![feature(core_intrinsics)]
 #![no_std]
+#![allow(internal_features)]
+#![feature(core_intrinsics)] // math go zoom
 
 extern crate alloc;
 
-pub mod controller;
+pub mod devices;
 pub mod drivetrain;
 pub mod math;
-pub mod devices;
+pub mod commands;
 pub mod tracking;
-pub mod timer;
+pub mod controller;
 
 pub mod prelude {
-    pub use crate::{controller::*, drivetrain::*, math::Vec2, devices::*, tracking::*};
+    pub use crate::{
+        devices::drive_motors,
+        drivetrain::DifferentialDrivetrain,
+        math::Vec2,
+        tracking::Tracking,
+        commands::joystick::{JoystickCommands, JoystickLayout},
+    };
 }

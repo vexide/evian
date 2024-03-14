@@ -5,13 +5,12 @@ repository = "https://github.com/tropix126/vexnav/"
 authors = ["Tropical"]
 license-file = "LICENSE.md"
 categories = ["science::robotics", "no-std", "mathematics", "embedded"]
-keywords = ["vex", "vex-rt", "vex-robotics", "robotics", "autonomous"]
+keywords = ["vex", "pros", "pros-rs", "vex-robotics", "robotics", "autonomous"]
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-vex-rt = "0.15.1"
-num-traits = { version = "0.2", default-features = false, features = ["libm"] }
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[profile.dev.package."*"]
-opt-level = "s"
+[dependencies]
+pros = { git = "https://github.com/pros-rs/pros-rs" }
+num-traits = { version = "0.2", default-features = false, features = ["libm"] }

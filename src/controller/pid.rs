@@ -1,32 +1,3 @@
-use core::time::Duration;
-use num_traits::real::Real;
-
-/// A closed-loop feedback controller.
-///
-/// At its core, a feedback controller is a simple function that produces an output value
-/// given a desired value (a "setpoint") and a measurement of a system's current state. The goal
-/// of a feedback controller is to stabilize the system's measured state to match the setpoint as
-/// close as possible.
-pub trait FeedbackController: Send + Sync + 'static {
-    type Input;
-    type Output;
-    
-    /// Produce an output value given an `error` value, which is the difference between the measured state
-    /// and the desired state (setpoint).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// /// A basic proportional controller that multiplies the error value by a constant (2.0).
-    /// /// This effectively means that the correction will increase proportional to the growth
-    /// /// of the error. A high error value will produce a higher output than a lower error.
-    /// fn update(&mut self, error: f64) -> f64 {
-    /// 	error * 2.0
-    /// }
-    /// ```
-    fn update(&mut self, error: Self::Input, dt: Duration) -> Self::Output;
-}
-
 /// A proportional-integral-derivative (PID) feedback controller.
 ///
 /// The PID controller is a feedback control algorithm with common applications
@@ -49,7 +20,7 @@ pub trait FeedbackController: Send + Sync + 'static {
 /// 	> reaches a saturation point, preventing the error from decreasing. In this case, integral will rapidly
 /// 	> increase, causing an unpredictable (usually much larger than expected) output. This specific implementation
 /// 	> of PID has no guards against integral windup. In cases where this is a problem, a custom implementation
-/// 	> of `FeedbackController` or simply setting `ki` to `0.0` may be desirable
+/// 	> of `MotionController` or simply setting `ki` to `0.0` may be desirable
 ///
 /// - The derivative component represents the change in error over time. The derivative component is the
 /// difference between the error given to `update` and the error given to `update` the last time it was
@@ -112,7 +83,7 @@ impl PIDController {
     }
 }
 
-impl FeedbackController for PIDController {
+impl MotionController for PIDController {
     type Input = f64;
     type Output = f64;
 
