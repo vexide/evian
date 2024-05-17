@@ -1,4 +1,4 @@
-use pros::devices::{controller::ControllerError, smart::Motor, Controller};
+use vexide::devices::{controller::Controller, controller::ControllerError, smart::Motor};
 
 use crate::drivetrain::Voltages;
 
@@ -11,19 +11,15 @@ pub enum JoystickLayout {
 }
 
 pub trait JoystickCommands {
-	fn command(&self, layout: JoystickLayout) -> Result<Voltages, ControllerError>;
+    fn command(&self, layout: JoystickLayout) -> Result<Voltages, ControllerError>;
 }
 
 impl JoystickCommands for Controller {
-	fn command(&self, layout: JoystickLayout) -> Result<Voltages, ControllerError> {
-		let state = self.state()?;
-		let left_stick = state.joysticks.left;
-		let right_stick = state.joysticks.right;
-		
+    fn command(&self, layout: JoystickLayout) -> Result<Voltages, ControllerError> {
         let (left_voltage, right_voltage) = match layout {
             JoystickLayout::Tank => (
-                Motor::MAX_VOLTAGE * left_stick.y as f64,
-                Motor::MAX_VOLTAGE * right_stick.y as f64,
+                Motor::MAX_VOLTAGE * self.left_stick.y()? as f64,
+                Motor::MAX_VOLTAGE * self.right_stick.y()? as f64,
             ),
             _ => todo!(),
         };

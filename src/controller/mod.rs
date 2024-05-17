@@ -7,7 +7,7 @@
 pub trait MotionController: core::fmt::Debug + Send + Sync + 'static {
     type Input;
     type Output;
-    
+
     /// Produce an output value given an `error` value, which is the difference between the measured state
     /// and the desired state (setpoint).
     ///

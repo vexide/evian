@@ -4,19 +4,20 @@
 
 extern crate alloc;
 
+pub mod commands;
+pub mod controller;
 pub mod devices;
 pub mod drivetrain;
 pub mod math;
-pub mod commands;
 pub mod tracking;
-pub mod controller;
+pub mod settle;
 
 pub mod prelude {
     pub use crate::{
+        commands::joystick::{JoystickCommands, JoystickLayout},
         devices::drive_motors,
         drivetrain::DifferentialDrivetrain,
         math::Vec2,
         tracking::Tracking,
-        commands::joystick::{JoystickCommands, JoystickLayout},
     };
 }

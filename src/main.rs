@@ -1,74 +1,67 @@
 #![no_main]
 #![no_std]
+#![feature(error_in_core)]
 
 extern crate alloc;
 
-use pros::prelude::*;
+use core::error::Error;
+
+use alloc::boxed::Box;
+use vexide::prelude::*;
 use vexnav::{
-    devices::DriveMotors, drivetrain::Voltages, prelude::*, tracking::{ParallelWheelTracking, TrackingWheel}
+    devices::DriveMotors, prelude::*, tracking::{ParallelWheelTracking, TrackingWheel}
 };
 
-/// Store robot state that will be used throughout the program.
-struct VexRobot {
-    controller: Controller,
-    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<DriveMotors, DriveMotors>>,
+type AnyError = Box<dyn Error>;
+
+struct Robot {
+    pub drivetrain: DifferentialDrivetrain<ParallelWheelTracking<DriveMotors, DriveMotors>>,
+    pub controller: Controller,
 }
 
-impl VexRobot {
-    /// Create subsystems and set up anything that will be used throughout the program.
-    /// This function is run by PROS as soon as the robot program is selected.
-    pub fn new(peripherals: Peripherals) -> Self {
-        let left_motors = drive_motors![
-            Motor::new(peripherals.port_1, Gearset::Blue, Direction::Forward),
-            Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
-            Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
-        ];
-        let right_motors = drive_motors![
-            Motor::new(peripherals.port_4, Gearset::Blue, Direction::Reverse),
-            Motor::new(peripherals.port_5, Gearset::Blue, Direction::Reverse),
-            Motor::new(peripherals.port_6, Gearset::Blue, Direction::Reverse),
-        ];
+impl CompetitionRobot for Robot {
+    type Error = AnyError;
 
-        let tracking = ParallelWheelTracking::new(
-            Vec2::default(),
-            90.0,
-            TrackingWheel::new(left_motors.clone(), 3.25, 7.5, Some(36.0 / 60.0)),
-            TrackingWheel::new(right_motors.clone(), 3.25, 7.5, Some(36.0 / 60.0)),
-            Some(InertialSensor::new(peripherals.port_9)),
-        );
-
-        Self {
-            drivetrain: DifferentialDrivetrain::new(left_motors, right_motors, tracking),
-            controller: Controller::Master,
-        }
-    }
-}
-
-impl AsyncRobot for VexRobot {
-    /// Runs when the robot is enabled in autonomous mode.
-    async fn auto(&mut self) -> Result {
-        self.drivetrain.execute(Voltages(12.0, 12.0));
-
+    async fn autonomous(&mut self) -> Result<(), Self::Error> {
         Ok(())
     }
 
-    /// Runs when the robot is enabled in driver control mode.
-    async fn opcontrol(&mut self) -> Result {
+    async fn driver(&mut self) -> Result<(), Self::Error> {
         loop {
-            _ = self.drivetrain.execute(
-                self.controller.command(JoystickLayout::Tank)?
-            );
+            self.drivetrain
+                .execute(self.controller.command(JoystickLayout::Tank)?)
+                .await;
 
-            sleep(Motor::DATA_READ_RATE).await;
+            sleep(Controller::UPDATE_RATE).await;
         }
     }
 }
 
-// Register the robot with PROS so that its methods will be called.
-async_robot!(
-    VexRobot,
-    VexRobot::new(Peripherals::take().unwrap_or_else(|| unsafe {
-        println!("who yoinked my Peripherals??");
-        Peripherals::steal() // gimme that
-    }))
-);
+#[vexide::main]
+async fn main(peripherals: Peripherals) -> Result<(), AnyError> {
+    let left_motors = drive_motors![
+        Motor::new(peripherals.port_1, Gearset::Blue, Direction::Forward),
+        Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
+        Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
+    ];
+    let right_motors = drive_motors![
+        Motor::new(peripherals.port_4, Gearset::Blue, Direction::Reverse),
+        Motor::new(peripherals.port_5, Gearset::Blue, Direction::Reverse),
+        Motor::new(peripherals.port_6, Gearset::Blue, Direction::Reverse),
+    ];
+
+    let tracking = ParallelWheelTracking::new(
+        Vec2::default(),
+        90.0,
+        TrackingWheel::new(left_motors.clone(), 3.25, 7.5, Some(36.0 / 60.0)),
+        TrackingWheel::new(right_motors.clone(), 3.25, 7.5, Some(36.0 / 60.0)),
+        Some(InertialSensor::new(peripherals.port_9)),
+    );
+
+    Robot {
+        drivetrain: DifferentialDrivetrain::new(left_motors, right_motors, tracking),
+        controller: peripherals.primary_controller,
+    }.compete().await;
+
+    Ok(())
+}

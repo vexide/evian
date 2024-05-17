@@ -1,16 +1,17 @@
 [package]
 name = "vexnav"
-description = "A library for autonomously controlling VEX robots."
-repository = "https://github.com/tropix126/vexnav/"
+description = "Experimental command-based controls library for vexide."
+repository = "https://github.com/vexide/evian/"
 authors = ["Tropical"]
 license-file = "LICENSE.md"
 categories = ["science::robotics", "no-std", "mathematics", "embedded"]
-keywords = ["vex", "pros", "pros-rs", "vex-robotics", "robotics", "autonomous"]
+keywords = ["vex", "vexide", "vex-robotics", "robotics", "autonomous"]
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pros = { git = "https://github.com/pros-rs/pros-rs" }
+vexide = "0.2.0"
 num-traits = { version = "0.2", default-features = false, features = ["libm"] }
+replace_with = { version = "0.1.7", default-features = false }

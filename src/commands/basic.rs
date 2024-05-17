@@ -1,14 +1,10 @@
-use pros::devices::smart::Motor;
 use num_traits::real::Real;
+use vexide::devices::smart::Motor;
 
 use crate::{
-    math,
-	commands::Command,
-    controller::MotionController,
-    drivetrain::Voltages,
+    commands::Command, controller::MotionController, drivetrain::Voltages, math,
     tracking::TrackingContext,
 };
-
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct BasicMotion<
@@ -42,15 +38,13 @@ impl<
         let drive_output = self.drive_controller.update(self.drive_error);
         let turn_output = self.drive_controller.update(self.turn_error);
 
-        Voltages(
-            drive_output + turn_output,
-            drive_output - turn_output
-        ).normalized(Motor::MAX_VOLTAGE)
+        Voltages(drive_output + turn_output, drive_output - turn_output)
+            .normalized(Motor::MAX_VOLTAGE)
     }
 
     fn is_settled(&self) -> bool {
-		self.drive_error.abs() < self.drive_tolerance && self.turn_error.abs() < self.turn_tolerance
-	}
+        self.drive_error.abs() < self.drive_tolerance && self.turn_error.abs() < self.turn_tolerance
+    }
 
     fn cancel(&mut self) {}
 }

@@ -1,13 +1,14 @@
 use alloc::{sync::Arc, vec::Vec};
-use pros::{
-    core::{error::PortError, sync::Mutex},
+use vexide::{
+    core::sync::{Mutex, MutexGuard},
     devices::{
-        adi::{AdiEncoder, AdiError},
+        adi::{encoder::EncoderError, AdiEncoder},
+        position::Position,
         smart::{
             motor::{Motor, MotorError},
             rotation::RotationSensor,
         },
-        Position,
+        PortError,
     },
 };
 
@@ -35,8 +36,7 @@ macro_rules! impl_rotary_sensor {
 
 impl_rotary_sensor!(Motor, position, MotorError);
 impl_rotary_sensor!(RotationSensor, position, PortError);
-impl_rotary_sensor!(AdiEncoder, position, AdiError);
-// impl_rotary_sensor!(AdiPotentiometer, angle, AdiError); // TODO: Consider this in the future.
+impl_rotary_sensor!(AdiEncoder, position, EncoderError);
 
 impl RotarySensor for Vec<Motor> {
     type Error = MotorError;
@@ -57,7 +57,19 @@ impl<T: RotarySensor> RotarySensor for Arc<Mutex<T>> {
     type Error = <T as RotarySensor>::Error;
 
     fn position(&self) -> Result<Position, Self::Error> {
-        self.lock().position()
+        let mut guard: Option<MutexGuard<'_, T>> = None;
+
+        while match self.try_lock() {
+            Some(lock) => {
+                guard = Some(lock);
+                false
+            }
+            None => true,
+        } {
+            core::hint::spin_loop();
+        }
+
+        guard.unwrap().position()
     }
 }
 
@@ -66,14 +78,12 @@ macro_rules! drive_motors {
     ( $( $item:expr ),* $(,)?) => {
         {
             use ::alloc::{sync::Arc, vec::Vec};
-            use ::pros::{core::sync::Mutex, devices::smart::Motor};
+            use ::vexide::{core::sync::Mutex, devices::smart::Motor};
 
             let mut temp_vec: Vec<Motor> = Vec::new();
 
             $(
-				if let Ok(motor) = $item {
-					temp_vec.push(motor);
-				}
+                temp_vec.push($item);
             )*
 
             Arc::new(Mutex::new(temp_vec))

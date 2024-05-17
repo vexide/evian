@@ -2,12 +2,12 @@ use core::f64::consts::{FRAC_2_PI, PI};
 use core::fmt::Debug;
 use core::prelude::rust_2021::*;
 use num_traits::real::Real;
-use pros::devices::smart::InertialSensor;
-use pros::devices::Position;
+use vexide::devices::position::Position;
+use vexide::devices::smart::InertialSensor;
 
 use crate::{devices::RotarySensor, math::Vec2};
 
-/// A system that takes telemetry from a mobile robot.
+/// A system that performs localization and returns telemetry on a mobile robot.
 pub trait Tracking: Send + 'static {
     fn forward_travel(&self) -> f64;
 
@@ -23,8 +23,8 @@ pub trait Tracking: Send + 'static {
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct TrackingContext {
     pub position: Vec2,
-    pub forward_travel: f64,
     pub heading: f64,
+    pub forward_travel: f64,
 }
 
 /// A struct representing a wheel attached to a rotary sensor.
@@ -51,12 +51,12 @@ impl<T: RotarySensor> TrackingWheel<T> {
     fn travel(&self) -> f64 {
         let wheel_circumference = self.wheel_diameter * PI;
 
-        return (self
+        return self
             .sensor
             .position()
-            .unwrap_or(Position::from_degrees(0.0))
+            .unwrap_or(Position::from_counts(0))
             .into_degrees()
-            / 360.0)
+            / 360.0
             * self.gearing.unwrap_or(1.0)
             * wheel_circumference;
     }
@@ -115,9 +115,11 @@ impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> 
     fn heading(&self) -> f64 {
         self.heading_offset
             + if let Some(gyro) = &self.gyro {
-                gyro.heading().unwrap_or_else(|_| {
+                if let Ok(heading) = gyro.heading() {
+                    heading.to_radians()
+                } else {
                     (self.right_wheel.travel() - self.left_wheel.travel()) / self.track_width()
-                })
+                }
             } else {
                 (self.right_wheel.travel() - self.left_wheel.travel()) / self.track_width()
             } % FRAC_2_PI
@@ -145,9 +147,9 @@ impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> 
         self.prev_forward_travel = forward_travel;
 
         TrackingContext {
-            position: self.position,
-            forward_travel,
-            heading,
+            position: self.position(),
+            heading: self.heading(),
+            forward_travel: self.forward_travel(),
         }
     }
 }
