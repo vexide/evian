@@ -56,7 +56,7 @@ impl<T: Tracking> DifferentialDrivetrain<T> {
                         motor.set_voltage(right).unwrap();
                     }
 
-                    sleep(Motor::DATA_READ_RATE).await;
+                    sleep(Motor::DATA_READ_INTERVAL).await;
                 }
             }),
         }
@@ -131,6 +131,7 @@ impl<'a, O: 'static> Future for Execute<'a, O> {
 }
 
 /// Left/Right Motor Voltages
+/// 
 /// Used as the standard output of a [`Command`] when working with the [`DifferentialDrivetrain`]
 /// struct.
 ///

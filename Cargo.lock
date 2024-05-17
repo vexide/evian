@@ -27,6 +27,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "critical-section"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7059fff8937831a9ae6f0fe4d658ffabf58f2ca96aa9dec1c889f936f705f216"
+
+[[package]]
 name = "dlmalloc"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -36,6 +42,12 @@ dependencies = [
  "libc",
  "windows-sys",
 ]
+
+[[package]]
+name = "futures-core"
+version = "0.3.30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dfc6580bb841c5a68e9ef15c77ccc837b40a7504914d52e47b8b0e9bbda25a1d"
 
 [[package]]
 name = "heck"
@@ -70,6 +82,12 @@ name = "memchr"
 version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
+
+[[package]]
+name = "mint"
+version = "0.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e53debba6bda7a793e5f99b8dacf19e626084f525f7829104ba9898f367d85ff"
 
 [[package]]
 name = "no_std_io"
@@ -144,87 +162,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macro2"
-version = "1.0.79"
+name = "pin-project"
+version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e835ff2298f5721608eb1a980ecaee1aef2c132bf95ecc026a11b7bf3c01c02e"
+checksum = "b6bf43b791c5b9e34c3d182969b4abb522f9343702850a2e57f460d00d09b4b3"
+dependencies = [
+ "pin-project-internal",
+]
+
+[[package]]
+name = "pin-project-internal"
+version = "1.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f38a4412a78282e09a2cf38d195ea5420d15ba0602cb375210efbc877243965"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "proc-macro2"
+version = "1.0.82"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ad3d49ab951a01fbaafe34f2ec74122942fe18a3f9814c3268f1bb72042131b"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "pros"
-version = "0.8.0"
-source = "git+https://github.com/pros-rs/pros-rs#d1e99727ad309da6b3a8be4ddb45827637dcbfd1"
-dependencies = [
- "pros-async",
- "pros-core",
- "pros-devices",
- "pros-math",
- "pros-panic",
- "pros-sys",
-]
-
-[[package]]
-name = "pros-async"
-version = "0.1.0"
-source = "git+https://github.com/pros-rs/pros-rs#d1e99727ad309da6b3a8be4ddb45827637dcbfd1"
-dependencies = [
- "async-task",
- "pros-core",
- "pros-sys",
- "waker-fn",
-]
-
-[[package]]
-name = "pros-core"
-version = "0.1.0"
-source = "git+https://github.com/pros-rs/pros-rs#d1e99727ad309da6b3a8be4ddb45827637dcbfd1"
-dependencies = [
- "dlmalloc",
- "no_std_io",
- "pros-sys",
- "snafu",
- "spin",
-]
-
-[[package]]
-name = "pros-devices"
-version = "0.1.0"
-source = "git+https://github.com/pros-rs/pros-rs#d1e99727ad309da6b3a8be4ddb45827637dcbfd1"
-dependencies = [
- "bitflags",
- "no_std_io",
- "pros-core",
- "pros-sys",
- "snafu",
-]
-
-[[package]]
-name = "pros-math"
-version = "0.1.0"
-source = "git+https://github.com/pros-rs/pros-rs#d1e99727ad309da6b3a8be4ddb45827637dcbfd1"
-dependencies = [
- "num",
- "pros-core",
-]
-
-[[package]]
-name = "pros-panic"
-version = "0.1.0"
-source = "git+https://github.com/pros-rs/pros-rs#d1e99727ad309da6b3a8be4ddb45827637dcbfd1"
-dependencies = [
- "pros-core",
- "pros-devices",
- "pros-sys",
-]
-
-[[package]]
-name = "pros-sys"
-version = "0.7.0"
-source = "git+https://github.com/pros-rs/pros-rs#d1e99727ad309da6b3a8be4ddb45827637dcbfd1"
-dependencies = [
- "cfg-if",
 ]
 
 [[package]]
@@ -235,6 +198,12 @@ checksum = "291ec9ab5efd934aaf503a6466c5d5251535d108ee747472c3977cc5acc868ef"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "replace_with"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3a8614ee435691de62bcffcf4a66d91b3594bf1428a5722e79103249a095690"
 
 [[package]]
 name = "scopeguard"
@@ -264,23 +233,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "spin"
-version = "0.9.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
-dependencies = [
- "lock_api",
-]
-
-[[package]]
 name = "syn"
-version = "2.0.52"
+version = "2.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b699d15b36d1f02c3e7c69f8ffef53de37aefae075d8488d4ba1a7788d574a07"
+checksum = "7ad3dee41f36859875573074334c200d1add8e4a87bb37113ebd31d926b7b11f"
 dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "talc"
+version = "4.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04be12ec299aadd63a0bf781d893e4b6139d33cdca6dcd6f6be31f849cedcac8"
+dependencies = [
+ "lock_api",
 ]
 
 [[package]]
@@ -290,11 +259,123 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
+name = "vex-sdk"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f96042448be8828098eb3c799071bbf5a9a1abc170264ac04ffeef355eb1d60a"
+
+[[package]]
+name = "vexide"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b1be4d726856a2d608c7b81ada5e6fc53907c95922b5b792af16fd00a4f3975"
+dependencies = [
+ "vex-sdk",
+ "vexide-async",
+ "vexide-core",
+ "vexide-devices",
+ "vexide-macro",
+ "vexide-math",
+ "vexide-panic",
+ "vexide-startup",
+]
+
+[[package]]
+name = "vexide-async"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29a7a8ff83836bd5c5d23e84ca1df87376b49bcb3cfaf93071f816258cf8117c"
+dependencies = [
+ "async-task",
+ "critical-section",
+ "vex-sdk",
+ "vexide-core",
+ "waker-fn",
+]
+
+[[package]]
+name = "vexide-core"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d149c51e15ca483d095c867d840db484f9e20b54034ba0510d7d72eb92d27245"
+dependencies = [
+ "bitflags",
+ "critical-section",
+ "dlmalloc",
+ "futures-core",
+ "lock_api",
+ "no_std_io",
+ "pin-project",
+ "replace_with",
+ "snafu",
+ "talc",
+ "vex-sdk",
+]
+
+[[package]]
+name = "vexide-devices"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e70e60e2d4daa4dd9c251d96759028eed08624b9d9260df1bc9beea285b195b1"
+dependencies = [
+ "bitflags",
+ "mint",
+ "no_std_io",
+ "snafu",
+ "vex-sdk",
+ "vexide-core",
+]
+
+[[package]]
+name = "vexide-macro"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41fa52584b31c59d97254caf86c471e1fdc0fe140426313682eb12c0e3bf1f53"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "vexide-math"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9630a004398ca6ead31471ebd8de7c74c07c2370b098bd663309e816b4f4be0"
+dependencies = [
+ "num",
+ "vexide-core",
+]
+
+[[package]]
+name = "vexide-panic"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7a4b149fdaff8166170bdd548080f841dd5b51faef7a1e02ed668062e84baf2"
+dependencies = [
+ "vex-sdk",
+ "vexide-core",
+ "vexide-devices",
+]
+
+[[package]]
+name = "vexide-startup"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffbc235b9645f4a14343f9456bfa8828f5bfb941ba834588908daa43a4860000"
+dependencies = [
+ "vex-sdk",
+ "vexide-async",
+ "vexide-core",
+ "vexide-devices",
+]
+
+[[package]]
 name = "vexnav"
 version = "0.1.0"
 dependencies = [
  "num-traits",
- "pros",
+ "replace_with",
+ "vexide",
 ]
 
 [[package]]

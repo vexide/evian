@@ -10,7 +10,6 @@ pub mod devices;
 pub mod drivetrain;
 pub mod math;
 pub mod tracking;
-pub mod settle;
 
 pub mod prelude {
     pub use crate::{

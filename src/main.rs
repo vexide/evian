@@ -32,7 +32,7 @@ impl CompetitionRobot for Robot {
                 .execute(self.controller.command(JoystickLayout::Tank)?)
                 .await;
 
-            sleep(Controller::UPDATE_RATE).await;
+            sleep(Controller::UPDATE_INTERVAL).await;
         }
     }
 }

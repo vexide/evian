@@ -2,7 +2,6 @@ use core::f64::consts::{FRAC_2_PI, PI};
 use core::fmt::Debug;
 use core::prelude::rust_2021::*;
 use num_traits::real::Real;
-use vexide::devices::position::Position;
 use vexide::devices::smart::InertialSensor;
 
 use crate::{devices::RotarySensor, math::Vec2};
@@ -54,9 +53,8 @@ impl<T: RotarySensor> TrackingWheel<T> {
         return self
             .sensor
             .position()
-            .unwrap_or(Position::from_counts(0))
-            .into_degrees()
-            / 360.0
+            .unwrap_or_default()
+            .as_revolutions()
             * self.gearing.unwrap_or(1.0)
             * wheel_circumference;
     }
