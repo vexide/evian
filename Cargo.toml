@@ -1,5 +1,5 @@
 [package]
-name = "vexnav"
+name = "evian"
 description = "Experimental command-based controls library for vexide."
 repository = "https://github.com/vexide/evian/"
 authors = ["Tropical"]

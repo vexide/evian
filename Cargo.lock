@@ -44,6 +44,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "evian"
+version = "0.1.0"
+dependencies = [
+ "num-traits",
+ "replace_with",
+ "vexide",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -367,15 +376,6 @@ dependencies = [
  "vexide-async",
  "vexide-core",
  "vexide-devices",
-]
-
-[[package]]
-name = "vexnav"
-version = "0.1.0"
-dependencies = [
- "num-traits",
- "replace_with",
- "vexide",
 ]
 
 [[package]]
