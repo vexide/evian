@@ -7,7 +7,7 @@ pub mod settler;
 /// given a desired value (a "setpoint") and a measurement of a system's current state. The goal
 /// of a feedback controller is to stabilize the system's measured state to match the setpoint as
 /// close as possible.
-pub trait MotionController: core::fmt::Debug + Send + Sync + 'static {
+pub trait MotionController: Send + Sync + 'static {
     type Input;
     type Output;
 

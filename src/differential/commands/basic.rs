@@ -2,7 +2,7 @@ use vexide::devices::smart::Motor;
 
 use crate::{
     command::{Command, CommandUpdate},
-    control::{MotionController, settler::Settler},
+    control::{settler::Settler, MotionController},
     differential::Voltages,
     math,
     tracking::TrackingContext,
@@ -79,7 +79,7 @@ enum Target {
     Relative(f64),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 struct BasicMotion<
     L: MotionController<Input = f64, Output = f64>,
     A: MotionController<Input = f64, Output = f64>,

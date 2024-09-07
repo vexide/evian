@@ -2,7 +2,6 @@ use core::time::Duration;
 
 use vexide::core::time::Instant;
 
-
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Settler {
     start_timestamp: Instant,

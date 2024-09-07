@@ -1,4 +1,7 @@
-use crate::{command::{Command, CommandUpdate}, tracking::Tracking};
+use crate::{
+    command::{Command, CommandUpdate},
+    tracking::Tracking,
+};
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use vexide::{
     async_runtime::{
@@ -11,7 +14,6 @@ use vexide::{
 
 use super::Voltages;
 
-#[derive(Debug)]
 pub struct DifferentialDrivetrain<T: Tracking> {
     left_motors: DriveMotors,
     right_motors: DriveMotors,
@@ -46,7 +48,7 @@ impl<T: Tracking> DifferentialDrivetrain<T> {
                                 for motor in right_motors.lock().await.iter_mut() {
                                     motor.set_voltage(right).unwrap();
                                 }
-                            },
+                            }
                             CommandUpdate::Settled => {
                                 *command_guard = None;
                                 barrier.wait();

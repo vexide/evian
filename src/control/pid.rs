@@ -73,7 +73,7 @@ impl PidController {
     pub fn gains(&self) -> (f64, f64, f64) {
         (self.kp, self.ki, self.kd)
     }
-    
+
     pub fn integral_threshold(&self) -> f64 {
         self.integral_threshold
     }
@@ -104,12 +104,14 @@ impl MotionController for PidController {
         if error.signum() != self.prev_error.signum() {
             self.integral = 0.0;
         }
-        
+
         let derivative = error - self.prev_error;
         self.prev_error = error;
 
         self.prev_timestamp = Instant::now();
 
-        (error * self.kp) + (self.integral * self.ki * dt.as_secs_f64()) + (derivative * self.kd / dt.as_secs_f64())
+        (error * self.kp)
+            + (self.integral * self.ki * dt.as_secs_f64())
+            + (derivative * self.kd / dt.as_secs_f64())
     }
 }

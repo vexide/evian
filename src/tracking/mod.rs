@@ -1,6 +1,6 @@
+pub mod parallel_wheel;
 pub mod sensor;
 pub mod wheel;
-pub mod parallel_wheel;
 
 use core::fmt::Debug;
 use core::prelude::rust_2021::*;
