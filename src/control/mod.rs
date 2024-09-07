@@ -1,3 +1,6 @@
+pub mod pid;
+pub mod settler;
+
 /// A closed-loop feedback controller.
 ///
 /// At its core, a feedback controller is a simple function that produces an output value
@@ -18,7 +21,7 @@ pub trait MotionController: core::fmt::Debug + Send + Sync + 'static {
     /// /// This effectively means that the correction will increase proportional to the growth
     /// /// of the error. A high error value will produce a higher output than a lower error.
     /// fn update(&mut self, error: f64) -> f64 {
-    /// 	error * 2.0
+    ///     error * 2.0
     /// }
     /// ```
     fn update(&mut self, error: Self::Input) -> Self::Output;

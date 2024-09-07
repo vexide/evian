@@ -1,64 +1,9 @@
-use core::f64::consts::{FRAC_2_PI, PI};
-use core::fmt::Debug;
-use core::prelude::rust_2021::*;
-use num_traits::real::Real;
-use vexide::devices::smart::InertialSensor;
+use core::f64::consts::FRAC_2_PI;
+use vexide::{core::float::Float, devices::smart::InertialSensor};
 
-use crate::{devices::RotarySensor, math::Vec2};
+use crate::math::Vec2;
 
-/// A system that performs localization and returns telemetry on a mobile robot.
-pub trait Tracking: Send + 'static {
-    fn forward_travel(&self) -> f64;
-
-    fn heading(&self) -> f64;
-    fn set_heading(&mut self, heading: f64);
-
-    fn position(&self) -> Vec2;
-    fn set_position(&mut self, position: Vec2);
-
-    fn update(&mut self) -> TrackingContext;
-}
-
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct TrackingContext {
-    pub position: Vec2,
-    pub heading: f64,
-    pub forward_travel: f64,
-}
-
-/// A struct representing a wheel attached to a rotary sensor.
-#[derive(Debug, Clone, PartialEq)]
-pub struct TrackingWheel<T: RotarySensor> {
-    pub sensor: T,
-    pub wheel_diameter: f64,
-    pub offset: f64,
-    pub gearing: Option<f64>,
-}
-
-impl<T: RotarySensor> TrackingWheel<T> {
-    pub fn new(sensor: T, wheel_diameter: f64, offset: f64, gearing: Option<f64>) -> Self {
-        Self {
-            sensor,
-            wheel_diameter,
-            offset,
-            gearing,
-        }
-    }
-}
-
-impl<T: RotarySensor> TrackingWheel<T> {
-    fn travel(&self) -> f64 {
-        let wheel_circumference = self.wheel_diameter * PI;
-
-        return self
-            .sensor
-            .position()
-            .unwrap_or_default()
-            .as_revolutions()
-            * self.gearing.unwrap_or(1.0)
-            * wheel_circumference;
-    }
-}
+use super::{sensor::RotarySensor, wheel::TrackingWheel, Tracking, TrackingContext};
 
 #[derive(Debug, PartialEq)]
 pub struct ParallelWheelTracking<T: RotarySensor, U: RotarySensor> {

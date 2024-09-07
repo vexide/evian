@@ -12,9 +12,6 @@ use vexide::{
     },
 };
 
-/// Internal alias so I don't have to type this shit out a million times.
-pub type DriveMotors = Arc<Mutex<Vec<Motor>>>;
-
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
 pub trait RotarySensor: Send + 'static {
     type Error;
@@ -72,22 +69,3 @@ impl<T: RotarySensor> RotarySensor for Arc<Mutex<T>> {
         guard.unwrap().position()
     }
 }
-
-#[macro_export]
-macro_rules! drive_motors {
-    ( $( $item:expr ),* $(,)?) => {
-        {
-            use ::alloc::{sync::Arc, vec::Vec};
-            use ::vexide::{core::sync::Mutex, devices::smart::Motor};
-
-            let mut temp_vec: Vec<Motor> = Vec::new();
-
-            $(
-                temp_vec.push($item);
-            )*
-
-            Arc::new(Mutex::new(temp_vec))
-        }
-    };
-}
-pub use drive_motors;

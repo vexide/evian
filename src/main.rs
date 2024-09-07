@@ -1,44 +1,48 @@
 #![no_main]
 #![no_std]
-#![feature(error_in_core)]
 
 extern crate alloc;
 
-use core::error::Error;
+use core::time::Duration;
 
-use alloc::boxed::Box;
-use vexide::prelude::*;
-use vexnav::{
-    devices::DriveMotors, prelude::*, tracking::{ParallelWheelTracking, TrackingWheel}
+use evian::{
+    control::{pid::PidController, settler::Settler},
+    differential::{
+        commands::basic::BasicMotions,
+        drivetrain::{drive_motors, DifferentialDrivetrain, DriveMotors},
+    },
+    math::Vec2,
+    tracking::{parallel_wheel::ParallelWheelTracking, wheel::TrackingWheel},
 };
-
-type AnyError = Box<dyn Error>;
+use vexide::prelude::*;
 
 struct Robot {
     pub drivetrain: DifferentialDrivetrain<ParallelWheelTracking<DriveMotors, DriveMotors>>,
-    pub controller: Controller,
 }
 
-impl CompetitionRobot for Robot {
-    type Error = AnyError;
+impl Compete for Robot {
+    async fn autonomous(&mut self) {
+        let basic_motions = BasicMotions {
+            linear_controller: PidController::new((0.0, 0.0, 0.0), 0.25),
+            angular_controller: PidController::new((0.0, 0.0, 0.0), 0.25),
+            linear_settler: Settler::new()
+                .tolerance(0.3)
+                .tolerance_time(Duration::from_millis(100))
+                .timeout(Duration::from_secs(2)),
+            angular_settler: Settler::new()
+                .tolerance(0.3)
+                .tolerance_time(Duration::from_millis(100))
+                .timeout(Duration::from_secs(2)),
+        };
 
-    async fn autonomous(&mut self) -> Result<(), Self::Error> {
-        Ok(())
-    }
-
-    async fn driver(&mut self) -> Result<(), Self::Error> {
-        loop {
-            self.drivetrain
-                .execute(self.controller.command(JoystickLayout::Tank)?)
-                .await;
-
-            sleep(Controller::UPDATE_INTERVAL).await;
-        }
+        self.drivetrain
+            .execute(basic_motions.drive_distance(10.0))
+            .await;
     }
 }
 
 #[vexide::main]
-async fn main(peripherals: Peripherals) -> Result<(), AnyError> {
+async fn main(peripherals: Peripherals) {
     let left_motors = drive_motors![
         Motor::new(peripherals.port_1, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
@@ -60,8 +64,7 @@ async fn main(peripherals: Peripherals) -> Result<(), AnyError> {
 
     Robot {
         drivetrain: DifferentialDrivetrain::new(left_motors, right_motors, tracking),
-        controller: peripherals.primary_controller,
-    }.compete().await;
-
-    Ok(())
+    }
+    .compete()
+    .await;
 }

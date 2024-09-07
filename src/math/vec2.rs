@@ -1,5 +1,5 @@
 use core::{fmt, ops};
-use num_traits::real::Real;
+use vexide::core::float::Float;
 
 /// A vector in 2D space.
 ///

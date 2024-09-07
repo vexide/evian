@@ -47,7 +47,6 @@ dependencies = [
 name = "evian"
 version = "0.1.0"
 dependencies = [
- "num-traits",
  "replace_with",
  "vexide",
 ]
@@ -108,69 +107,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b05180d69e3da0e530ba2a1dae5110317e49e3b7f3d41be227dc5f92e49ee7af"
-dependencies = [
- "num-complex",
- "num-integer",
- "num-iter",
- "num-rational",
- "num-traits",
-]
-
-[[package]]
-name = "num-complex"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23c6602fda94a57c990fe0df199a035d83576b496aa29f4e634a8ac6004e68a6"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
-name = "num-integer"
-version = "0.1.46"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7969661fd2958a5cb096e56c8e1ad0444ac2bbcd0061bd28660485a44879858f"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
-name = "num-iter"
-version = "0.1.44"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d869c01cc0c455284163fd0092f1f93835385ccab5a98a0dcc497b2f8bf055a9"
-dependencies = [
- "autocfg",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-rational"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
-dependencies = [
- "autocfg",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-traits"
-version = "0.2.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da0df0e5185db44f69b44f26786fe401b6c293d1907744beaa7fa62b2e5a517a"
-dependencies = [
- "autocfg",
- "libm",
-]
-
-[[package]]
 name = "pin-project"
 version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -192,9 +128,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.82"
+version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ad3d49ab951a01fbaafe34f2ec74122942fe18a3f9814c3268f1bb72042131b"
+checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
 dependencies = [
  "unicode-ident",
 ]
@@ -269,31 +205,30 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
 name = "vex-sdk"
-version = "0.14.0"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f96042448be8828098eb3c799071bbf5a9a1abc170264ac04ffeef355eb1d60a"
+checksum = "f285bbc2b96fc4c7fae42ebe365dd2e9121e7002a58b1a9e0e4b1d14dba4d6d0"
 
 [[package]]
 name = "vexide"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b1be4d726856a2d608c7b81ada5e6fc53907c95922b5b792af16fd00a4f3975"
+checksum = "ace9f09b120d4964781954fb76ead234eb87e76e3c17fd7602abc0e195b630ad"
 dependencies = [
  "vex-sdk",
  "vexide-async",
  "vexide-core",
  "vexide-devices",
  "vexide-macro",
- "vexide-math",
  "vexide-panic",
  "vexide-startup",
 ]
 
 [[package]]
 name = "vexide-async"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29a7a8ff83836bd5c5d23e84ca1df87376b49bcb3cfaf93071f816258cf8117c"
+checksum = "7290f7048d80aa5f56f6cb0796d9961bfd59dbff09ed14c03f0fef6d2c3d4924"
 dependencies = [
  "async-task",
  "critical-section",
@@ -304,14 +239,15 @@ dependencies = [
 
 [[package]]
 name = "vexide-core"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d149c51e15ca483d095c867d840db484f9e20b54034ba0510d7d72eb92d27245"
+checksum = "74f955e2a26dcc203c3932e631c1b066c74903d45ecd925cbf4884a5ca1b18aa"
 dependencies = [
  "bitflags",
  "critical-section",
  "dlmalloc",
  "futures-core",
+ "libm",
  "lock_api",
  "no_std_io",
  "pin-project",
@@ -323,9 +259,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-devices"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e70e60e2d4daa4dd9c251d96759028eed08624b9d9260df1bc9beea285b195b1"
+checksum = "1b02afdd2441d91de4c135a665d548327d718efb336f75dbc980abf314f43c39"
 dependencies = [
  "bitflags",
  "mint",
@@ -337,29 +273,20 @@ dependencies = [
 
 [[package]]
 name = "vexide-macro"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41fa52584b31c59d97254caf86c471e1fdc0fe140426313682eb12c0e3bf1f53"
+checksum = "7538be8f7d96df9e4b3b845e6c8db0ccbdf09417abdeaab6db849c6c577267ba"
 dependencies = [
+ "proc-macro2",
  "quote",
  "syn",
 ]
 
 [[package]]
-name = "vexide-math"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9630a004398ca6ead31471ebd8de7c74c07c2370b098bd663309e816b4f4be0"
-dependencies = [
- "num",
- "vexide-core",
-]
-
-[[package]]
 name = "vexide-panic"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7a4b149fdaff8166170bdd548080f841dd5b51faef7a1e02ed668062e84baf2"
+checksum = "1cea12419ffd5ffbc9693f8897d78168c3f8a194eba65b959d9ebdf73ace3344"
 dependencies = [
  "vex-sdk",
  "vexide-core",
@@ -368,10 +295,11 @@ dependencies = [
 
 [[package]]
 name = "vexide-startup"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffbc235b9645f4a14343f9456bfa8828f5bfb941ba834588908daa43a4860000"
+checksum = "0d8a0f59e445582e39a1b18a1eda1e6ee73f47953cafd54a474b38940ac9d9c6"
 dependencies = [
+ "bitflags",
  "vex-sdk",
  "vexide-async",
  "vexide-core",
