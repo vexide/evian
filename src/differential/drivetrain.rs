@@ -51,7 +51,7 @@ impl<T: Tracking> DifferentialDrivetrain<T> {
                             }
                             CommandUpdate::Settled => {
                                 *command_guard = None;
-                                barrier.wait();
+                                barrier.wait().await;
                                 for motor in left_motors.lock().await.iter_mut() {
                                     motor.set_voltage(0.0).unwrap();
                                 }
