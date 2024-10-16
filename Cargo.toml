@@ -12,5 +12,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vexide = "0.3.0"
+vexide = "0.4.2"
 replace_with = { version = "0.1.7", default-features = false }

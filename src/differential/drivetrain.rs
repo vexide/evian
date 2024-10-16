@@ -72,7 +72,7 @@ impl<T: Tracking> DifferentialDrivetrain<T> {
 
     pub async fn execute(&mut self, cmd: impl Command<Output = Voltages>) {
         *self.command.lock().await = Some(Box::new(cmd));
-        self.barrier.wait();
+        self.barrier.wait().await;
     }
 
     pub fn tracking(&self) -> Arc<Mutex<T>> {
