@@ -14,3 +14,6 @@ edition = "2021"
 [dependencies]
 vexide = "0.4.2"
 replace_with = { version = "0.1.7", default-features = false }
+
+[package.metadata.docs.rs]
+targets = ["armv7a-none-eabi"]
