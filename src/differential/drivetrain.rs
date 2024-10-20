@@ -92,7 +92,7 @@ impl<T: Tracking> DifferentialDrivetrain<T> {
     }
 }
 
-/// Internal alias so I don't have to type this shit out a million times.
+// Internal alias so I don't have to type this shit out a million times.
 pub type DriveMotors = Arc<Mutex<Vec<Motor>>>;
 
 #[macro_export]

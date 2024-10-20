@@ -122,8 +122,8 @@ impl<
         let linear_error = target_forward_travel - cx.forward_travel;
         let angular_error = math::normalize_angle(target_heading - cx.heading);
 
-        if self.linear_settler.is_settled(linear_error)
-            && self.angular_settler.is_settled(angular_error)
+        if self.linear_settler.is_settled(linear_error, cx.linear_velocity)
+            && self.angular_settler.is_settled(angular_error, cx.angular_velocity)
         {
             return CommandUpdate::Settled;
         }

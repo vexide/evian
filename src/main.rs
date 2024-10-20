@@ -26,11 +26,11 @@ impl Compete for Robot {
             linear_controller: PidController::new((0.0, 0.0, 0.0), 0.25),
             angular_controller: PidController::new((0.0, 0.0, 0.0), 0.25),
             linear_settler: Settler::new()
-                .tolerance(0.3)
+                .error_tolerance(0.3)
                 .tolerance_time(Duration::from_millis(100))
                 .timeout(Duration::from_secs(2)),
             angular_settler: Settler::new()
-                .tolerance(0.3)
+                .error_tolerance(0.3)
                 .tolerance_time(Duration::from_millis(100))
                 .timeout(Duration::from_secs(2)),
         };
@@ -54,16 +54,18 @@ async fn main(peripherals: Peripherals) {
         Motor::new(peripherals.port_6, Gearset::Blue, Direction::Reverse),
     ];
 
-    let tracking = ParallelWheelTracking::new(
-        Vec2::default(),
-        90.0,
-        TrackingWheel::new(left_motors.clone(), 3.25, 7.5, Some(36.0 / 60.0)),
-        TrackingWheel::new(right_motors.clone(), 3.25, 7.5, Some(36.0 / 60.0)),
-        Some(InertialSensor::new(peripherals.port_9)),
-    );
-
     Robot {
-        drivetrain: DifferentialDrivetrain::new(left_motors, right_motors, tracking),
+        drivetrain: DifferentialDrivetrain::new(
+            left_motors.clone(),
+            right_motors.clone(),
+            ParallelWheelTracking::new(
+                Vec2::default(),
+                90.0,
+                TrackingWheel::new(left_motors, 3.25, 7.5, Some(36.0 / 60.0)),
+                TrackingWheel::new(right_motors, 3.25, 7.5, Some(36.0 / 60.0)),
+                Some(InertialSensor::new(peripherals.port_9)),
+            )
+        ),
     }
     .compete()
     .await;

@@ -37,25 +37,20 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
 }
 
 impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
-    fn track_width(&self) -> f64 {
-        self.left_wheel.offset + self.right_wheel.offset
+    
+    pub fn set_heading(&mut self, heading: f64) {
+        self.heading_offset = heading - self.heading();
     }
-}
-
-impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> {
-    fn position(&self) -> Vec2 {
-        self.position
-    }
-
-    fn set_position(&mut self, position: Vec2) {
+    
+    pub fn set_position(&mut self, position: Vec2) {
         self.position = position;
     }
 
-    fn forward_travel(&self) -> f64 {
-        (self.left_wheel.travel() + self.right_wheel.travel()) / 2.0
+    pub fn track_width(&self) -> f64 {
+        self.left_wheel.offset + self.right_wheel.offset
     }
 
-    fn heading(&self) -> f64 {
+    pub fn heading(&self) -> f64 {
         self.heading_offset
             + if let Some(gyro) = &self.gyro {
                 if let Ok(heading) = gyro.heading() {
@@ -68,10 +63,12 @@ impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> 
             } % FRAC_2_PI
     }
 
-    fn set_heading(&mut self, heading: f64) {
-        self.heading_offset = heading - self.heading();
+    pub fn forward_travel(&self) -> f64 {
+        (self.left_wheel.travel() + self.right_wheel.travel()) / 2.0
     }
+}
 
+impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> {
     fn update(&mut self) -> TrackingContext {
         let forward_travel = self.forward_travel();
         let heading = self.heading();
@@ -90,9 +87,11 @@ impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> 
         self.prev_forward_travel = forward_travel;
 
         TrackingContext {
-            position: self.position(),
-            heading: self.heading(),
-            forward_travel: self.forward_travel(),
+            position: self.position,
+            heading,
+            forward_travel,
+            linear_velocity: todo!(),
+            angular_velocity: todo!(),
         }
     }
 }

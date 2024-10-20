@@ -6,8 +6,9 @@ use vexide::core::time::Instant;
 pub struct Settler {
     start_timestamp: Instant,
     tolerance_timestamp: Option<Instant>,
-    tolerance: Option<f64>,
     tolerance_time: Option<Duration>,
+    error_tolerance: Option<f64>,
+    velocity_tolerance: Option<f64>,
     timeout: Option<Duration>,
 }
 
@@ -17,14 +18,20 @@ impl Settler {
         Self {
             start_timestamp: Instant::now(),
             tolerance_timestamp: None,
-            tolerance: None,
+            error_tolerance: None,
+            velocity_tolerance: None,
             tolerance_time: None,
             timeout: None,
         }
     }
 
-    pub fn tolerance(&mut self, tolerance: f64) -> Self {
-        self.tolerance = Some(tolerance);
+    pub fn error_tolerance(&mut self, tolerance: f64) -> Self {
+        self.error_tolerance = Some(tolerance);
+        *self
+    }
+
+    pub fn velocity_tolerance(&mut self, tolerance: f64) -> Self {
+        self.velocity_tolerance = Some(tolerance);
         *self
     }
 
@@ -38,25 +45,36 @@ impl Settler {
         *self
     }
 
-    pub fn is_settled(&mut self, error: f64) -> bool {
+    pub fn is_settled(&mut self, error: f64, velocity: f64) -> bool {
+        // If we have timed out, then we are settled.
         if let Some(timeout) = self.timeout {
             if self.start_timestamp.elapsed() < timeout {
                 return true;
             }
         }
 
-        if let Some(tolerance) = self.tolerance {
-            if error < tolerance {
-                if self.tolerance_timestamp.is_none() {
-                    self.tolerance_timestamp = Some(Instant::now());
-                } else if let Some(tolerance_time) = self.tolerance_time {
-                    if self.tolerance_timestamp.unwrap().elapsed() > tolerance_time {
-                        return true;
-                    }
-                }
-            } else if self.tolerance_timestamp.is_some() {
-                self.tolerance_timestamp = None;
+        // Check if we are within the tolerance range for either error and velocity.
+        let in_tolerances = self
+            .error_tolerance
+            .is_none_or(|tolerance| error < tolerance)
+            && self
+                .velocity_tolerance
+                .is_none_or(|tolerance| velocity < tolerance);
+
+        if in_tolerances {
+            // We are now within tolerance, so we record the timestamp that this occurred if
+            // we previously weren't in tolerance.
+            if self.tolerance_timestamp.is_none() {
+                self.tolerance_timestamp = Some(Instant::now());
             }
+
+            // If we have a tolerance time (required time to be within tolerance to settle), then compare that with
+            // the elapsed tolerance timer. If we've been settled for greater than that time, then we are now settled.
+            if self.tolerance_time.is_none_or(|time| self.tolerance_timestamp.unwrap().elapsed() > time) {
+                return true;
+            }
+        } else if self.tolerance_timestamp.is_some() {
+            self.tolerance_timestamp = None;
         }
 
         false
