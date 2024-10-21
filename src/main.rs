@@ -23,8 +23,8 @@ struct Robot {
 impl Compete for Robot {
     async fn autonomous(&mut self) {
         let basic_motions = BasicMotions {
-            linear_controller: PidController::new((0.0, 0.0, 0.0), 0.25),
-            angular_controller: PidController::new((0.0, 0.0, 0.0), 0.25),
+            linear_controller: PidController::new(0.0, 0.0, 0.0, None),
+            angular_controller: PidController::new(0.0, 0.0, 0.0, None),
             linear_settler: Settler::new()
                 .error_tolerance(0.3)
                 .tolerance_time(Duration::from_millis(100))
@@ -36,7 +36,9 @@ impl Compete for Robot {
         };
 
         self.drivetrain
-            .execute(basic_motions.drive_distance(10.0))
+            .execute(
+                basic_motions.drive_distance(10.0),
+            )
             .await;
     }
 }
@@ -64,7 +66,7 @@ async fn main(peripherals: Peripherals) {
                 TrackingWheel::new(left_motors, 3.25, 7.5, Some(36.0 / 60.0)),
                 TrackingWheel::new(right_motors, 3.25, 7.5, Some(36.0 / 60.0)),
                 Some(InertialSensor::new(peripherals.port_9)),
-            )
+            ),
         ),
     }
     .compete()

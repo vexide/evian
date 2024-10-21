@@ -1,4 +1,4 @@
-use vexide::devices::smart::Motor;
+use vexide::{core::time::Instant, devices::smart::Motor};
 
 use crate::{
     command::{Command, CommandUpdate},
@@ -48,6 +48,8 @@ impl<
             angular_controller: self.angular_controller.clone(),
             angular_settler: self.angular_settler,
             angular_target: heading_target,
+
+            prev_timestamp: Instant::now(),
         }
     }
 
@@ -93,6 +95,8 @@ struct BasicMotion<
     angular_controller: A,
     angular_settler: Settler,
     angular_target: Target,
+
+    prev_timestamp: Instant,
 }
 
 impl<
@@ -103,6 +107,8 @@ impl<
     type Output = Voltages;
 
     fn update(&mut self, cx: TrackingContext) -> CommandUpdate<Self::Output> {
+        let dt = self.prev_timestamp.elapsed();
+
         if self.initial_cx.is_none() {
             self.initial_cx = Some(cx);
         }
@@ -128,8 +134,18 @@ impl<
             return CommandUpdate::Settled;
         }
 
-        let linear_output = self.linear_controller.update(linear_error);
-        let angular_output = self.linear_controller.update(angular_error);
+        let linear_output = self.linear_controller.update(
+            target_forward_travel,
+            cx.forward_travel,
+            dt,
+        );
+        let angular_output = self.linear_controller.update(
+            math::normalize_angle(target_heading),
+            math::normalize_angle(cx.heading),
+            dt,
+        );
+
+        self.prev_timestamp = Instant::now();
 
         CommandUpdate::Update(
             Voltages(

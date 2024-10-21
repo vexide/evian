@@ -14,16 +14,16 @@ use vexide::{
 
 use super::Voltages;
 
-pub struct DifferentialDrivetrain<T: Tracking> {
+pub struct DifferentialDrivetrain<T: Tracking + Send + 'static> {
     left_motors: DriveMotors,
     right_motors: DriveMotors,
     tracking: Arc<Mutex<T>>,
-    command: Arc<Mutex<Option<Box<dyn Command<Output = Voltages>>>>>,
+    command: Arc<Mutex<Option<Box<dyn Command<Output = Voltages> + Send>>>>,
     barrier: Arc<Barrier>,
     _task: Task<()>,
 }
 
-impl<T: Tracking> DifferentialDrivetrain<T> {
+impl<T: Tracking + Send> DifferentialDrivetrain<T> {
     pub fn new(left_motors: DriveMotors, right_motors: DriveMotors, tracking: T) -> Self {
         let command = Arc::new(Mutex::new(None));
         let tracking = Arc::new(Mutex::new(tracking));
@@ -70,7 +70,7 @@ impl<T: Tracking> DifferentialDrivetrain<T> {
         }
     }
 
-    pub async fn execute(&mut self, cmd: impl Command<Output = Voltages>) {
+    pub async fn execute(&mut self, cmd: impl Command<Output = Voltages> + Send + 'static) {
         *self.command.lock().await = Some(Box::new(cmd));
         self.barrier.wait().await;
     }
@@ -79,7 +79,7 @@ impl<T: Tracking> DifferentialDrivetrain<T> {
         Arc::clone(&self.tracking)
     }
 
-    pub fn command(&self) -> Arc<Mutex<Option<Box<dyn Command<Output = Voltages>>>>> {
+    pub fn command(&self) -> Arc<Mutex<Option<Box<dyn Command<Output = Voltages> + Send>>>> {
         Arc::clone(&self.command)
     }
 

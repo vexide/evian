@@ -1,6 +1,6 @@
 use crate::tracking::TrackingContext;
 
-pub trait Command: Send + 'static {
+pub trait Command {
     type Output;
 
     fn update(&mut self, cx: TrackingContext) -> CommandUpdate<Self::Output>;

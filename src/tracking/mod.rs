@@ -8,7 +8,7 @@ use core::prelude::rust_2021::*;
 use crate::math::Vec2;
 
 /// A system that performs localization and returns telemetry of a mobile robot.
-pub trait Tracking: Send + 'static {
+pub trait Tracking {
     fn update(&mut self) -> TrackingContext;
 }
 

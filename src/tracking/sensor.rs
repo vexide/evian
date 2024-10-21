@@ -13,7 +13,7 @@ use vexide::{
 };
 
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
-pub trait RotarySensor: Send + 'static {
+pub trait RotarySensor {
     type Error;
 
     fn position(&self) -> Result<Position, Self::Error>;

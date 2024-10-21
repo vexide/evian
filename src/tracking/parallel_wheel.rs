@@ -37,7 +37,6 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
 }
 
 impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
-    
     pub fn set_heading(&mut self, heading: f64) {
         self.heading_offset = heading - self.heading();
     }
@@ -76,10 +75,6 @@ impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> 
         let delta_forward_travel = forward_travel - self.prev_forward_travel;
         let delta_heading = heading - self.prev_heading;
 
-        // Find a position delta.
-        // This is a vector relative to the previous position, and can be found by creating a vector with our
-        // average forward travel as the y-axis, then rotating the y-axis about our current heading. This gives
-        // a rough estimate of the change in position, but does not account for sideways motion.
         self.position += Vec2::from_polar(
             2.0 * (delta_forward_travel / delta_heading) * (heading / 2.0).sin(),
             (self.prev_heading + delta_heading) / 2.0,
