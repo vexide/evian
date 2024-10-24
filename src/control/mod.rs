@@ -3,13 +3,24 @@ use core::time::Duration;
 pub mod pid;
 pub mod settler;
 
-pub trait MotionController {
+pub trait Feedback {
     type Input;
     type Output;
 
     fn update(
         &mut self,
-        process_value: Self::Input,
+        measurement: Self::Input,
+        setpoint: Self::Input,
+        dt: Duration,
+    ) -> Self::Output;
+}
+
+pub trait Feedforward {
+    type Input;
+    type Output;
+
+    fn update(
+        &mut self,
         setpoint: Self::Input,
         dt: Duration,
     ) -> Self::Output;

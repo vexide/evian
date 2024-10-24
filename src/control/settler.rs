@@ -70,7 +70,10 @@ impl Settler {
 
             // If we have a tolerance time (required time to be within tolerance to settle), then compare that with
             // the elapsed tolerance timer. If we've been settled for greater than that time, then we are now settled.
-            if self.tolerance_time.is_none_or(|time| self.tolerance_timestamp.unwrap().elapsed() > time) {
+            if self
+                .tolerance_time
+                .is_none_or(|time| self.tolerance_timestamp.unwrap().elapsed() > time)
+            {
                 return true;
             }
         } else if self.tolerance_timestamp.is_some() {

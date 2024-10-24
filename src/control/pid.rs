@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use vexide::prelude::Float;
 
-use super::MotionController;
+use super::Feedback;
 
 /// A proportional-integral-derivative (PID) feedback controller with windup prevention.
 ///
@@ -46,7 +46,7 @@ use super::MotionController;
 /// 2. An optional `integration_range` value can be passed to the controller, which defines a range of error where
 ///    integration will occur. When `|error| > integration_range`, no integration will occur if used.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct PidController {
+pub struct Pid {
     kp: f64,
     ki: f64,
     kd: f64,
@@ -56,8 +56,8 @@ pub struct PidController {
     prev_error: f64,
 }
 
-impl PidController {
-    /// Construct a new [`PIDController`] from gain constants.
+impl Pid {
+    /// Construct a new PID controller from gain constants and an optional integration range.
     pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<f64>) -> Self {
         Self {
             kp,
@@ -114,18 +114,18 @@ impl PidController {
     }
 }
 
-impl MotionController for PidController {
+impl Feedback for Pid {
     type Input = f64;
     type Output = f64;
 
     fn update(
         &mut self,
-        process_value: Self::Output,
+        measurement: Self::Output,
         setpoint: Self::Input,
         dt: Duration,
     ) -> Self::Output {
         // Calculate error (difference between our setpoint and measured process value).
-        let error = setpoint - process_value;
+        let error = setpoint - measurement;
 
         // If an integration range is used and we are within it, add to the integral.
         // If we are outside of the range, or if we have crossed the setpoint, reset integration.

@@ -4,14 +4,14 @@ use vexide::{core::time::Instant, devices::smart::Motor};
 
 use crate::{
     command::{Command, CommandUpdate},
-    control::{settler::Settler, MotionController},
+    control::{settler::Settler, Feedback},
     differential::Voltages,
     tracking::TrackingContext,
 };
 
 pub struct BasicMotions<
-    L: MotionController<Input = f64, Output = f64> + Clone,
-    A: MotionController<Input = f64, Output = f64> + Clone,
+    L: Feedback<Input = f64, Output = f64> + Clone,
+    A: Feedback<Input = f64, Output = f64> + Clone,
 > {
     pub linear_controller: L,
     pub linear_settler: Settler,
@@ -20,8 +20,8 @@ pub struct BasicMotions<
 }
 
 impl<
-        L: MotionController<Input = f64, Output = f64> + Clone,
-        A: MotionController<Input = f64, Output = f64> + Clone,
+        L: Feedback<Input = f64, Output = f64> + Clone,
+        A: Feedback<Input = f64, Output = f64> + Clone,
     > BasicMotions<L, A>
 {
     pub fn new(
@@ -83,10 +83,7 @@ enum Target {
 }
 
 #[derive(Clone, Copy, PartialEq)]
-struct BasicMotion<
-    L: MotionController<Input = f64, Output = f64>,
-    A: MotionController<Input = f64, Output = f64>,
-> {
+struct BasicMotion<L: Feedback<Input = f64, Output = f64>, A: Feedback<Input = f64, Output = f64>> {
     initial_cx: Option<TrackingContext>,
 
     linear_controller: L,
@@ -100,10 +97,8 @@ struct BasicMotion<
     prev_timestamp: Instant,
 }
 
-impl<
-        L: MotionController<Input = f64, Output = f64>,
-        A: MotionController<Input = f64, Output = f64>,
-    > Command for BasicMotion<L, A>
+impl<L: Feedback<Input = f64, Output = f64>, A: Feedback<Input = f64, Output = f64>> Command
+    for BasicMotion<L, A>
 {
     type Output = Voltages;
 
@@ -127,24 +122,24 @@ impl<
         };
 
         let linear_error = target_forward_travel - cx.forward_travel;
-        let angular_error = (target_heading - cx.heading) % FRAC_PI_2;
+        let angular_error = target_heading % FRAC_PI_2 - cx.heading;
 
-        if self.linear_settler.is_settled(linear_error, cx.linear_velocity)
-            && self.angular_settler.is_settled(angular_error, cx.angular_velocity)
+        if self
+            .linear_settler
+            .is_settled(linear_error, cx.linear_velocity)
+            && self
+                .angular_settler
+                .is_settled(angular_error, cx.angular_velocity)
         {
             return CommandUpdate::Settled;
         }
 
-        let linear_output = self.linear_controller.update(
-            cx.forward_travel,
-            target_forward_travel,
-            dt,
-        );
-        let angular_output = self.linear_controller.update(
-            cx.heading,
-            target_heading % FRAC_PI_2,
-            dt,
-        );
+        let linear_output =
+            self.linear_controller
+                .update(cx.forward_travel, target_forward_travel, dt);
+        let angular_output =
+            self.linear_controller
+                .update(cx.heading, target_heading % FRAC_PI_2, dt);
 
         self.prev_timestamp = Instant::now();
 

@@ -6,7 +6,7 @@ extern crate alloc;
 use core::time::Duration;
 
 use evian::{
-    control::{pid::PidController, settler::Settler},
+    control::{pid::Pid, settler::Settler},
     differential::{
         commands::basic::BasicMotions,
         drivetrain::{drive_motors, DifferentialDrivetrain, DriveMotors},
@@ -26,8 +26,8 @@ struct Robot {
 impl Compete for Robot {
     async fn autonomous(&mut self) {
         let basic_motions = BasicMotions {
-            linear_controller: PidController::new(0.5, 0.0, 0.0, None),
-            angular_controller: PidController::new(0.5, 0.0, 0.0, None),
+            linear_controller: Pid::new(0.5, 0.0, 0.0, None),
+            angular_controller: Pid::new(0.5, 0.0, 0.0, None),
             linear_settler: Settler::new()
                 .error_tolerance(0.3)
                 .tolerance_time(Duration::from_millis(100))

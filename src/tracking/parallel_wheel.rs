@@ -10,6 +10,7 @@ pub struct ParallelWheelTracking<T: RotarySensor, U: RotarySensor> {
     position: Vec2,
     left_wheel: TrackingWheel<T>,
     right_wheel: TrackingWheel<U>,
+    
     gyro: Option<InertialSensor>,
     heading_offset: f64,
     prev_forward_travel: f64,

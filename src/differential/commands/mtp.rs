@@ -3,16 +3,18 @@ use core::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 use vexide::{core::time::Instant, devices::smart::Motor, prelude::Float};
 
 use crate::{
-    command::{Command, CommandUpdate}, control::{settler::Settler, MotionController}, differential::Voltages, math::Vec2, tracking::TrackingContext
+    command::{Command, CommandUpdate},
+    control::{settler::Settler, Feedback},
+    differential::Voltages,
+    math::Vec2,
+    tracking::TrackingContext,
 };
 
 #[derive(Clone, Copy, PartialEq)]
 struct MoveToPoint<
-    L: MotionController<Input = f64, Output = f64>,
-    A: MotionController<Input = f64, Output = f64>,
+    L: Feedback<Input = f64, Output = f64>,
+    A: Feedback<Input = f64, Output = f64>,
 > {
-    initial_cx: Option<TrackingContext>,
-
     target: Vec2,
 
     distance_controller: L,
@@ -24,8 +26,8 @@ struct MoveToPoint<
 }
 
 impl<
-        L: MotionController<Input = f64, Output = f64>,
-        A: MotionController<Input = f64, Output = f64>,
+        L: Feedback<Input = f64, Output = f64>,
+        A: Feedback<Input = f64, Output = f64>,
     > Command for MoveToPoint<L, A>
 {
     type Output = Voltages;
@@ -33,26 +35,21 @@ impl<
     fn update(&mut self, cx: TrackingContext) -> CommandUpdate<Self::Output> {
         let dt = self.prev_timestamp.elapsed();
 
-        let local_target = cx.position - self.target;
-        let distance_to_point = local_target.length();
-        let mut angle_target = local_target.angle();
-        let mut angle_error = cx.heading - angle_target;
+        let local_target = self.target - cx.position;
         
+        let mut angle_target = local_target.angle();
+        let mut angle_error = (cx.heading - local_target.angle()) % FRAC_PI_2;
+        let mut distance_error = local_target.length();
+
         if angle_error.abs() > FRAC_PI_4 {
+            distance_error = -distance_error;
             angle_error -= FRAC_PI_2;
             angle_target -= FRAC_PI_2;
         }
 
-        let angular_output = self.angle_controller.update(
-            angle_target,
-            cx.heading,
-            dt,
-        );
-        let linear_output = self.distance_controller.update(
-            distance_to_point,
-            0.0,
-            dt,
-        ) * angle_error.cos();
+        let angular_output = self.angle_controller.update(angle_target, cx.heading, dt);
+        let linear_output =
+            self.distance_controller.update(distance_error, 0.0, dt) * angle_error.cos();
 
         self.prev_timestamp = Instant::now();
 
