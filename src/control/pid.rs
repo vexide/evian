@@ -120,8 +120,8 @@ impl MotionController for PidController {
 
     fn update(
         &mut self,
-        setpoint: Self::Input,
         process_value: Self::Output,
+        setpoint: Self::Input,
         dt: Duration,
     ) -> Self::Output {
         // Calculate error (difference between our setpoint and measured process value).

@@ -136,13 +136,13 @@ impl<
         }
 
         let linear_output = self.linear_controller.update(
-            target_forward_travel,
             cx.forward_travel,
+            target_forward_travel,
             dt,
         );
         let angular_output = self.linear_controller.update(
+            cx.heading,
             target_heading % FRAC_PI_2,
-            cx.heading % FRAC_PI_2,
             dt,
         );
 
