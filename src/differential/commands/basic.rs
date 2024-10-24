@@ -10,14 +10,14 @@ use crate::{
     tracking::TrackingContext,
 };
 
-pub struct BasicMotions<F: Feedback<Input = f64, Output = f64> + Clone> {
+pub struct BasicCommands<F: Feedback<Input = f64, Output = f64> + Clone> {
     pub linear_controller: F,
-    pub linear_settler: Settler,
     pub angular_controller: F,
+    pub linear_settler: Settler,
     pub angular_settler: Settler,
 }
 
-impl<F: Feedback<Input = f64, Output = f64> + Clone> BasicMotions<F> {
+impl<F: Feedback<Input = f64, Output = f64> + Clone> BasicCommands<F> {
     pub fn new(
         linear_controller: F,
         angular_controller: F,
@@ -81,11 +81,10 @@ struct BasicMotion<F: Feedback<Input = f64, Output = f64>> {
     initial_cx: Option<TrackingContext>,
 
     linear_controller: F,
-    linear_settler: Settler,
-    linear_target: Target,
-
     angular_controller: F,
+    linear_settler: Settler,
     angular_settler: Settler,
+    linear_target: Target,
     angular_target: Target,
 
     prev_timestamp: Instant,

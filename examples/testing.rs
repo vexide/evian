@@ -17,7 +17,7 @@ struct Robot {
 
 impl Compete for Robot {
     async fn autonomous(&mut self) {
-        let basic_motions = BasicMotions {
+        let basic_motions = BasicCommands {
             linear_controller: Pid::new(0.5, 0.0, 0.0, None),
             angular_controller: Pid::new(0.5, 0.0, 0.0, None),
             linear_settler: Settler::new()

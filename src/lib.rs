@@ -12,7 +12,7 @@ pub mod tracking;
 pub mod prelude {
     pub use crate::{
         control::{pid::Pid, Feedback, Feedforward},
-        differential::{commands::basic::BasicMotions, drivetrain::DifferentialDrivetrain},
+        differential::{commands::basic::BasicCommands, drivetrain::DifferentialDrivetrain},
         math::vec2::Vec2,
         settler::Settler,
         tracking::{parallel_wheel::ParallelWheelTracking, wheel::TrackingWheel, Tracking},

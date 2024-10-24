@@ -1,2 +1,2 @@
 pub mod basic;
-pub mod mtp;
+pub mod point;

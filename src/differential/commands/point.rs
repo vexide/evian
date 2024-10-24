@@ -35,6 +35,10 @@ impl<F: Feedback<Input = f64, Output = f64>> Command for MoveToPoint<F> {
         let mut angle_error = (cx.heading - local_target.angle()) % FRAC_PI_2;
         let mut distance_error = local_target.length();
 
+        if self.settler.is_settled(distance_error, cx.linear_velocity) {
+            return CommandUpdate::Settled;
+        }
+
         if angle_error.abs() > FRAC_PI_4 {
             distance_error = -distance_error;
             angle_error -= FRAC_PI_2;
