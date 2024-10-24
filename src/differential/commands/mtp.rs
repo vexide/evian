@@ -12,20 +12,18 @@ use crate::{
 };
 
 #[derive(Clone, Copy, PartialEq)]
-struct MoveToPoint<L: Feedback<Input = f64, Output = f64>, A: Feedback<Input = f64, Output = f64>> {
+struct MoveToPoint<F: Feedback<Input = f64, Output = f64>> {
     target: Vec2,
 
-    distance_controller: L,
-    angle_controller: A,
+    distance_controller: F,
+    angle_controller: F,
 
     settler: Settler,
 
     prev_timestamp: Instant,
 }
 
-impl<L: Feedback<Input = f64, Output = f64>, A: Feedback<Input = f64, Output = f64>> Command
-    for MoveToPoint<L, A>
-{
+impl<F: Feedback<Input = f64, Output = f64>> Command for MoveToPoint<F> {
     type Output = Voltages;
 
     fn update(&mut self, cx: TrackingContext) -> CommandUpdate<Self::Output> {

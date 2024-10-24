@@ -10,24 +10,17 @@ use crate::{
     tracking::TrackingContext,
 };
 
-pub struct BasicMotions<
-    L: Feedback<Input = f64, Output = f64> + Clone,
-    A: Feedback<Input = f64, Output = f64> + Clone,
-> {
-    pub linear_controller: L,
+pub struct BasicMotions<F: Feedback<Input = f64, Output = f64> + Clone> {
+    pub linear_controller: F,
     pub linear_settler: Settler,
-    pub angular_controller: A,
+    pub angular_controller: F,
     pub angular_settler: Settler,
 }
 
-impl<
-        L: Feedback<Input = f64, Output = f64> + Clone,
-        A: Feedback<Input = f64, Output = f64> + Clone,
-    > BasicMotions<L, A>
-{
+impl<F: Feedback<Input = f64, Output = f64> + Clone> BasicMotions<F> {
     pub fn new(
-        linear_controller: L,
-        angular_controller: A,
+        linear_controller: F,
+        angular_controller: F,
         linear_settler: Settler,
         angular_settler: Settler,
     ) -> Self {
@@ -39,7 +32,7 @@ impl<
         }
     }
 
-    fn make_command(&self, distance_target: Target, heading_target: Target) -> BasicMotion<L, A> {
+    fn make_command(&self, distance_target: Target, heading_target: Target) -> BasicMotion<F> {
         BasicMotion {
             initial_cx: None,
 
@@ -84,23 +77,21 @@ enum Target {
 }
 
 #[derive(Clone, Copy, PartialEq)]
-struct BasicMotion<L: Feedback<Input = f64, Output = f64>, A: Feedback<Input = f64, Output = f64>> {
+struct BasicMotion<F: Feedback<Input = f64, Output = f64>> {
     initial_cx: Option<TrackingContext>,
 
-    linear_controller: L,
+    linear_controller: F,
     linear_settler: Settler,
     linear_target: Target,
 
-    angular_controller: A,
+    angular_controller: F,
     angular_settler: Settler,
     angular_target: Target,
 
     prev_timestamp: Instant,
 }
 
-impl<L: Feedback<Input = f64, Output = f64>, A: Feedback<Input = f64, Output = f64>> Command
-    for BasicMotion<L, A>
-{
+impl<F: Feedback<Input = f64, Output = f64>> Command for BasicMotion<F> {
     type Output = Voltages;
 
     fn update(&mut self, cx: TrackingContext) -> CommandUpdate<Self::Output> {
