@@ -37,10 +37,11 @@ impl<T: Tracking + Send> DifferentialDrivetrain<T> {
             barrier: barrier.clone(),
             _task: spawn(async move {
                 loop {
+                    let tracking_cx = tracking.lock().await.update();
                     let mut command_guard = command.lock().await;
 
                     if let Some(command) = command_guard.as_mut() {
-                        match command.update(tracking.lock().await.update()) {
+                        match command.update(tracking_cx) {
                             CommandUpdate::Update(Voltages(left, right)) => {
                                 for motor in left_motors.lock().await.iter_mut() {
                                     motor.set_voltage(left).unwrap();

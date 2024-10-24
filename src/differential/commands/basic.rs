@@ -1,10 +1,11 @@
+use core::f64::consts::FRAC_PI_2;
+
 use vexide::{core::time::Instant, devices::smart::Motor};
 
 use crate::{
     command::{Command, CommandUpdate},
     control::{settler::Settler, MotionController},
     differential::Voltages,
-    math,
     tracking::TrackingContext,
 };
 
@@ -126,7 +127,7 @@ impl<
         };
 
         let linear_error = target_forward_travel - cx.forward_travel;
-        let angular_error = math::normalize_angle(target_heading - cx.heading);
+        let angular_error = (target_heading - cx.heading) % FRAC_PI_2;
 
         if self.linear_settler.is_settled(linear_error, cx.linear_velocity)
             && self.angular_settler.is_settled(angular_error, cx.angular_velocity)
@@ -140,8 +141,8 @@ impl<
             dt,
         );
         let angular_output = self.linear_controller.update(
-            math::normalize_angle(target_heading),
-            math::normalize_angle(cx.heading),
+            target_heading % FRAC_PI_2,
+            cx.heading % FRAC_PI_2,
             dt,
         );
 

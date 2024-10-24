@@ -48,7 +48,7 @@ impl Settler {
     pub fn is_settled(&mut self, error: f64, velocity: f64) -> bool {
         // If we have timed out, then we are settled.
         if let Some(timeout) = self.timeout {
-            if self.start_timestamp.elapsed() < timeout {
+            if self.start_timestamp.elapsed() > timeout {
                 return true;
             }
         }
