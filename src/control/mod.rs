@@ -1,7 +1,6 @@
 use core::time::Duration;
 
 pub mod pid;
-pub mod settler;
 
 pub trait Feedback {
     type Input;
@@ -19,9 +18,5 @@ pub trait Feedforward {
     type Input;
     type Output;
 
-    fn update(
-        &mut self,
-        setpoint: Self::Input,
-        dt: Duration,
-    ) -> Self::Output;
+    fn update(&mut self, setpoint: Self::Input, dt: Duration) -> Self::Output;
 }

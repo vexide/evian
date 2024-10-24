@@ -4,8 +4,9 @@ use vexide::{core::time::Instant, devices::smart::Motor};
 
 use crate::{
     command::{Command, CommandUpdate},
-    control::{settler::Settler, Feedback},
+    control::Feedback,
     differential::Voltages,
+    settler::Settler,
     tracking::TrackingContext,
 };
 

@@ -6,4 +6,5 @@ pub mod command;
 pub mod control;
 pub mod differential;
 pub mod math;
+pub mod settler;
 pub mod tracking;

@@ -4,17 +4,15 @@ use vexide::{core::time::Instant, devices::smart::Motor, prelude::Float};
 
 use crate::{
     command::{Command, CommandUpdate},
-    control::{settler::Settler, Feedback},
+    control::Feedback,
     differential::Voltages,
     math::Vec2,
+    settler::Settler,
     tracking::TrackingContext,
 };
 
 #[derive(Clone, Copy, PartialEq)]
-struct MoveToPoint<
-    L: Feedback<Input = f64, Output = f64>,
-    A: Feedback<Input = f64, Output = f64>,
-> {
+struct MoveToPoint<L: Feedback<Input = f64, Output = f64>, A: Feedback<Input = f64, Output = f64>> {
     target: Vec2,
 
     distance_controller: L,
@@ -25,10 +23,8 @@ struct MoveToPoint<
     prev_timestamp: Instant,
 }
 
-impl<
-        L: Feedback<Input = f64, Output = f64>,
-        A: Feedback<Input = f64, Output = f64>,
-    > Command for MoveToPoint<L, A>
+impl<L: Feedback<Input = f64, Output = f64>, A: Feedback<Input = f64, Output = f64>> Command
+    for MoveToPoint<L, A>
 {
     type Output = Voltages;
 
@@ -36,7 +32,7 @@ impl<
         let dt = self.prev_timestamp.elapsed();
 
         let local_target = self.target - cx.position;
-        
+
         let mut angle_target = local_target.angle();
         let mut angle_error = (cx.heading - local_target.angle()) % FRAC_PI_2;
         let mut distance_error = local_target.length();

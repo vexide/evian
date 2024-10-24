@@ -6,7 +6,8 @@ extern crate alloc;
 use core::time::Duration;
 
 use evian::{
-    control::{pid::Pid, settler::Settler},
+    control::pid::Pid,
+    settler::Settler,
     differential::{
         commands::basic::BasicMotions,
         drivetrain::{drive_motors, DifferentialDrivetrain, DriveMotors},
