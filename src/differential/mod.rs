@@ -1,6 +1,6 @@
 //! Differential Drivetrain Control
 //!
-//! A differential drivetrain (also called a **tank drive**) is a robot whose movement is
+//! A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot whose movement is
 //! controlled by two independently driven sets of motors on the left and right sides of its
 //! chassis. The system operates by adjusting the speed and direction of the left and right
 //! motors, enabling the robot to drive straight or execute turns.

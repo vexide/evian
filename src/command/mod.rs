@@ -4,7 +4,7 @@
 //! is a general implementation of a motion algorithm, and might perform actions like:
 //!
 //! - Driving to a target position.
-//! - Turning to face a direction .
+//! - Turning to face a direction.
 //! - Following a curve or trajectory.
 //! - Maintaining a constant velocity.
 //!
