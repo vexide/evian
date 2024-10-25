@@ -3,21 +3,20 @@ use core::f64::consts::FRAC_PI_2;
 use vexide::{core::time::Instant, devices::smart::Motor};
 
 use crate::{
-    command::{Command, CommandUpdate},
+    command::{settler::Settler, Command, CommandUpdate},
     control::Feedback,
     differential::Voltages,
-    settler::Settler,
     tracking::TrackingContext,
 };
 
-pub struct BasicCommands<F: Feedback<Input = f64, Output = f64> + Clone> {
+pub struct BasicCommands<F: Feedback<Error = f64, Output = f64> + Clone> {
     pub linear_controller: F,
     pub angular_controller: F,
     pub linear_settler: Settler,
     pub angular_settler: Settler,
 }
 
-impl<F: Feedback<Input = f64, Output = f64> + Clone> BasicCommands<F> {
+impl<F: Feedback<Error = f64, Output = f64> + Clone> BasicCommands<F> {
     pub fn new(
         linear_controller: F,
         angular_controller: F,
@@ -77,7 +76,7 @@ enum Target {
 }
 
 #[derive(Clone, Copy, PartialEq)]
-struct BasicMotion<F: Feedback<Input = f64, Output = f64>> {
+struct BasicMotion<F: Feedback<Error = f64, Output = f64>> {
     initial_cx: Option<TrackingContext>,
 
     linear_controller: F,
@@ -90,7 +89,7 @@ struct BasicMotion<F: Feedback<Input = f64, Output = f64>> {
     prev_timestamp: Instant,
 }
 
-impl<F: Feedback<Input = f64, Output = f64>> Command for BasicMotion<F> {
+impl<F: Feedback<Error = f64, Output = f64>> Command for BasicMotion<F> {
     type Output = Voltages;
 
     fn update(&mut self, cx: TrackingContext) -> CommandUpdate<Self::Output> {
@@ -113,7 +112,7 @@ impl<F: Feedback<Input = f64, Output = f64>> Command for BasicMotion<F> {
         };
 
         let linear_error = target_forward_travel - cx.forward_travel;
-        let angular_error = target_heading % FRAC_PI_2 - cx.heading;
+        let angular_error = (cx.heading - target_heading) % FRAC_PI_2;
 
         if self
             .linear_settler
@@ -125,12 +124,8 @@ impl<F: Feedback<Input = f64, Output = f64>> Command for BasicMotion<F> {
             return CommandUpdate::Settled;
         }
 
-        let linear_output =
-            self.linear_controller
-                .update(cx.forward_travel, target_forward_travel, dt);
-        let angular_output =
-            self.linear_controller
-                .update(cx.heading, target_heading % FRAC_PI_2, dt);
+        let linear_output = self.linear_controller.update(linear_error, dt);
+        let angular_output = self.angular_controller.update(angular_error, dt);
 
         self.prev_timestamp = Instant::now();
 

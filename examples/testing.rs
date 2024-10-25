@@ -5,8 +5,8 @@ extern crate alloc;
 
 use core::time::Duration;
 
-use vexide::prelude::*;
 use evian::prelude::*;
+use vexide::prelude::*;
 
 struct Robot {
     controller: Controller,
@@ -16,39 +16,40 @@ struct Robot {
 }
 
 impl Compete for Robot {
-    async fn autonomous(&mut self) {
+    async fn autonomous(&mut self) {}
+
+    async fn driver(&mut self) {
         let basic_motions = BasicCommands {
             linear_controller: Pid::new(0.5, 0.0, 0.0, None),
-            angular_controller: Pid::new(0.5, 0.0, 0.0, None),
+            angular_controller: Pid::new(5.0, 0.0, 0.0, None),
             linear_settler: Settler::new()
                 .error_tolerance(0.3)
-                .tolerance_time(Duration::from_millis(100))
+                .tolerance_duration(Duration::from_millis(100))
                 .timeout(Duration::from_secs(2)),
             angular_settler: Settler::new()
-                .error_tolerance(0.3)
-                .tolerance_time(Duration::from_millis(100))
-                .timeout(Duration::from_secs(2)),
+                .error_tolerance(0.3_f64.to_radians())
+                .tolerance_duration(Duration::from_millis(100)),
         };
 
         self.drivetrain
-            .execute(basic_motions.drive_distance(10.0))
+            .execute(basic_motions.turn_to_heading(0.0_f64.to_radians()))
             .await;
-    }
 
-    async fn driver(&mut self) {
-        loop {
-            let left = self.controller.left_stick.y().unwrap_or_default();
-            let right = self.controller.right_stick.y().unwrap_or_default();
+        println!("Settled");
 
-            for motor in self.left_motors.lock().await.iter_mut() {
-                motor.set_voltage(Motor::MAX_VOLTAGE * left).unwrap();
-            }
-            for motor in self.right_motors.lock().await.iter_mut() {
-                motor.set_voltage(Motor::MAX_VOLTAGE * right).unwrap();
-            }
+        // loop {
+        //     let left = self.controller.left_stick.y().unwrap_or_default();
+        //     let right = self.controller.right_stick.y().unwrap_or_default();
 
-            sleep(Duration::from_millis(25)).await;
-        }
+        //     for motor in self.left_motors.lock().await.iter_mut() {
+        //         motor.set_voltage(Motor::MAX_VOLTAGE * left).unwrap();
+        //     }
+        //     for motor in self.right_motors.lock().await.iter_mut() {
+        //         motor.set_voltage(Motor::MAX_VOLTAGE * right).unwrap();
+        //     }
+
+        //     sleep(Duration::from_millis(25)).await;
+        // }
     }
 }
 
@@ -64,11 +65,18 @@ async fn main(peripherals: Peripherals) {
         Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
     ];
-    let mut imu = InertialSensor::new(peripherals.port_15);
 
-    imu.calibrate().await.unwrap();
-
-    println!("Calibrated IMU");
+    let mut drivetrain = DifferentialDrivetrain::new(
+        left_motors.clone(),
+        right_motors.clone(),
+        ParallelWheelTracking::new(
+            Vec2::default(),
+            90.0_f64.to_radians(),
+            TrackingWheel::new(left_motors.clone(), 3.25, 7.5, Some(36.0 / 48.0)),
+            TrackingWheel::new(right_motors.clone(), 3.25, 7.5, Some(36.0 / 48.0)),
+            None,
+        ),
+    );
 
     Robot {
         controller: peripherals.primary_controller,
@@ -80,7 +88,7 @@ async fn main(peripherals: Peripherals) {
                 90.0_f64.to_radians(),
                 TrackingWheel::new(left_motors.clone(), 3.25, 7.5, Some(36.0 / 48.0)),
                 TrackingWheel::new(right_motors.clone(), 3.25, 7.5, Some(36.0 / 48.0)),
-                Some(imu),
+                None,
             ),
         ),
         left_motors,

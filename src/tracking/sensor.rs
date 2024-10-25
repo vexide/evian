@@ -49,7 +49,7 @@ impl RotarySensor for Vec<Motor> {
     }
 }
 
-/// Blanket implementation for all Arc<Mutex<T>> wrappers of already implemented sensors.
+/// Blanket implementation for all `Arc<Mutex<T>>` wrappers of already implemented sensors.
 impl<T: RotarySensor> RotarySensor for Arc<Mutex<T>> {
     type Error = <T as RotarySensor>::Error;
 

@@ -14,8 +14,20 @@ edition = "2021"
 [package.metadata.v5]
 slot = 1
 
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+
 [dependencies]
-vexide = "0.4.2"
+vexide = { version = "0.4.2", default-features = false, features = [
+    "async",
+    "core",
+    "devices",
+    "macro",
+    "panic",
+    "startup",
+] }
 replace_with = { version = "0.1.7", default-features = false }
 
 [package.metadata.docs.rs]

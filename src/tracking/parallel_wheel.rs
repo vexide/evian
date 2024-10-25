@@ -11,7 +11,7 @@ pub struct ParallelWheelTracking<T: RotarySensor, U: RotarySensor> {
     left_wheel: TrackingWheel<T>,
     right_wheel: TrackingWheel<U>,
 
-    gyro: Option<InertialSensor>,
+    imu: Option<InertialSensor>,
     heading_offset: f64,
     prev_forward_travel: f64,
     prev_heading: f64,
@@ -29,15 +29,13 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
             position: origin,
             left_wheel,
             right_wheel,
-            gyro,
+            imu: gyro,
             heading_offset: heading,
             prev_forward_travel: 0.0,
             prev_heading: 0.0,
         }
     }
-}
 
-impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
     pub fn set_heading(&mut self, heading: f64) {
         self.heading_offset = heading - self.heading();
     }
@@ -56,8 +54,8 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
 
     pub fn heading(&self) -> f64 {
         (self.heading_offset
-            + if let Some(gyro) = &self.gyro {
-                if let Ok(heading) = gyro.heading() {
+            + if let Some(imu) = &self.imu {
+                if let Ok(heading) = imu.heading() {
                     TAU - heading.to_radians()
                 } else {
                     (self.right_wheel.travel() - self.left_wheel.travel()) / self.track_width()
