@@ -42,7 +42,11 @@ impl RotarySensor for Vec<Motor> {
         let mut degree_sum = 0.0;
 
         for motor in self.iter() {
-            degree_sum += motor.position()?.as_degrees();
+            degree_sum += if let Ok(position) = motor.position() {
+                position.as_degrees()
+            } else {
+                continue;
+            };
         }
 
         Ok(Position::from_degrees(degree_sum / (self.len() as f64)))

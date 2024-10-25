@@ -42,10 +42,10 @@ impl Compete for Robot {
             let right = self.controller.right_stick.y().unwrap_or_default();
 
             for motor in self.left_motors.lock().await.iter_mut() {
-                motor.set_voltage(Motor::MAX_VOLTAGE * left).unwrap();
+                motor.set_voltage(Motor::MAX_VOLTAGE * left).ok();
             }
             for motor in self.right_motors.lock().await.iter_mut() {
-                motor.set_voltage(Motor::MAX_VOLTAGE * right).unwrap();
+                motor.set_voltage(Motor::MAX_VOLTAGE * right).ok();
             }
 
             sleep(Duration::from_millis(25)).await;
