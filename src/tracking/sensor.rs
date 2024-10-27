@@ -40,16 +40,20 @@ impl RotarySensor for Vec<Motor> {
 
     fn position(&self) -> Result<Position, Self::Error> {
         let mut degree_sum = 0.0;
+        // The total motors to be used in the average later
+        let mut total_motors = self.len();
 
         for motor in self.iter() {
             degree_sum += if let Ok(position) = motor.position() {
                 position.as_degrees()
             } else {
+                // Since this motor isn't being counted in the average, decrement the count
+                total_motors -= 1;
                 continue;
             };
         }
 
-        Ok(Position::from_degrees(degree_sum / (self.len() as f64)))
+        Ok(Position::from_degrees(degree_sum / (total_motors as f64)))
     }
 }
 
