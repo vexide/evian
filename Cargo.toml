@@ -20,14 +20,7 @@ opt-level = "z"
 lto = true
 
 [dependencies]
-vexide = { version = "0.4.2", default-features = false, features = [
-    "async",
-    "core",
-    "devices",
-    "macro",
-    "panic",
-    "startup",
-] }
+vexide = { version = "0.5.0-rc.2" }
 replace_with = { version = "0.1.7", default-features = false }
 
 [package.metadata.docs.rs]

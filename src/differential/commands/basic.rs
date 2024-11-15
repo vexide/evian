@@ -134,7 +134,7 @@ impl<F: Feedback<Error = f64, Output = f64>> Command for BasicMotion<F> {
                 linear_output + angular_output,
                 linear_output - angular_output,
             )
-            .normalized(Motor::MAX_VOLTAGE),
+            .normalized(Motor::V5_MAX_VOLTAGE),
         )
     }
 }

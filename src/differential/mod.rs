@@ -125,7 +125,7 @@ impl<T: Tracking + Send> DifferentialDrivetrain<T> {
 
                     drop(command_guard);
 
-                    sleep(Motor::DATA_WRITE_INTERVAL).await;
+                    sleep(Motor::WRITE_INTERVAL).await;
                 }
             }),
         }
