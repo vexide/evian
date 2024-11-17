@@ -92,11 +92,8 @@ impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f
             let angular_output = self.angular_controller.update(angular_error, dt);
 
             _ = drivetrain.set_voltages(
-                Voltages(
-                    linear_output + angular_output,
-                    linear_output - angular_output,
-                )
-                .normalized(Motor::V5_MAX_VOLTAGE),
+                Voltages::from_arcade(linear_output, angular_output)
+                    .normalized(Motor::V5_MAX_VOLTAGE),
             );
 
             prev_time = Instant::now();
