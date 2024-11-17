@@ -1,15 +1,14 @@
-use alloc::{sync::Arc, vec::Vec};
-use vexide::{
-    core::sync::{Mutex, MutexGuard},
-    devices::{
-        adi::{encoder::EncoderError, AdiEncoder},
-        position::Position,
-        smart::{
-            motor::{Motor, MotorError},
-            rotation::RotationSensor,
-        },
-        PortError,
+use core::cell::RefCell;
+
+use alloc::{rc::Rc, vec::Vec};
+use vexide::devices::{
+    adi::{encoder::EncoderError, AdiEncoder},
+    position::Position,
+    smart::{
+        motor::{Motor, MotorError},
+        rotation::RotationSensor,
     },
+    PortError,
 };
 
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
@@ -57,23 +56,11 @@ impl RotarySensor for Vec<Motor> {
     }
 }
 
-/// Blanket implementation for all `Arc<Mutex<T>>` wrappers of already implemented sensors.
-impl<T: RotarySensor> RotarySensor for Arc<Mutex<T>> {
+/// Blanket implementation for all `Rc<RefCell<T>>` wrappers of already implemented sensors.
+impl<T: RotarySensor> RotarySensor for Rc<RefCell<T>> {
     type Error = <T as RotarySensor>::Error;
 
     fn position(&self) -> Result<Position, Self::Error> {
-        let mut guard: Option<MutexGuard<'_, T>> = None;
-
-        while match self.try_lock() {
-            Some(lock) => {
-                guard = Some(lock);
-                false
-            }
-            None => true,
-        } {
-            core::hint::spin_loop();
-        }
-
-        guard.unwrap().position()
+        self.borrow().position()
     }
 }

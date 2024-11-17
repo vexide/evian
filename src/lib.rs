@@ -2,20 +2,18 @@
 
 extern crate alloc;
 
-pub mod command;
 pub mod control;
 pub mod differential;
 pub mod math;
+pub mod settler;
 pub mod tracking;
 
 pub mod prelude {
     pub use crate::{
-        command::settler::Settler,
         control::{pid::Pid, Feedback},
-        differential::{
-            commands::basic::BasicCommands, drive_motors, DifferentialDrivetrain, DriveMotors,
-        },
-        math::vec2::Vec2,
+        differential::{shared_motors, DifferentialDrivetrain, SharedMotors},
+        math::Vec2,
+        settler::Settler,
         tracking::{parallel_wheel::ParallelWheelTracking, wheel::TrackingWheel, Tracking},
     };
 }

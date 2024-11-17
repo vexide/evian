@@ -13,12 +13,17 @@
 //! Several basic implementations of tracking are provided by this module as a reference, with
 //! the ability to implement your own custom tracking setups using the [`Tracking`] trait.
 
-pub mod parallel_wheel;
 pub mod sensor;
 pub mod wheel;
 
+pub mod parallel_wheel;
+pub mod perpendicular_wheel;
+
+use core::cell::RefCell;
 use core::fmt::Debug;
 use core::prelude::rust_2021::*;
+
+use alloc::rc::Rc;
 
 use crate::math::Vec2;
 
@@ -28,12 +33,19 @@ pub trait Tracking {
     ///
     /// This method should be called periodically to maintain an up-to-date
     /// estimate of the robot's position and motion state.
-    fn update(&mut self) -> TrackingContext;
+    fn update(&mut self) -> TrackingData;
+}
+
+/// Blanket implementation for all `Rc<RefCell<T>>` wrappers of already implemented sensors.
+impl<T: Tracking> Tracking for Rc<RefCell<T>> {
+    fn update(&mut self) -> TrackingData {
+        self.borrow_mut().update()
+    }
 }
 
 /// State information about a robot's position and motion.
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct TrackingContext {
+pub struct TrackingData {
     /// The estimated 2D position of the robot in its coordinate frame.
     pub position: Vec2,
 

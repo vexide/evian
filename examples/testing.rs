@@ -5,48 +5,49 @@ extern crate alloc;
 
 use core::time::Duration;
 
-use evian::prelude::*;
+use evian::{
+    differential::{commands::basic::BasicMotion, Voltages},
+    prelude::*,
+};
 use vexide::prelude::*;
 
 struct Robot {
     controller: Controller,
-    drivetrain: DifferentialDrivetrain<ParallelWheelTracking<DriveMotors, DriveMotors>>,
-    left_motors: DriveMotors,
-    right_motors: DriveMotors,
+    drivetrain: DifferentialDrivetrain,
 }
 
 impl Compete for Robot {
     async fn autonomous(&mut self) {
-        let basic_motions = BasicCommands {
+        let mut basic_motion = BasicMotion {
             linear_controller: Pid::new(0.5, 0.0, 0.0, None),
-            angular_controller: Pid::new(5.0, 0.0, 0.0, None),
+            angular_controller: Pid::new(0.5, 0.0, 0.0, None),
             linear_settler: Settler::new()
                 .error_tolerance(0.3)
                 .tolerance_duration(Duration::from_millis(100))
                 .timeout(Duration::from_secs(2)),
             angular_settler: Settler::new()
-                .error_tolerance(0.3_f64.to_radians())
-                .tolerance_duration(Duration::from_millis(100)),
+                .error_tolerance(0.3)
+                .tolerance_duration(Duration::from_millis(100))
+                .timeout(Duration::from_secs(2)),
         };
 
-        self.drivetrain
-            .execute(basic_motions.turn_to_heading(0.0_f64.to_radians()))
+        basic_motion
+            .drive_distance(&mut self.drivetrain, 10.0)
             .await;
 
-        println!("Settled");
+        basic_motion
+            .turn_to_heading(&mut self.drivetrain, 90.0.to_radians())
+            .await;
     }
 
     async fn driver(&mut self) {
         loop {
-            let left = self.controller.left_stick.y().unwrap_or_default();
-            let right = self.controller.right_stick.y().unwrap_or_default();
+            let controller = self.controller.state().unwrap_or_default();
 
-            for motor in self.left_motors.lock().await.iter_mut() {
-                motor.set_voltage(Motor::MAX_VOLTAGE * left).ok();
-            }
-            for motor in self.right_motors.lock().await.iter_mut() {
-                motor.set_voltage(Motor::MAX_VOLTAGE * right).ok();
-            }
+            self.drivetrain.set_voltages((
+                controller.left_stick.y() * Motor::V5_MAX_VOLTAGE,
+                controller.right_stick.y() * Motor::V5_MAX_VOLTAGE,
+            ));
 
             sleep(Duration::from_millis(25)).await;
         }
@@ -55,12 +56,12 @@ impl Compete for Robot {
 
 #[vexide::main]
 async fn main(peripherals: Peripherals) {
-    let left_motors = drive_motors![
+    let left_motors = shared_motors![
         Motor::new(peripherals.port_2, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
     ];
-    let right_motors = drive_motors![
+    let right_motors = shared_motors![
         Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
@@ -79,8 +80,6 @@ async fn main(peripherals: Peripherals) {
                 None,
             ),
         ),
-        left_motors,
-        right_motors,
     }
     .compete()
     .await;

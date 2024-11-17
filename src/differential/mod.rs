@@ -11,178 +11,76 @@
 //!
 //! Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
 
-use vexide::core::float::Float;
+use core::cell::RefCell;
+
+use vexide::{
+    async_runtime::task::Task,
+    core::float::Float,
+    devices::smart::motor::MotorError,
+    prelude::{sleep, spawn},
+};
 
 pub mod commands;
 
-use crate::{
-    command::{Command, CommandUpdate},
-    tracking::Tracking,
-};
-use alloc::{boxed::Box, sync::Arc, vec::Vec};
-use vexide::{
-    async_runtime::{
-        task::{spawn, Task},
-        time::sleep,
-    },
-    core::sync::{Barrier, Mutex},
-    devices::smart::Motor,
-};
+use crate::{prelude::Tracking, tracking::TrackingData};
+use alloc::{rc::Rc, vec::Vec};
+use vexide::devices::smart::Motor;
 
 /// Differential Drivetrain
-///
-/// # Overview
-///
-/// This struct combines the following systems:
-///
-/// - **Motor Control**: The left and right motors are represented by [`DriveMotors`], which is an alias
-///   for a shared collection of motor objects. Each motor’s voltage is adjusted based on the current [`Command`].
-/// - **Commands**: Commands are executed by the drivetrain, which issue motor voltages based on an
-///   implementation of a motion algorithm.
-/// - **Tracking**: A provided struct implementing the [`Tracking`] trait is used to gather sensor data and perform
-///   localization (odometry). This data is then provided to commands, giving them updated information on the position,
-///   heading, velocity, etc... of the robot at a given point in time.
-pub struct DifferentialDrivetrain<T: Tracking + Send + 'static> {
-    left_motors: DriveMotors,
-    right_motors: DriveMotors,
-    tracking: Arc<Mutex<T>>,
-    command: Arc<Mutex<Option<Box<dyn Command<Output = Voltages> + Send>>>>,
-    barrier: Arc<Barrier>,
+pub struct DifferentialDrivetrain {
+    left_motors: SharedMotors,
+    right_motors: SharedMotors,
+    tracking_data: Rc<RefCell<TrackingData>>,
     _task: Task<()>,
 }
 
-impl<T: Tracking + Send> DifferentialDrivetrain<T> {
+impl DifferentialDrivetrain {
     /// Creates a new drivetrain with the provided left/right motors and a tracking system.
     ///
     /// Motors created with the [`drive_motors`] macro may be safely cloned, as they are wrapped
     /// in an [`Arc`] to allow sharing across tasks and between the drivetrain and its tracking
     /// instance if needed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let left_motors = drive_motors![
-    ///     Motor::new(peripherals.port_2, Gearset::Blue, Direction::Reverse),
-    ///     Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
-    ///     Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
-    /// ];
-    /// let right_motors = drive_motors![
-    ///     Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
-    ///     Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
-    ///     Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
-    /// ];
-    ///
-    /// let mut drivetrain = DifferentialDrivetrain::new(
-    ///     left_motors.clone(),
-    ///     right_motors.clone(),
-    ///     ParallelWheelTracking::new(
-    ///         Vec2::default(),
-    ///         90.0_f64.to_radians(),
-    ///         TrackingWheel::new(left_motors.clone(), 3.25, 7.5, Some(36.0 / 48.0)),
-    ///         TrackingWheel::new(right_motors.clone(), 3.25, 7.5, Some(36.0 / 48.0)),
-    ///         None,
-    ///     ),
-    /// );
-    /// ```
-    pub fn new(left_motors: DriveMotors, right_motors: DriveMotors, tracking: T) -> Self {
-        let command = Arc::new(Mutex::new(None));
-        let tracking = Arc::new(Mutex::new(tracking));
-        let barrier = Arc::new(Barrier::new(2));
+    pub fn new<T: Tracking + 'static>(
+        left_motors: SharedMotors,
+        right_motors: SharedMotors,
+        mut tracking: T,
+    ) -> Self {
+        let tracking_data = Rc::new(RefCell::new(tracking.update()));
 
         Self {
             left_motors: left_motors.clone(),
             right_motors: right_motors.clone(),
-            tracking: tracking.clone(),
-            command: command.clone(),
-            barrier: barrier.clone(),
+            tracking_data: tracking_data.clone(),
             _task: spawn(async move {
                 loop {
-                    let tracking_cx = tracking.lock().await.update();
-                    let mut command_guard = command.lock().await;
-
-                    if let Some(command) = command_guard.as_mut() {
-                        match command.update(tracking_cx) {
-                            CommandUpdate::Update(Voltages(left, right)) => {
-                                for motor in left_motors.lock().await.iter_mut() {
-                                    _ = motor.set_voltage(left);
-                                }
-                                for motor in right_motors.lock().await.iter_mut() {
-                                    _ = motor.set_voltage(right);
-                                }
-                            }
-                            CommandUpdate::Settled => {
-                                *command_guard = None;
-                                barrier.wait().await;
-                                for motor in left_motors.lock().await.iter_mut() {
-                                    _ = motor.set_voltage(0.0);
-                                }
-                                for motor in right_motors.lock().await.iter_mut() {
-                                    _ = motor.set_voltage(0.0);
-                                }
-                            }
-                        }
-                    }
-
-                    drop(command_guard);
-
+                    *tracking_data.borrow_mut() = tracking.update();
                     sleep(Motor::WRITE_INTERVAL).await;
                 }
             }),
         }
     }
 
-    /// Executes a [`Command`] on the drivetrain, polling until the command has settled.
-    ///
-    /// The provided command implementation must have an output type of [`Voltages`] (left/right
-    /// motor voltages) when updated. The future returned by this function will complete when the
-    /// command has settled.
-    pub async fn execute(&mut self, cmd: impl Command<Output = Voltages> + Send + 'static) {
-        *self.command.lock().await = Some(Box::new(cmd));
-        self.barrier.wait().await; // Await until settled.
+    pub fn set_voltages(&mut self, voltages: impl Into<Voltages>) -> Result<(), MotorError> {
+        let voltages = voltages.into();
+
+        for motor in self.left_motors.borrow_mut().iter_mut() {
+            motor.set_voltage(voltages.0)?;
+        }
+
+        for motor in self.right_motors.borrow_mut().iter_mut() {
+            motor.set_voltage(voltages.1)?;
+        }
+
+        Ok(())
     }
 
-    /// Returns a shared reference to the drivetrain's [`Tracking`] system.
-    ///
-    /// This is returned as an `Arc<Mutex<T>>` wrapping the tracking system,
-    /// and must be explicitly locked to access any sensor data off the system.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// // Obtain a lock on the drivetrain's tracking system.
-    /// let lock = drivetrain.tracking().lock().await;
-    ///
-    /// // Read data from the system (position in this case).
-    /// println!("Last known position: {:?}", lock.position());
-    ///
-    /// // Drop the lock so that the drivetrain's command task can use it.
-    /// drop(lock);
-    /// ```
-    pub fn tracking(&self) -> Arc<Mutex<T>> {
-        Arc::clone(&self.tracking)
-    }
-
-    /// Returns a shared reference to a possibly executing [`Command`] on the drivetrain.
-    ///
-    /// This is returned as an `Arc<Mutex<T>>` wrapping a dynamically-dispatched command,
-    /// or `None` if no command is currently being polled by the drivetrain.
-    pub fn command(&self) -> Arc<Mutex<Option<Box<dyn Command<Output = Voltages> + Send>>>> {
-        Arc::clone(&self.command)
-    }
-
-    /// Returns ta shared reference to the left [`DriveMotors`].
-    pub fn left_motors(&self) -> DriveMotors {
-        Arc::clone(&self.left_motors)
-    }
-
-    /// Returns ta shared reference to the right [`DriveMotors`].
-    pub fn right_motors(&self) -> DriveMotors {
-        Arc::clone(&self.right_motors)
+    pub fn tracking_data(&self) -> TrackingData {
+        *self.tracking_data.borrow()
     }
 }
 
 // Internal alias so I don't have to type this shit out a million times.
-pub type DriveMotors = Arc<Mutex<Vec<Motor>>>;
+pub type SharedMotors = Rc<RefCell<Vec<Motor>>>;
 
 /// A macro that creates a set of motors for a [`DifferentialDrivetrain`].
 ///
@@ -195,11 +93,13 @@ pub type DriveMotors = Arc<Mutex<Vec<Motor>>>;
 /// let motors = drive_motors![motor1, motor2, motor3];
 /// ```
 #[macro_export]
-macro_rules! drive_motors {
+macro_rules! shared_motors {
     ( $( $item:expr ),* $(,)?) => {
         {
-            use ::alloc::{sync::Arc, vec::Vec};
-            use ::vexide::{core::sync::Mutex, devices::smart::Motor};
+            extern crate alloc;
+
+            use ::core::cell::RefCell;
+            use ::alloc::{rc::Rc, vec::Vec};
 
             let mut temp_vec: Vec<Motor> = Vec::new();
 
@@ -207,11 +107,11 @@ macro_rules! drive_motors {
                 temp_vec.push($item);
             )*
 
-            Arc::new(Mutex::new(temp_vec))
+            Rc::new(RefCell::new(temp_vec))
         }
     };
 }
-pub use drive_motors;
+pub use shared_motors;
 
 /// Left/Right Motor Voltages
 ///
@@ -253,5 +153,11 @@ impl Voltages {
     /// Returns the right voltage.
     pub fn right(&self) -> f64 {
         self.1
+    }
+}
+
+impl From<(f64, f64)> for Voltages {
+    fn from(value: (f64, f64)) -> Self {
+        Self(value.0, value.1)
     }
 }

@@ -1,140 +1,105 @@
-use core::f64::consts::FRAC_PI_2;
-
-use vexide::{core::time::Instant, devices::smart::Motor};
-
-use crate::{
-    command::{settler::Settler, Command, CommandUpdate},
-    control::Feedback,
-    differential::Voltages,
-    tracking::TrackingContext,
+use vexide::{
+    core::time::Instant,
+    devices::smart::Motor,
+    prelude::{sleep, SmartDevice},
 };
 
-pub struct BasicCommands<F: Feedback<Error = f64, Output = f64> + Clone> {
-    pub linear_controller: F,
-    pub angular_controller: F,
+use crate::{
+    control::Feedback, differential::Voltages, math::Vec2, prelude::DifferentialDrivetrain,
+    settler::Settler,
+};
+
+use super::normalize_radians;
+
+#[derive(PartialEq)]
+pub struct BasicMotion<
+    L: Feedback<Error = f64, Output = f64>,
+    A: Feedback<Error = f64, Output = f64>,
+> {
+    pub linear_controller: L,
+    pub angular_controller: A,
     pub linear_settler: Settler,
     pub angular_settler: Settler,
 }
 
-impl<F: Feedback<Error = f64, Output = f64> + Clone> BasicCommands<F> {
-    pub fn new(
-        linear_controller: F,
-        angular_controller: F,
-        linear_settler: Settler,
-        angular_settler: Settler,
-    ) -> Self {
-        Self {
-            linear_controller,
-            angular_controller,
-            linear_settler,
-            angular_settler,
+impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f64>>
+    BasicMotion<L, A>
+{
+    pub async fn drive_distance_at_heading(
+        &mut self,
+        drivetrain: &mut DifferentialDrivetrain,
+        target_distance: f64,
+        target_heading: f64,
+    ) {
+        let initial_forward_travel = drivetrain.tracking_data().forward_travel;
+        let mut prev_time = Instant::now();
+
+        loop {
+            sleep(Motor::UPDATE_INTERVAL).await;
+            let dt = prev_time.elapsed();
+
+            let tracking_data = drivetrain.tracking_data();
+
+            let linear_error =
+                (target_distance + initial_forward_travel) - tracking_data.forward_travel;
+            let angular_error = normalize_radians(tracking_data.heading - target_heading);
+
+            let linear_output = self.linear_controller.update(linear_error, dt);
+            let angular_output = self.angular_controller.update(angular_error, dt);
+
+            _ = drivetrain.set_voltages(
+                Voltages(
+                    linear_output + angular_output,
+                    linear_output - angular_output,
+                )
+                .normalized(Motor::V5_MAX_VOLTAGE),
+            );
+
+            prev_time = Instant::now();
         }
     }
 
-    fn make_command(&self, distance_target: Target, heading_target: Target) -> BasicMotion<F> {
-        BasicMotion {
-            initial_cx: None,
+    pub async fn drive_distance(&mut self, drivetrain: &mut DifferentialDrivetrain, distance: f64) {
+        self.drive_distance_at_heading(drivetrain, distance, drivetrain.tracking_data().heading)
+            .await
+    }
 
-            linear_controller: self.linear_controller.clone(),
-            linear_settler: self.linear_settler,
-            linear_target: distance_target,
+    pub async fn turn_to_heading(&mut self, drivetrain: &mut DifferentialDrivetrain, heading: f64) {
+        self.drive_distance_at_heading(drivetrain, 0.0, heading)
+            .await
+    }
 
-            angular_controller: self.angular_controller.clone(),
-            angular_settler: self.angular_settler,
-            angular_target: heading_target,
+    pub async fn turn_to_point(
+        &mut self,
+        drivetrain: &mut DifferentialDrivetrain,
+        point: impl Into<Vec2>,
+    ) {
+        let point = point.into();
+        let initial_forward_travel = drivetrain.tracking_data().forward_travel;
+        let mut prev_time = Instant::now();
 
-            prev_timestamp: Instant::now(),
+        loop {
+            sleep(Motor::UPDATE_INTERVAL).await;
+            let dt = prev_time.elapsed();
+
+            let tracking_data = drivetrain.tracking_data();
+
+            let linear_error = initial_forward_travel - tracking_data.forward_travel;
+            let angular_error =
+                normalize_radians(tracking_data.heading - (point - tracking_data.position).angle());
+
+            let linear_output = self.linear_controller.update(linear_error, dt);
+            let angular_output = self.angular_controller.update(angular_error, dt);
+
+            _ = drivetrain.set_voltages(
+                Voltages(
+                    linear_output + angular_output,
+                    linear_output - angular_output,
+                )
+                .normalized(Motor::V5_MAX_VOLTAGE),
+            );
+
+            prev_time = Instant::now();
         }
-    }
-
-    pub fn drive_distance_at_heading(
-        &self,
-        distance: f64,
-        heading: f64,
-    ) -> impl Command<Output = Voltages> {
-        self.make_command(Target::Relative(distance), Target::Absolute(heading))
-    }
-
-    pub fn drive_distance(&self, distance: f64) -> impl Command<Output = Voltages> {
-        self.make_command(Target::Relative(distance), Target::Initial)
-    }
-
-    pub fn turn_to_heading(&self, heading: f64) -> impl Command<Output = Voltages> {
-        self.make_command(Target::Initial, Target::Absolute(heading))
-    }
-
-    pub fn turn_by_angle(&self, offset: f64) -> impl Command<Output = Voltages> {
-        self.make_command(Target::Initial, Target::Relative(offset))
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum Target {
-    Initial,
-    Absolute(f64),
-    Relative(f64),
-}
-
-#[derive(Clone, Copy, PartialEq)]
-struct BasicMotion<F: Feedback<Error = f64, Output = f64>> {
-    initial_cx: Option<TrackingContext>,
-
-    linear_controller: F,
-    angular_controller: F,
-    linear_settler: Settler,
-    angular_settler: Settler,
-    linear_target: Target,
-    angular_target: Target,
-
-    prev_timestamp: Instant,
-}
-
-impl<F: Feedback<Error = f64, Output = f64>> Command for BasicMotion<F> {
-    type Output = Voltages;
-
-    fn update(&mut self, cx: TrackingContext) -> CommandUpdate<Self::Output> {
-        let dt = self.prev_timestamp.elapsed();
-
-        if self.initial_cx.is_none() {
-            self.initial_cx = Some(cx);
-        }
-        let initial_cx = self.initial_cx.unwrap();
-
-        let target_forward_travel = match self.linear_target {
-            Target::Absolute(travel) => travel,
-            Target::Relative(distance) => distance + initial_cx.forward_travel,
-            Target::Initial => initial_cx.forward_travel,
-        };
-        let target_heading = match self.angular_target {
-            Target::Absolute(heading) => heading,
-            Target::Relative(offset) => offset + initial_cx.heading,
-            Target::Initial => initial_cx.heading,
-        };
-
-        let linear_error = target_forward_travel - cx.forward_travel;
-        let angular_error = (cx.heading - target_heading) % FRAC_PI_2;
-
-        if self
-            .linear_settler
-            .is_settled(linear_error, cx.linear_velocity)
-            && self
-                .angular_settler
-                .is_settled(angular_error, cx.angular_velocity)
-        {
-            return CommandUpdate::Settled;
-        }
-
-        let linear_output = self.linear_controller.update(linear_error, dt);
-        let angular_output = self.angular_controller.update(angular_error, dt);
-
-        self.prev_timestamp = Instant::now();
-
-        CommandUpdate::Update(
-            Voltages(
-                linear_output + angular_output,
-                linear_output - angular_output,
-            )
-            .normalized(Motor::V5_MAX_VOLTAGE),
-        )
     }
 }

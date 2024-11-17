@@ -35,13 +35,13 @@ impl<T: RotarySensor> TrackingWheel<T> {
     ///
     /// This method uses the wheel's diameter and gear ratio to convert
     /// sensor rotations into linear distance traveled.
-    /// 
+    ///
     /// # Error Handling
-    /// 
+    ///
     /// If sensor reading fails, this function returns `0.0`.
     pub fn travel(&self) -> f64 {
         let wheel_circumference = self.wheel_diameter * PI;
-    
+
         self.sensor.position().unwrap_or_default().as_revolutions()
             * self.gearing.unwrap_or(1.0)
             * wheel_circumference

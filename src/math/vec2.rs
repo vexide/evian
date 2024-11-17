@@ -1,5 +1,5 @@
 use core::{fmt, ops};
-use vexide::core::float::Float;
+use vexide::{core::float::Float, devices::math::Point2};
 
 /// A vector in 2D space.
 ///
@@ -81,13 +81,13 @@ impl Vec2 {
     }
 
     /// Project one `Vec2` onto onto another.
-    pub fn project(&self, onto: Vec2) -> Self {
+    pub fn projected(&self, onto: Vec2) -> Self {
         onto * (self.dot(onto) / onto.length().powi(2))
     }
 
     /// Create a new vector with its coordinates rotated by a given angle
     /// in radians.
-    pub fn rotate(&self, angle: f64) -> Self {
+    pub fn rotated(&self, angle: f64) -> Self {
         let (sin, cos) = angle.sin_cos();
 
         Self {
@@ -102,6 +102,15 @@ impl From<(f64, f64)> for Vec2 {
         Self {
             x: tuple.0,
             y: tuple.1,
+        }
+    }
+}
+
+impl From<Point2<f64>> for Vec2 {
+    fn from(value: Point2<f64>) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
         }
     }
 }
