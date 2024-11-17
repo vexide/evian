@@ -96,8 +96,6 @@ pub type SharedMotors = Rc<RefCell<Vec<Motor>>>;
 macro_rules! shared_motors {
     ( $( $item:expr ),* $(,)?) => {
         {
-            extern crate alloc;
-
             use ::core::cell::RefCell;
             use ::alloc::{rc::Rc, vec::Vec};
 
