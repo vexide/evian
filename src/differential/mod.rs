@@ -126,10 +126,7 @@ pub struct Voltages(pub f64, pub f64);
 
 impl Voltages {
     pub fn from_arcade(linear: f64, angular: f64) -> Self {
-        Self(
-            linear + angular,
-            linear - angular,
-        )
+        Self(linear + angular, linear - angular)
     }
 
     /// Returns [`Voltages`] that are less than a provided `max` value while preserving
