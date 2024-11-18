@@ -30,7 +30,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
     pub async fn move_to_point(
         &mut self,
         drivetrain: &mut DifferentialDrivetrain,
-        point: impl Into<Vec2>,
+        point: impl Into<Vec2<f64>>,
     ) {
         let point = point.into();
         let mut prev_time = Instant::now();

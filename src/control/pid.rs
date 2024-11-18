@@ -93,35 +93,41 @@ pub struct Pid {
 
 impl Pid {
     /// Construct a new PID controller from gain constants and an optional integration range.
-    pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<f64>) -> Self {
+    #[must_use]
+    pub const fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<f64>) -> Self {
         Self {
             kp,
             ki,
             kd,
             integration_range,
-            integral: Default::default(),
-            prev_error: Default::default(),
+            integral: 0.0,
+            prev_error: 0.0,
         }
     }
 
     /// Get the current PID gains as a tuple (`kp`, `ki`, `kd`).
-    pub fn gains(&self) -> (f64, f64, f64) {
+    #[must_use]
+    pub const fn gains(&self) -> (f64, f64, f64) {
         (self.kp, self.ki, self.kd)
     }
 
-    pub fn kp(&self) -> f64 {
+    #[must_use]
+    pub const fn kp(&self) -> f64 {
         self.kp
     }
 
-    pub fn ki(&self) -> f64 {
+    #[must_use]
+    pub const fn ki(&self) -> f64 {
         self.ki
     }
 
-    pub fn kd(&self) -> f64 {
+    #[must_use]
+    pub const fn kd(&self) -> f64 {
         self.kd
     }
 
-    pub fn integration_range(&self) -> Option<f64> {
+    #[must_use]
+    pub const fn integration_range(&self) -> Option<f64> {
         self.integration_range
     }
 
@@ -190,35 +196,41 @@ pub struct AngularPid {
 
 impl AngularPid {
     /// Construct a new PID controller from gain constants and an optional integration range.
-    pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<Angle>) -> Self {
+    #[must_use]
+    pub const fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<Angle>) -> Self {
         Self {
             kp,
             ki,
             kd,
             integration_range,
-            integral: Default::default(),
-            prev_error: Default::default(),
+            integral: 0.0,
+            prev_error: Angle::from_radians(0.0),
         }
     }
 
     /// Get the current PID gains as a tuple (`kp`, `ki`, `kd`).
-    pub fn gains(&self) -> (f64, f64, f64) {
+    #[must_use]
+    pub const fn gains(&self) -> (f64, f64, f64) {
         (self.kp, self.ki, self.kd)
     }
 
-    pub fn kp(&self) -> f64 {
+    #[must_use]
+    pub const fn kp(&self) -> f64 {
         self.kp
     }
 
-    pub fn ki(&self) -> f64 {
+    #[must_use]
+    pub const fn ki(&self) -> f64 {
         self.ki
     }
 
-    pub fn kd(&self) -> f64 {
+    #[must_use]
+    pub const fn kd(&self) -> f64 {
         self.kd
     }
 
-    pub fn integration_range(&self) -> Option<Angle> {
+    #[must_use]
+    pub const fn integration_range(&self) -> Option<Angle> {
         self.integration_range
     }
 

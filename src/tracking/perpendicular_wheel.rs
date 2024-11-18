@@ -11,7 +11,7 @@ pub struct PerpendicularWheelTracking<T: RotarySensor, U: RotarySensor> {
     sideways_wheel: TrackingWheel<U>,
     imu: InertialSensor,
 
-    position: Vec2,
+    position: Vec2<f64>,
     heading_offset: Angle,
 
     prev_forward_travel: f64,
@@ -21,7 +21,7 @@ pub struct PerpendicularWheelTracking<T: RotarySensor, U: RotarySensor> {
 
 impl<T: RotarySensor, U: RotarySensor> PerpendicularWheelTracking<T, U> {
     pub fn new(
-        origin: Vec2,
+        origin: Vec2<f64>,
         heading: Angle,
         forward_wheel: TrackingWheel<T>,
         sideways_wheel: TrackingWheel<U>,
@@ -43,11 +43,11 @@ impl<T: RotarySensor, U: RotarySensor> PerpendicularWheelTracking<T, U> {
         self.heading_offset = heading - self.heading();
     }
 
-    pub fn set_position(&mut self, position: Vec2) {
+    pub fn set_position(&mut self, position: Vec2<f64>) {
         self.position = position;
     }
 
-    pub fn position(&self) -> Vec2 {
+    pub const fn position(&self) -> Vec2<f64> {
         self.position
     }
 

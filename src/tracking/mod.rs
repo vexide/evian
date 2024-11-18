@@ -47,7 +47,7 @@ impl<T: Tracking> Tracking for Rc<RefCell<T>> {
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct TrackingData {
     /// The estimated 2D position of the robot in its coordinate frame.
-    pub position: Vec2,
+    pub position: Vec2<f64>,
 
     /// The robot's heading angle in radians.
     ///

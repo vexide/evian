@@ -7,7 +7,7 @@ use super::{sensor::RotarySensor, wheel::TrackingWheel, Tracking, TrackingData};
 
 #[derive(Debug, PartialEq)]
 pub struct ParallelWheelTracking<T: RotarySensor, U: RotarySensor> {
-    position: Vec2,
+    position: Vec2<f64>,
     left_wheel: TrackingWheel<T>,
     right_wheel: TrackingWheel<U>,
 
@@ -19,7 +19,7 @@ pub struct ParallelWheelTracking<T: RotarySensor, U: RotarySensor> {
 
 impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
     pub fn new(
-        origin: Vec2,
+        origin: Vec2<f64>,
         heading: Angle,
         left_wheel: TrackingWheel<T>,
         right_wheel: TrackingWheel<U>,
@@ -40,7 +40,7 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
         self.heading_offset = heading - self.heading();
     }
 
-    pub fn set_position(&mut self, position: Vec2) {
+    pub fn set_position(&mut self, position: Vec2<f64>) {
         self.position = position;
     }
 
@@ -48,7 +48,7 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
         self.left_wheel.offset + self.right_wheel.offset
     }
 
-    pub fn position(&self) -> Vec2 {
+    pub const fn position(&self) -> Vec2<f64> {
         self.position
     }
 

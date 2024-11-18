@@ -9,122 +9,146 @@ pub struct Angle(f64);
 
 impl Angle {
     #[inline]
+    #[must_use]
     pub const fn from_radians(radians: f64) -> Self {
         Self(radians)
     }
 
     #[inline]
+    #[must_use]
     pub fn from_degrees(degrees: f64) -> Self {
         Self(degrees.to_radians())
     }
 
     #[inline]
+    #[must_use]
     pub fn as_degrees(&self) -> f64 {
         self.0.to_degrees()
     }
 
     #[inline]
-    pub fn as_radians(&self) -> f64 {
+    #[must_use]
+    pub const fn as_radians(&self) -> f64 {
         self.0
     }
 
     #[inline]
+    #[must_use]
     pub fn wrapped_half_period(&self) -> Self {
         Self(self.0 % FRAC_PI_2)
     }
 
     #[inline]
+    #[must_use]
     pub fn wrapped_period(&self) -> Self {
         Self(self.0 % PI)
     }
 
     #[inline]
+    #[must_use]
     pub const fn is_sign_positive(self) -> bool {
         self.0.is_sign_positive()
     }
 
     #[inline]
+    #[must_use]
     pub const fn is_sign_negative(self) -> bool {
         self.0.is_sign_negative()
     }
 
     #[inline]
+    #[must_use]
     pub fn min(self, other: Self) -> Self {
         Self(self.0.min(other.0))
     }
 
     #[inline]
+    #[must_use]
     pub fn max(self, other: Self) -> Self {
         Self(self.0.max(other.0))
     }
 
     #[inline]
+    #[must_use]
     pub fn abs(self) -> Self {
         Self(self.0.abs())
     }
 
     #[inline]
+    #[must_use]
     pub fn signum(self) -> f64 {
         self.0.signum()
     }
 
     #[inline]
+    #[must_use]
     pub fn copysign(self, sign: Self) -> Self {
         Self(self.0.copysign(sign.0))
     }
 
     #[inline]
+    #[must_use]
     pub fn mul_add(self, a: Self, b: Self) -> Self {
         Self(self.0.mul_add(a.0, b.0))
     }
 
     #[inline]
+    #[must_use]
     pub fn div_euclid(self, rhs: Self) -> Self {
         Self(self.0.div_euclid(rhs.0))
     }
 
     #[inline]
+    #[must_use]
     pub fn rem_euclid(self, rhs: Self) -> Self {
         Self(self.0.rem_euclid(rhs.0))
     }
 
     #[inline]
+    #[must_use]
     pub fn abs_sub(self, other: Self) -> Self {
         #[allow(deprecated)]
         Self(self.0.abs_sub(other.0))
     }
 
     #[inline]
+    #[must_use]
     pub fn sin(self) -> f64 {
         self.0.sin()
     }
 
     #[inline]
+    #[must_use]
     pub fn cos(self) -> f64 {
         self.0.cos()
     }
 
     #[inline]
+    #[must_use]
     pub fn tan(self) -> f64 {
         self.0.tan()
     }
 
     #[inline]
+    #[must_use]
     pub fn sin_cos(self) -> (f64, f64) {
         (self.sin(), self.cos())
     }
 
     #[inline]
+    #[must_use]
     pub fn sinh(self) -> f64 {
         self.0.sinh()
     }
 
     #[inline]
+    #[must_use]
     pub fn cosh(self) -> f64 {
         self.0.cosh()
     }
 
     #[inline]
+    #[must_use]
     pub fn tanh(self) -> f64 {
         self.0.tanh()
     }

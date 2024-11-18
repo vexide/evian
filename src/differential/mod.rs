@@ -48,8 +48,8 @@ impl DifferentialDrivetrain {
         let tracking_data = Rc::new(RefCell::new(tracking.update()));
 
         Self {
-            left_motors: left_motors.clone(),
-            right_motors: right_motors.clone(),
+            left_motors,
+            right_motors,
             tracking_data: tracking_data.clone(),
             _task: spawn(async move {
                 loop {
@@ -74,6 +74,7 @@ impl DifferentialDrivetrain {
         Ok(())
     }
 
+    #[must_use]
     pub fn tracking_data(&self) -> TrackingData {
         *self.tracking_data.borrow()
     }
@@ -125,7 +126,8 @@ pub use shared_motors;
 pub struct Voltages(pub f64, pub f64);
 
 impl Voltages {
-    pub fn from_arcade(linear: f64, angular: f64) -> Self {
+    #[must_use]
+    pub const fn from_arcade(linear: f64, angular: f64) -> Self {
         Self(linear + angular, linear - angular)
     }
 
@@ -134,6 +136,7 @@ impl Voltages {
     ///
     /// If either motor is over a `max_voltage`, both values will be decresed by the amount
     /// that is "oversaturated" to preserve the ratio between left and right power.
+    #[must_use]
     pub fn normalized(&self, max: f64) -> Self {
         let larger_magnitude = self.0.abs().max(self.1.abs()) / max;
 
@@ -148,12 +151,14 @@ impl Voltages {
     }
 
     /// Returns the left voltage.
-    pub fn left(&self) -> f64 {
+    #[must_use]
+    pub const fn left(&self) -> f64 {
         self.0
     }
 
     /// Returns the right voltage.
-    pub fn right(&self) -> f64 {
+    #[must_use]
+    pub const fn right(&self) -> f64 {
         self.1
     }
 }

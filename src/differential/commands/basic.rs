@@ -64,7 +64,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
     pub async fn drive_distance(&mut self, drivetrain: &mut DifferentialDrivetrain, distance: f64) {
         self.drive_distance_at_heading(drivetrain, distance, drivetrain.tracking_data().heading)
-            .await
+            .await;
     }
 
     pub async fn turn_to_heading(
@@ -73,13 +73,13 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
         heading: Angle,
     ) {
         self.drive_distance_at_heading(drivetrain, 0.0, heading)
-            .await
+            .await;
     }
 
     pub async fn turn_to_point(
         &mut self,
         drivetrain: &mut DifferentialDrivetrain,
-        point: impl Into<Vec2>,
+        point: impl Into<Vec2<f64>>,
     ) {
         let point = point.into();
         let initial_forward_travel = drivetrain.tracking_data().forward_travel;

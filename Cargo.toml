@@ -9,6 +9,17 @@ keywords = ["vex", "vexide", "vex-robotics", "robotics", "autonomous"]
 version = "0.2.0"
 edition = "2021"
 
+[lints.clippy]
+missing_const_for_fn = "warn"
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+doc_markdown = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+missing_panics_doc = "allow"
+cast_possible_wrap = "allow"
+match_bool = "allow"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [package.metadata.v5]

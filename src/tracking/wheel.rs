@@ -22,7 +22,7 @@ impl<T: RotarySensor> TrackingWheel<T> {
     /// * `wheel_diameter` - The diameter of the wheel in linear units.
     /// * `offset` - Distance from wheel to robot's center of rotation.
     /// * `gearing` - Optional gear ratio between sensor and wheel (use None for 1:1 if ungeared).
-    pub fn new(sensor: T, wheel_diameter: f64, offset: f64, gearing: Option<f64>) -> Self {
+    pub const fn new(sensor: T, wheel_diameter: f64, offset: f64, gearing: Option<f64>) -> Self {
         Self {
             sensor,
             wheel_diameter,

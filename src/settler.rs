@@ -48,15 +48,24 @@ impl Settler {
     ///
     /// Until tolerances are configured using the builder methods, all tolerance
     /// checks will pass immediately.
-    pub fn new() -> Self {
-        Self::default()
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            start_timestamp: None,
+            tolerance_timestamp: None,
+            tolerance_duration: None,
+            error_tolerance: None,
+            velocity_tolerance: None,
+            timeout: None,
+        }
     }
 
     /// Sets the maximum acceptable error value for settling.
     ///
     /// The error tolerance defines how close to the target position the system
     /// must be to be considered "within tolerance".
-    pub fn error_tolerance(&mut self, tolerance: f64) -> Self {
+    #[must_use]
+    pub const fn error_tolerance(&mut self, tolerance: f64) -> Self {
         self.error_tolerance = Some(tolerance);
         *self
     }
@@ -65,7 +74,8 @@ impl Settler {
     ///
     /// The velocity tolerance defines how slow the system must be moving to be
     /// considered "stable".
-    pub fn velocity_tolerance(&mut self, tolerance: f64) -> Self {
+    #[must_use]
+    pub const fn velocity_tolerance(&mut self, tolerance: f64) -> Self {
         self.velocity_tolerance = Some(tolerance);
         *self
     }
@@ -74,7 +84,8 @@ impl Settler {
     ///
     /// This duration acts as a "debounce" to ensure the system has truly stabilized
     /// and isn't just passing through the tolerance window momentarily.
-    pub fn tolerance_duration(&mut self, duration: Duration) -> Self {
+    #[must_use]
+    pub const fn tolerance_duration(&mut self, duration: Duration) -> Self {
         self.tolerance_duration = Some(duration);
         *self
     }
@@ -85,7 +96,8 @@ impl Settler {
     /// will report as settled regardless of the actual system state. This prevents
     /// commands from hanging indefinitely if settling proves impossible for whatever
     /// reason.
-    pub fn timeout(&mut self, timeout: Duration) -> Self {
+    #[must_use]
+    pub const fn timeout(&mut self, timeout: Duration) -> Self {
         self.timeout = Some(timeout);
         *self
     }

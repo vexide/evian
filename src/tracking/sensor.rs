@@ -42,7 +42,7 @@ impl RotarySensor for Vec<Motor> {
         // The total motors to be used in the average later
         let mut total_motors = self.len();
 
-        for motor in self.iter() {
+        for motor in self {
             degree_sum += if let Ok(position) = motor.position() {
                 position.as_degrees()
             } else {
@@ -52,6 +52,7 @@ impl RotarySensor for Vec<Motor> {
             };
         }
 
+        #[allow(clippy::cast_precision_loss)]
         Ok(Position::from_degrees(degree_sum / (total_motors as f64)))
     }
 }
