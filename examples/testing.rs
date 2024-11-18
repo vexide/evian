@@ -5,10 +5,7 @@ extern crate alloc;
 
 use core::time::Duration;
 
-use evian::{
-    differential::{commands::basic::BasicMotion, Voltages},
-    prelude::*,
-};
+use evian::{control::pid::AngularPid, differential::commands::basic::BasicMotion, prelude::*};
 use vexide::prelude::*;
 
 struct Robot {
@@ -21,7 +18,7 @@ impl Compete for Robot {
         let dt = &mut self.drivetrain;
         let mut basic_motion = BasicMotion {
             linear_controller: Pid::new(0.5, 0.0, 0.0, None),
-            angular_controller: Pid::new(0.5, 0.0, 0.0, None),
+            angular_controller: AngularPid::new(0.5, 0.0, 0.0, None),
             linear_settler: Settler::new()
                 .error_tolerance(0.3)
                 .tolerance_duration(Duration::from_millis(100))
@@ -42,7 +39,7 @@ impl Compete for Robot {
         loop {
             let controller = self.controller.state().unwrap_or_default();
 
-            self.drivetrain.set_voltages((
+            _ = self.drivetrain.set_voltages((
                 controller.left_stick.y() * Motor::V5_MAX_VOLTAGE,
                 controller.right_stick.y() * Motor::V5_MAX_VOLTAGE,
             ));

@@ -10,9 +10,12 @@ pub mod tracking;
 
 pub mod prelude {
     pub use crate::{
-        control::{pid::Pid, ControlLoop},
+        control::{
+            pid::{AngularPid, Pid},
+            ControlLoop,
+        },
         differential::{shared_motors, DifferentialDrivetrain, SharedMotors, Voltages},
-        math::Vec2,
+        math::{Angle, Vec2},
         settler::Settler,
         tracking::{parallel_wheel::ParallelWheelTracking, wheel::TrackingWheel, Tracking},
     };

@@ -71,7 +71,8 @@
 //! 2. **Integration bounds:** An optional `integration_range` value can be passed to the controller,
 //!    which defines a range of error where integration will occur. When `|error| > integration_range`,
 //!    no integration will occur if used.
-use core::{f64::consts::FRAC_PI_2, marker::PhantomData, time::Duration};
+
+use core::{f64::consts::FRAC_PI_2, time::Duration};
 
 use vexide::prelude::Float;
 
@@ -80,20 +81,19 @@ use crate::math::Angle;
 use super::ControlLoop;
 
 /// A proportional-integral-derivative (PID) feedback controller with integral windup prevention.
-pub struct Pid<I: Default + Copy, O> {
+pub struct Pid {
     kp: f64,
     ki: f64,
     kd: f64,
 
     integral: f64,
-    integration_range: Option<I>,
-    prev_error: I,
-    _output_phantom: PhantomData<O>,
+    integration_range: Option<f64>,
+    prev_error: f64,
 }
 
-impl<I: Default + Copy, O> Pid<I, O> {
+impl Pid {
     /// Construct a new PID controller from gain constants and an optional integration range.
-    pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<I>) -> Self {
+    pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<f64>) -> Self {
         Self {
             kp,
             ki,
@@ -101,7 +101,6 @@ impl<I: Default + Copy, O> Pid<I, O> {
             integration_range,
             integral: Default::default(),
             prev_error: Default::default(),
-            _output_phantom: PhantomData,
         }
     }
 
@@ -122,7 +121,7 @@ impl<I: Default + Copy, O> Pid<I, O> {
         self.kd
     }
 
-    pub fn integration_range(&self) -> Option<I> {
+    pub fn integration_range(&self) -> Option<f64> {
         self.integration_range
     }
 
@@ -145,12 +144,12 @@ impl<I: Default + Copy, O> Pid<I, O> {
         self.kd = kd;
     }
 
-    pub fn set_integration_range(&mut self, range: Option<I>) {
+    pub fn set_integration_range(&mut self, range: Option<f64>) {
         self.integration_range = range;
     }
 }
 
-impl ControlLoop for Pid<f64, f64> {
+impl ControlLoop for Pid {
     type Input = f64;
     type Output = f64;
 
@@ -178,7 +177,76 @@ impl ControlLoop for Pid<f64, f64> {
     }
 }
 
-impl ControlLoop for Pid<Angle, f64> {
+/// A proportional-integral-derivative (PID) feedback controller with integral windup prevention.
+pub struct AngularPid {
+    kp: f64,
+    ki: f64,
+    kd: f64,
+
+    integral: f64,
+    integration_range: Option<Angle>,
+    prev_error: Angle,
+}
+
+impl AngularPid {
+    /// Construct a new PID controller from gain constants and an optional integration range.
+    pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<Angle>) -> Self {
+        Self {
+            kp,
+            ki,
+            kd,
+            integration_range,
+            integral: Default::default(),
+            prev_error: Default::default(),
+        }
+    }
+
+    /// Get the current PID gains as a tuple (`kp`, `ki`, `kd`).
+    pub fn gains(&self) -> (f64, f64, f64) {
+        (self.kp, self.ki, self.kd)
+    }
+
+    pub fn kp(&self) -> f64 {
+        self.kp
+    }
+
+    pub fn ki(&self) -> f64 {
+        self.ki
+    }
+
+    pub fn kd(&self) -> f64 {
+        self.kd
+    }
+
+    pub fn integration_range(&self) -> Option<Angle> {
+        self.integration_range
+    }
+
+    /// Sets the PID gains to provided values.
+    pub fn set_gains(&mut self, kp: f64, ki: f64, kd: f64) {
+        self.kp = kp;
+        self.ki = ki;
+        self.kd = kd;
+    }
+
+    pub fn set_kp(&mut self, kp: f64) {
+        self.kp = kp;
+    }
+
+    pub fn set_ki(&mut self, ki: f64) {
+        self.ki = ki;
+    }
+
+    pub fn set_kd(&mut self, kd: f64) {
+        self.kd = kd;
+    }
+
+    pub fn set_integration_range(&mut self, range: Option<Angle>) {
+        self.integration_range = range;
+    }
+}
+
+impl ControlLoop for AngularPid {
     type Input = Angle;
     type Output = f64;
 
