@@ -1,28 +1,28 @@
 use core::f64::consts::TAU;
-use vexide::{core::float::Float, devices::smart::InertialSensor};
+use vexide::devices::smart::InertialSensor;
 
-use crate::math::Vec2;
+use crate::math::{Angle, Vec2};
 
 use super::{sensor::RotarySensor, wheel::TrackingWheel, Tracking, TrackingData};
 
 #[derive(Debug, PartialEq)]
-pub struct ParallelWheelTracking<T: RotarySensor, U: RotarySensor> {
+pub struct PerpendicularWheelTracking<T: RotarySensor, U: RotarySensor> {
     forward_wheel: TrackingWheel<T>,
     sideways_wheel: TrackingWheel<U>,
     imu: InertialSensor,
 
     position: Vec2,
-    heading_offset: f64,
+    heading_offset: Angle,
 
     prev_forward_travel: f64,
     prev_sideways_travel: f64,
-    prev_heading: f64,
+    prev_heading: Angle,
 }
 
-impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
+impl<T: RotarySensor, U: RotarySensor> PerpendicularWheelTracking<T, U> {
     pub fn new(
         origin: Vec2,
-        heading: f64,
+        heading: Angle,
         forward_wheel: TrackingWheel<T>,
         sideways_wheel: TrackingWheel<U>,
         gyro: InertialSensor,
@@ -35,11 +35,11 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
             heading_offset: heading,
             prev_forward_travel: 0.0,
             prev_sideways_travel: 0.0,
-            prev_heading: 0.0,
+            prev_heading: Angle::default(),
         }
     }
 
-    pub fn set_heading(&mut self, heading: f64) {
+    pub fn set_heading(&mut self, heading: Angle) {
         self.heading_offset = heading - self.heading();
     }
 
@@ -51,8 +51,8 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
         self.position
     }
 
-    pub fn heading(&self) -> f64 {
-        (TAU - self.imu.heading().unwrap_or_default().to_radians()) % TAU
+    pub fn heading(&self) -> Angle {
+        Angle::from_radians((TAU - self.imu.heading().unwrap_or_default().to_radians()) % TAU)
     }
 
     pub fn forward_travel(&self) -> f64 {
@@ -64,7 +64,7 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
     }
 }
 
-impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> {
+impl<T: RotarySensor, U: RotarySensor> Tracking for PerpendicularWheelTracking<T, U> {
     fn update(&mut self) -> TrackingData {
         let forward_travel = self.forward_travel();
         let sideways_travel = self.forward_travel();
@@ -75,17 +75,19 @@ impl<T: RotarySensor, U: RotarySensor> Tracking for ParallelWheelTracking<T, U> 
         let delta_heading = heading - self.prev_heading;
         let avg_heading = self.prev_heading + (delta_heading / 2.0);
 
-        if delta_heading == 0.0 {
-            self.position +=
-                Vec2::new(delta_forward_travel, delta_sideways_travel).rotated(avg_heading);
+        if delta_heading.as_radians() == 0.0 {
+            self.position += Vec2::new(delta_forward_travel, delta_sideways_travel)
+                .rotated(avg_heading.as_radians());
         } else {
             self.position += Vec2::new(
                 2.0 * (delta_heading / 2.0).sin()
-                    * (delta_sideways_travel / delta_heading + self.sideways_wheel.offset),
+                    * (delta_sideways_travel / delta_heading.as_radians()
+                        + self.sideways_wheel.offset),
                 2.0 * (delta_heading / 2.0).sin()
-                    * (delta_forward_travel / delta_heading + self.forward_wheel.offset),
+                    * (delta_forward_travel / delta_heading.as_radians()
+                        + self.forward_wheel.offset),
             )
-            .rotated(avg_heading);
+            .rotated(avg_heading.as_radians());
         }
 
         self.prev_forward_travel = forward_travel;

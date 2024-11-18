@@ -5,16 +5,17 @@ use vexide::{
 };
 
 use crate::{
-    control::Feedback, differential::Voltages, math::Vec2, prelude::DifferentialDrivetrain,
+    control::ControlLoop,
+    differential::Voltages,
+    math::{Angle, Vec2},
+    prelude::DifferentialDrivetrain,
     settler::Settler,
 };
 
-use super::normalize_radians;
-
 #[derive(PartialEq)]
 pub struct BasicMotion<
-    L: Feedback<Error = f64, Output = f64>,
-    A: Feedback<Error = f64, Output = f64>,
+    L: ControlLoop<Input = f64, Output = f64>,
+    A: ControlLoop<Input = Angle, Output = f64>,
 > {
     pub linear_controller: L,
     pub angular_controller: A,
@@ -22,14 +23,14 @@ pub struct BasicMotion<
     pub angular_settler: Settler,
 }
 
-impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f64>>
+impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>
     BasicMotion<L, A>
 {
     pub async fn drive_distance_at_heading(
         &mut self,
         drivetrain: &mut DifferentialDrivetrain,
         target_distance: f64,
-        target_heading: f64,
+        target_heading: Angle,
     ) {
         let initial_forward_travel = drivetrain.tracking_data().forward_travel;
         let mut prev_time = Instant::now();
@@ -40,12 +41,14 @@ impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f
 
             let tracking_data = drivetrain.tracking_data();
 
-            let linear_error =
-                (target_distance + initial_forward_travel) - tracking_data.forward_travel;
-            let angular_error = normalize_radians(tracking_data.heading - target_heading);
-
-            let linear_output = self.linear_controller.update(linear_error, dt);
-            let angular_output = self.angular_controller.update(angular_error, dt);
+            let linear_output = self.linear_controller.update(
+                tracking_data.forward_travel,
+                target_distance + initial_forward_travel,
+                dt,
+            );
+            let angular_output =
+                self.angular_controller
+                    .update(tracking_data.heading, target_heading, dt);
 
             _ = drivetrain.set_voltages(
                 Voltages(
@@ -64,7 +67,11 @@ impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f
             .await
     }
 
-    pub async fn turn_to_heading(&mut self, drivetrain: &mut DifferentialDrivetrain, heading: f64) {
+    pub async fn turn_to_heading(
+        &mut self,
+        drivetrain: &mut DifferentialDrivetrain,
+        heading: Angle,
+    ) {
         self.drive_distance_at_heading(drivetrain, 0.0, heading)
             .await
     }
@@ -84,12 +91,16 @@ impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f
 
             let tracking_data = drivetrain.tracking_data();
 
-            let linear_error = initial_forward_travel - tracking_data.forward_travel;
-            let angular_error =
-                normalize_radians(tracking_data.heading - (point - tracking_data.position).angle());
-
-            let linear_output = self.linear_controller.update(linear_error, dt);
-            let angular_output = self.angular_controller.update(angular_error, dt);
+            let linear_output = self.linear_controller.update(
+                tracking_data.forward_travel,
+                initial_forward_travel,
+                dt,
+            );
+            let angular_output = self.angular_controller.update(
+                tracking_data.heading,
+                Angle::from_radians((point - tracking_data.position).angle()),
+                dt,
+            );
 
             _ = drivetrain.set_voltages(
                 Voltages::from_arcade(linear_output, angular_output)

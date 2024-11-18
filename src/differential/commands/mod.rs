@@ -8,8 +8,3 @@
 
 pub mod basic;
 pub mod mtp;
-
-#[inline]
-pub fn normalize_radians(angle: f64) -> f64 {
-    angle % core::f64::consts::FRAC_PI_2
-}

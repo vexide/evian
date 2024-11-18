@@ -25,7 +25,7 @@ use core::prelude::rust_2021::*;
 
 use alloc::rc::Rc;
 
-use crate::math::Vec2;
+use crate::math::{Angle, Vec2};
 
 /// A system that performs localization and returns telemetry on a mobile robot.
 pub trait Tracking {
@@ -52,7 +52,7 @@ pub struct TrackingData {
     /// The robot's heading angle in radians.
     ///
     /// Positive angles represent counterclockwise rotation from the positive x-axis.
-    pub heading: f64,
+    pub heading: Angle,
 
     /// The total distance the robot has traveled forward.
     ///

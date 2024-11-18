@@ -71,34 +71,37 @@
 //! 2. **Integration bounds:** An optional `integration_range` value can be passed to the controller,
 //!    which defines a range of error where integration will occur. When `|error| > integration_range`,
 //!    no integration will occur if used.
-use core::time::Duration;
+use core::{f64::consts::FRAC_PI_2, marker::PhantomData, time::Duration};
 
 use vexide::prelude::Float;
 
-use super::Feedback;
+use crate::math::Angle;
+
+use super::ControlLoop;
 
 /// A proportional-integral-derivative (PID) feedback controller with integral windup prevention.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Pid {
+pub struct Pid<I: Default + Copy, O> {
     kp: f64,
     ki: f64,
     kd: f64,
-    integration_range: Option<f64>,
 
     integral: f64,
-    prev_error: f64,
+    integration_range: Option<I>,
+    prev_error: I,
+    _output_phantom: PhantomData<O>,
 }
 
-impl Pid {
+impl<I: Default + Copy, O> Pid<I, O> {
     /// Construct a new PID controller from gain constants and an optional integration range.
-    pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<f64>) -> Self {
+    pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<I>) -> Self {
         Self {
             kp,
             ki,
             kd,
             integration_range,
-            integral: 0.0,
-            prev_error: 0.0,
+            integral: Default::default(),
+            prev_error: Default::default(),
+            _output_phantom: PhantomData,
         }
     }
 
@@ -119,7 +122,7 @@ impl Pid {
         self.kd
     }
 
-    pub fn integration_range(&self) -> Option<f64> {
+    pub fn integration_range(&self) -> Option<I> {
         self.integration_range
     }
 
@@ -142,17 +145,18 @@ impl Pid {
         self.kd = kd;
     }
 
-    pub fn set_integration_range(&mut self, range: Option<f64>) {
+    pub fn set_integration_range(&mut self, range: Option<I>) {
         self.integration_range = range;
     }
 }
 
-impl Feedback for Pid {
-    type Error = f64;
-
+impl ControlLoop for Pid<f64, f64> {
+    type Input = f64;
     type Output = f64;
 
-    fn update(&mut self, error: Self::Error, dt: Duration) -> Self::Output {
+    fn update(&mut self, measurement: f64, setpoint: f64, dt: Duration) -> f64 {
+        let error = (setpoint - measurement) % FRAC_PI_2;
+
         // If an integration range is used and we are within it, add to the integral.
         // If we are outside of the range, or if we have crossed the setpoint, reset integration.
         if self
@@ -171,5 +175,33 @@ impl Feedback for Pid {
 
         // Control signal = error * kp + integral + ki + derivative * kd.
         (error * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
+    }
+}
+
+impl ControlLoop for Pid<Angle, f64> {
+    type Input = Angle;
+    type Output = f64;
+
+    fn update(&mut self, measurement: Angle, setpoint: Angle, dt: Duration) -> f64 {
+        let error = (setpoint - measurement).wrapped_half_period();
+
+        // If an integration range is used and we are within it, add to the integral.
+        // If we are outside of the range, or if we have crossed the setpoint, reset integration.
+        if self
+            .integration_range
+            .is_none_or(|range| error.abs() < range)
+            && error.signum() == self.prev_error.signum()
+        {
+            self.integral += error.as_radians() * dt.as_secs_f64();
+        } else {
+            self.integral = 0.0;
+        }
+
+        // Calculate derivative (change in error / change in time)
+        let derivative = (error - self.prev_error).as_radians() / dt.as_secs_f64();
+        self.prev_error = error;
+
+        // Control signal = error * kp + integral + ki + derivative * kd.
+        (error.as_radians() * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
     }
 }

@@ -7,23 +7,24 @@ use vexide::{
 };
 
 use crate::{
-    control::Feedback, differential::Voltages, math::Vec2, prelude::DifferentialDrivetrain,
+    control::ControlLoop,
+    differential::Voltages,
+    math::{Angle, Vec2},
+    prelude::DifferentialDrivetrain,
     settler::Settler,
 };
 
-use super::normalize_radians;
-
 #[derive(PartialEq)]
 pub struct MoveToPoint<
-    L: Feedback<Error = f64, Output = f64>,
-    A: Feedback<Error = f64, Output = f64>,
+    L: ControlLoop<Input = f64, Output = f64>,
+    A: ControlLoop<Input = Angle, Output = f64>,
 > {
     pub distance_controller: L,
     pub angle_controller: A,
     pub settler: Settler,
 }
 
-impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f64>>
+impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>
     MoveToPoint<L, A>
 {
     pub async fn move_to_point(
@@ -43,7 +44,7 @@ impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f
             let local_target = point - tracking_data.position;
 
             let mut distance_error = local_target.length();
-            let mut angle_error = normalize_radians(tracking_data.heading - local_target.angle());
+            let mut angle_error = tracking_data.heading - Angle::from_radians(local_target.angle());
 
             if self
                 .settler
@@ -52,14 +53,18 @@ impl<L: Feedback<Error = f64, Output = f64>, A: Feedback<Error = f64, Output = f
                 break;
             }
 
-            if angle_error.abs() > FRAC_PI_4 {
+            if angle_error.as_radians().abs() > FRAC_PI_4 {
                 distance_error = -distance_error;
-                angle_error = normalize_radians(angle_error - FRAC_PI_2);
+                angle_error -= Angle::from_radians(FRAC_PI_2);
             }
 
-            let angular_output = self.angle_controller.update(angle_error, dt);
+            let angular_output = self.angle_controller.update(
+                tracking_data.heading,
+                Angle::from_radians(local_target.angle()),
+                dt,
+            );
             let linear_output =
-                self.distance_controller.update(distance_error, dt) * angle_error.cos();
+                self.distance_controller.update(distance_error, 0.0, dt) * angle_error.cos();
 
             _ = drivetrain.set_voltages(
                 Voltages::from_arcade(linear_output, angular_output)
