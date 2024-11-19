@@ -1,5 +1,8 @@
 use core::{
-    f64::{self, consts::{FRAC_PI_2, PI, TAU}},
+    f64::{
+        self,
+        consts::{FRAC_PI_2, PI, TAU},
+    },
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 use vexide::{core::float::Float, devices::position::Position};

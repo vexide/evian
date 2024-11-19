@@ -2,7 +2,7 @@
 
 use core::f64::consts::PI;
 
-use super::sensor::RotarySensor;
+use crate::tracking::sensor::RotarySensor;
 
 /// A wheel attached to a rotary sensor for position tracking.
 #[derive(Debug, Clone, PartialEq)]

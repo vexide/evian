@@ -15,6 +15,11 @@ use vexide::devices::{
 pub trait RotarySensor {
     type Error;
 
+    /// Reads the angular position measurement of the sensor.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Self::Error`] if the reading failed.
     fn position(&self) -> Result<Position, Self::Error>;
 }
 

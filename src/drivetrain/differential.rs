@@ -13,53 +13,35 @@
 
 use core::cell::RefCell;
 
-use vexide::{
-    async_runtime::task::Task,
-    core::float::Float,
-    devices::smart::motor::MotorError,
-    prelude::{sleep, spawn},
-};
+use vexide::{core::float::Float, devices::smart::motor::MotorError};
 
-pub mod commands;
-
-use crate::{prelude::Tracking, tracking::TrackingData};
 use alloc::{rc::Rc, vec::Vec};
 use vexide::devices::smart::Motor;
 
-/// Differential Drivetrain
-pub struct DifferentialDrivetrain {
+/// A collection of motors mounted in a differential (left/right) configuration.
+pub struct Differential {
     left_motors: SharedMotors,
     right_motors: SharedMotors,
-    tracking_data: Rc<RefCell<TrackingData>>,
-    _task: Task<()>,
 }
 
-impl DifferentialDrivetrain {
+impl Differential {
     /// Creates a new drivetrain with the provided left/right motors and a tracking system.
     ///
     /// Motors created with the [`drive_motors`] macro may be safely cloned, as they are wrapped
     /// in an [`Arc`] to allow sharing across tasks and between the drivetrain and its tracking
     /// instance if needed.
-    pub fn new<T: Tracking + 'static>(
-        left_motors: SharedMotors,
-        right_motors: SharedMotors,
-        mut tracking: T,
-    ) -> Self {
-        let tracking_data = Rc::new(RefCell::new(tracking.update()));
-
+    pub const fn new(left_motors: SharedMotors, right_motors: SharedMotors) -> Self {
         Self {
             left_motors,
             right_motors,
-            tracking_data: tracking_data.clone(),
-            _task: spawn(async move {
-                loop {
-                    *tracking_data.borrow_mut() = tracking.update();
-                    sleep(Motor::WRITE_INTERVAL).await;
-                }
-            }),
         }
     }
 
+    /// Sets the voltage of the left and right motors.
+    ///
+    /// # Errors
+    ///
+    /// See [`Motor::set_voltage`].
     pub fn set_voltages(&mut self, voltages: impl Into<Voltages>) -> Result<(), MotorError> {
         let voltages = voltages.into();
 
@@ -72,11 +54,6 @@ impl DifferentialDrivetrain {
         }
 
         Ok(())
-    }
-
-    #[must_use]
-    pub fn tracking_data(&self) -> TrackingData {
-        *self.tracking_data.borrow()
     }
 }
 

@@ -3,41 +3,37 @@
 
 extern crate alloc;
 
-use core::time::Duration;
-
-use evian::{control::pid::AngularPid, differential::commands::basic::BasicMotion, prelude::*};
+use evian::prelude::*;
 use vexide::prelude::*;
+
+use core::time::Duration;
+use evian::command::mtp::MoveToPoint;
 
 struct Robot {
     controller: Controller,
-    drivetrain: DifferentialDrivetrain,
+    drivetrain: Drivetrain<Differential, ParallelWheelTracking>,
 }
 
 impl Compete for Robot {
     async fn autonomous(&mut self) {
         let dt = &mut self.drivetrain;
-        let mut basic_motion = BasicMotion {
-            linear_controller: Pid::new(0.5, 0.0, 0.0, None),
-            angular_controller: AngularPid::new(0.5, 0.0, 0.0, None),
-            linear_settler: Settler::new()
-                .error_tolerance(0.3)
-                .tolerance_duration(Duration::from_millis(100))
-                .timeout(Duration::from_secs(2)),
-            angular_settler: Settler::new()
+        let mut mtp = MoveToPoint {
+            distance_controller: Pid::new(0.5, 0.0, 0.0, None),
+            angle_controller: AngularPid::new(0.5, 0.0, 0.0, None),
+            settler: Settler::new()
                 .error_tolerance(0.3)
                 .tolerance_duration(Duration::from_millis(100))
                 .timeout(Duration::from_secs(2)),
         };
 
-        basic_motion.drive_distance(dt, 10.0).await;
-        basic_motion.turn_to_heading(dt, 90.0.deg()).await;
+        mtp.move_to_point(dt, (24.0, 24.0)).await;
     }
 
     async fn driver(&mut self) {
         loop {
             let controller = self.controller.state().unwrap_or_default();
 
-            _ = self.drivetrain.set_voltages((
+            _ = self.drivetrain.motors.set_voltages((
                 controller.left_stick.y() * Motor::V5_MAX_VOLTAGE,
                 controller.right_stick.y() * Motor::V5_MAX_VOLTAGE,
             ));
@@ -62,14 +58,13 @@ async fn main(peripherals: Peripherals) {
 
     Robot {
         controller: peripherals.primary_controller,
-        drivetrain: DifferentialDrivetrain::new(
-            left_motors.clone(),
-            right_motors.clone(),
+        drivetrain: Drivetrain::new(
+            Differential::new(left_motors.clone(), right_motors.clone()),
             ParallelWheelTracking::new(
                 Vec2::default(),
                 0.0.deg(),
-                TrackingWheel::new(left_motors.clone(), 3.25, 7.5, Some(36.0 / 48.0)),
-                TrackingWheel::new(right_motors.clone(), 3.25, 7.5, Some(36.0 / 48.0)),
+                TrackingWheel::new(left_motors, 3.25, 7.5, Some(36.0 / 48.0)),
+                TrackingWheel::new(right_motors, 3.25, 7.5, Some(36.0 / 48.0)),
                 None,
             ),
         ),

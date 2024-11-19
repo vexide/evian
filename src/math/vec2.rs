@@ -75,7 +75,6 @@ impl<T: Float + Copy + Sub<Output = T>> Vec2<T> {
     }
 }
 
-
 impl<T: Float + Copy + Div<Output = T>> Vec2<T> {
     /// Get the unit (normalized) vector.
     ///
