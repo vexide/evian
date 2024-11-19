@@ -4,7 +4,7 @@ use core::{
 };
 use vexide::{core::float::Float, devices::position::Position};
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Angle(f64);
 
 impl Angle {
@@ -95,18 +95,6 @@ impl Angle {
 
     #[inline]
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn min(self, other: Self) -> Self {
-        Self(self.0.min(other.0))
-    }
-
-    #[inline]
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn max(self, other: Self) -> Self {
-        Self(self.0.max(other.0))
-    }
-
-    #[inline]
-    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs(self) -> Self {
         Self(self.0.abs())
     }
@@ -137,12 +125,6 @@ impl Angle {
 
     #[inline]
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn rem_euclid(self, rhs: Self) -> Self {
-        Self(self.0.rem_euclid(rhs.0))
-    }
-
-    #[inline]
-    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs_sub(self, other: Self) -> Self {
         #[allow(deprecated)]
         Self(self.0.abs_sub(other.0))
@@ -169,7 +151,7 @@ impl Angle {
     #[inline]
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn sin_cos(self) -> (f64, f64) {
-        (self.sin(), self.cos())
+        self.0.sin_cos()
     }
 }
 
