@@ -68,7 +68,7 @@ dependencies = [
 
 [[package]]
 name = "evian"
-version = "0.2.0"
+version = "0.3.0-beta.1"
 dependencies = [
  "replace_with",
  "vexide",

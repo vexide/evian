@@ -70,7 +70,7 @@ impl ParallelWheelTracking {
             let delta_heading = heading - prev_heading;
             let avg_heading = prev_heading + (delta_heading / 2.0);
 
-            let displacement = if delta_heading.as_radians() == 0.0 {
+            let displacement = if delta_heading == Angle::ZERO {
                 Vec2::from_polar(delta_forward_travel, avg_heading.as_radians())
             } else {
                 Vec2::from_polar(

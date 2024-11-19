@@ -6,7 +6,7 @@ use vexide::{
 };
 
 use crate::{
-    math::{Angle, Vec2},
+    math::{Angle, IntoAngle, Vec2},
     prelude::TracksVelocity,
     tracking::{sensor::RotarySensor, TracksForwardTravel, TracksHeading, TracksPosition},
 };
@@ -52,9 +52,8 @@ impl PerpendicularWheelTracking {
         loop {
             let forward_travel = forward_wheel.travel();
             let sideways_travel = sideways_wheel.travel();
+            let heading = (TAU - imu.heading().unwrap_or_default().to_radians()).rad();
             let heading_offset = data.borrow().heading_offset;
-            let heading =
-                Angle::from_radians((TAU - imu.heading().unwrap_or_default().to_radians()) % TAU);
 
             let delta_forward_travel = forward_travel - prev_forward_travel;
             let delta_sideways_travel = sideways_travel - prev_sideways_travel;
@@ -62,9 +61,8 @@ impl PerpendicularWheelTracking {
 
             let avg_heading = prev_heading + (delta_heading / 2.0);
 
-            let displacement = if delta_heading.as_radians() == 0.0 {
+            let displacement = if delta_heading == Angle::ZERO {
                 Vec2::new(delta_forward_travel, delta_sideways_travel)
-                    .rotated(avg_heading.as_radians())
             } else {
                 Vec2::new(
                     2.0 * (delta_heading / 2.0).sin()
@@ -74,8 +72,7 @@ impl PerpendicularWheelTracking {
                         * (delta_forward_travel / delta_heading.as_radians()
                             + forward_wheel.offset),
                 )
-                .rotated(avg_heading.as_radians())
-            };
+            }.rotated(avg_heading.as_radians());
 
             data.replace_with(|prev_data| TrackingData {
                 position: prev_data.position + displacement,
