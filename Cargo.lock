@@ -21,6 +21,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
+name = "bytemuck"
+version = "1.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8334215b81e418a0a7bdb8ef0849474f40bb10c8b71f1c4ed315cff49f32494d"
+
+[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -192,6 +198,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3a8614ee435691de62bcffcf4a66d91b3594bf1428a5722e79103249a095690"
 
 [[package]]
+name = "rgb"
+version = "0.8.50"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57397d16646700483b67d2dd6511d79318f9d057fdbd21a4066aeac8b41d310a"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
 name = "rustc_version"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -311,16 +326,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e91b56cd4cadaeb79bbf1a5645f6b4f8dc5bde8834ad5894a8db35fda9efa1fe"
 
 [[package]]
-name = "vex-sdk"
-version = "0.22.0"
+name = "vex-libunwind"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40b1777b4e4a60f9fed09417dafdc4a6a3393a67df1bd02c3b589770d906cff3"
+checksum = "8a93b1794031a6ec542ca31c3c19ee54a1c7ad78bad188577d75452d2f344780"
+dependencies = [
+ "snafu",
+ "vex-libunwind-sys",
+]
+
+[[package]]
+name = "vex-libunwind-sys"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1eddc26a00312b0b53ee4df6574e4c09488c89361d3beb6f4cbe75267af32f50"
+
+[[package]]
+name = "vex-sdk"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cddff1d9785c5e35e031340c0a24afbeb911a654f99fec062c5ec94281c189ed"
 
 [[package]]
 name = "vexide"
-version = "0.4.2"
+version = "0.5.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd35ef0d295c766cd44eaa75f4367eaded8a3af428f6ce9e2d68a6adb8be310c"
+checksum = "fdc23f100f3fb276cb2956fe5721c759125a97c948df0f57bce4fb8ee31e0a34"
 dependencies = [
  "vex-sdk",
  "vexide-async",
@@ -333,9 +364,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-async"
-version = "0.1.5"
+version = "0.1.6-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69dd1e26ad5af374a10ead32dcef781233f8d85d1b5e63094c644218360a16e3"
+checksum = "65ef1b4261a210ca16f5e814a4d9d5c37a1a99eee09384481da0a43728807f19"
 dependencies = [
  "async-task",
  "vex-sdk",
@@ -345,9 +376,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-core"
-version = "0.4.2"
+version = "0.5.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9834a1c72df5729a8e89209d9fe75b6f10ad127d4d0f07d6fd93eff64df11e74"
+checksum = "b6074d84dcfa006eafbce872c61349dd407b779829f789c48288007cb7cdce72"
 dependencies = [
  "bitflags",
  "dlmalloc",
@@ -359,18 +390,20 @@ dependencies = [
  "replace_with",
  "snafu",
  "talc",
+ "vex-libunwind",
  "vex-sdk",
 ]
 
 [[package]]
 name = "vexide-devices"
-version = "0.4.2"
+version = "0.5.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e2ef518f2bb3c251d5d5fd78c5787590f80b100647e928e9423900e8f7462cb"
+checksum = "a8e5710fe51d26f261c0579ca7f43689184340b1c446b7f9329db09710ac02a1"
 dependencies = [
  "bitflags",
  "mint",
  "no_std_io",
+ "rgb",
  "snafu",
  "vex-sdk",
  "vexide-core",
@@ -378,9 +411,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-macro"
-version = "0.3.0"
+version = "0.3.1-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "047cf74e7dfe1e88f70ac7928b1ad6b99952f3ccf6b1c5b3e2b155a3fe8bf1f7"
+checksum = "891688ed5c0a7eae16c5855afc5694531d76ea5a28da9658228904f7c7add9cd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -389,20 +422,21 @@ dependencies = [
 
 [[package]]
 name = "vexide-panic"
-version = "0.1.5"
+version = "0.1.6-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4873045bb00da14af65a816fe17f93fa1157fa40ec3ae286a58458f8ddbcddd1"
+checksum = "2e632954901a80b875981668939a57d486253b8da96a6653194e3b3b51a90277"
 dependencies = [
  "snafu",
  "vex-sdk",
  "vexide-core",
+ "vexide-devices",
 ]
 
 [[package]]
 name = "vexide-startup"
-version = "0.3.2"
+version = "0.3.3-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b507e63c798998f9e520db2dc807078b78fccbd6c11b65275c799dda849b394"
+checksum = "7a9b1b3cbe1394704e68354c68bf77ff5bf632fe0a3e16d301698ccb4c92211e"
 dependencies = [
  "bitflags",
  "compile-time",

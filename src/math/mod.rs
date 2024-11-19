@@ -1,5 +1,7 @@
 //! Math Utilities & Types
 
-pub mod vec2;
+mod angle;
+mod vec2;
 
+pub use angle::{Angle, IntoAngle};
 pub use vec2::Vec2;

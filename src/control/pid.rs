@@ -71,27 +71,30 @@
 //! 2. **Integration bounds:** An optional `integration_range` value can be passed to the controller,
 //!    which defines a range of error where integration will occur. When `|error| > integration_range`,
 //!    no integration will occur if used.
-use core::time::Duration;
+
+use core::{f64::consts::FRAC_PI_2, time::Duration};
 
 use vexide::prelude::Float;
 
-use super::Feedback;
+use crate::math::Angle;
+
+use super::ControlLoop;
 
 /// A proportional-integral-derivative (PID) feedback controller with integral windup prevention.
-#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Pid {
     kp: f64,
     ki: f64,
     kd: f64,
-    integration_range: Option<f64>,
 
     integral: f64,
+    integration_range: Option<f64>,
     prev_error: f64,
 }
 
 impl Pid {
     /// Construct a new PID controller from gain constants and an optional integration range.
-    pub fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<f64>) -> Self {
+    #[must_use]
+    pub const fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<f64>) -> Self {
         Self {
             kp,
             ki,
@@ -103,23 +106,28 @@ impl Pid {
     }
 
     /// Get the current PID gains as a tuple (`kp`, `ki`, `kd`).
-    pub fn gains(&self) -> (f64, f64, f64) {
+    #[must_use]
+    pub const fn gains(&self) -> (f64, f64, f64) {
         (self.kp, self.ki, self.kd)
     }
 
-    pub fn kp(&self) -> f64 {
+    #[must_use]
+    pub const fn kp(&self) -> f64 {
         self.kp
     }
 
-    pub fn ki(&self) -> f64 {
+    #[must_use]
+    pub const fn ki(&self) -> f64 {
         self.ki
     }
 
-    pub fn kd(&self) -> f64 {
+    #[must_use]
+    pub const fn kd(&self) -> f64 {
         self.kd
     }
 
-    pub fn integration_range(&self) -> Option<f64> {
+    #[must_use]
+    pub const fn integration_range(&self) -> Option<f64> {
         self.integration_range
     }
 
@@ -147,12 +155,13 @@ impl Pid {
     }
 }
 
-impl Feedback for Pid {
-    type Error = f64;
-
+impl ControlLoop for Pid {
+    type Input = f64;
     type Output = f64;
 
-    fn update(&mut self, error: Self::Error, dt: Duration) -> Self::Output {
+    fn update(&mut self, measurement: f64, setpoint: f64, dt: Duration) -> f64 {
+        let error = (setpoint - measurement) % FRAC_PI_2;
+
         // If an integration range is used and we are within it, add to the integral.
         // If we are outside of the range, or if we have crossed the setpoint, reset integration.
         if self
@@ -171,5 +180,109 @@ impl Feedback for Pid {
 
         // Control signal = error * kp + integral + ki + derivative * kd.
         (error * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
+    }
+}
+
+/// A proportional-integral-derivative (PID) feedback controller with integral windup prevention.
+pub struct AngularPid {
+    kp: f64,
+    ki: f64,
+    kd: f64,
+
+    integral: f64,
+    integration_range: Option<Angle>,
+    prev_error: Angle,
+}
+
+impl AngularPid {
+    /// Construct a new PID controller from gain constants and an optional integration range.
+    #[must_use]
+    pub const fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<Angle>) -> Self {
+        Self {
+            kp,
+            ki,
+            kd,
+            integration_range,
+            integral: 0.0,
+            prev_error: Angle::from_radians(0.0),
+        }
+    }
+
+    /// Get the current PID gains as a tuple (`kp`, `ki`, `kd`).
+    #[must_use]
+    pub const fn gains(&self) -> (f64, f64, f64) {
+        (self.kp, self.ki, self.kd)
+    }
+
+    #[must_use]
+    pub const fn kp(&self) -> f64 {
+        self.kp
+    }
+
+    #[must_use]
+    pub const fn ki(&self) -> f64 {
+        self.ki
+    }
+
+    #[must_use]
+    pub const fn kd(&self) -> f64 {
+        self.kd
+    }
+
+    #[must_use]
+    pub const fn integration_range(&self) -> Option<Angle> {
+        self.integration_range
+    }
+
+    /// Sets the PID gains to provided values.
+    pub fn set_gains(&mut self, kp: f64, ki: f64, kd: f64) {
+        self.kp = kp;
+        self.ki = ki;
+        self.kd = kd;
+    }
+
+    pub fn set_kp(&mut self, kp: f64) {
+        self.kp = kp;
+    }
+
+    pub fn set_ki(&mut self, ki: f64) {
+        self.ki = ki;
+    }
+
+    pub fn set_kd(&mut self, kd: f64) {
+        self.kd = kd;
+    }
+
+    pub fn set_integration_range(&mut self, range: Option<Angle>) {
+        self.integration_range = range;
+    }
+}
+
+impl ControlLoop for AngularPid {
+    type Input = Angle;
+    type Output = f64;
+
+    fn update(&mut self, measurement: Angle, setpoint: Angle, dt: Duration) -> f64 {
+        let error = (setpoint - measurement).wrapped();
+
+        // If an integration range is used and we are within it, add to the integral.
+        // If we are outside of the range, or if we have crossed the setpoint, reset integration.
+        #[allow(clippy::float_cmp)]
+        if self
+            .integration_range
+            .is_none_or(|range| error.as_radians().abs() < range.as_radians())
+            && error.signum() == self.prev_error.signum()
+        {
+            self.integral += error.as_radians() * dt.as_secs_f64();
+        } else {
+            self.integral = 0.0;
+        }
+
+        // Calculate derivative (change in error / change in time)
+        let derivative = (error - self.prev_error).as_radians() / dt.as_secs_f64();
+        self.prev_error = error;
+
+        // Control signal = error * kp + integral + ki + derivative * kd.
+        (error.as_radians() * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
     }
 }

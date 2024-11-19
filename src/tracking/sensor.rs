@@ -1,21 +1,25 @@
-use alloc::{sync::Arc, vec::Vec};
-use vexide::{
-    core::sync::{Mutex, MutexGuard},
-    devices::{
-        adi::{encoder::EncoderError, AdiEncoder},
-        position::Position,
-        smart::{
-            motor::{Motor, MotorError},
-            rotation::RotationSensor,
-        },
-        PortError,
+use core::cell::RefCell;
+
+use alloc::{rc::Rc, vec::Vec};
+use vexide::devices::{
+    adi::{encoder::EncoderError, AdiEncoder},
+    position::Position,
+    smart::{
+        motor::{Motor, MotorError},
+        rotation::RotationSensor,
     },
+    PortError,
 };
 
 /// A sensor that can measure rotation, for example, a potentiometer or encoder.
 pub trait RotarySensor {
     type Error;
 
+    /// Reads the angular position measurement of the sensor.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Self::Error`] if the reading failed.
     fn position(&self) -> Result<Position, Self::Error>;
 }
 
@@ -43,7 +47,7 @@ impl RotarySensor for Vec<Motor> {
         // The total motors to be used in the average later
         let mut total_motors = self.len();
 
-        for motor in self.iter() {
+        for motor in self {
             degree_sum += if let Ok(position) = motor.position() {
                 position.as_degrees()
             } else {
@@ -53,27 +57,16 @@ impl RotarySensor for Vec<Motor> {
             };
         }
 
+        #[allow(clippy::cast_precision_loss)]
         Ok(Position::from_degrees(degree_sum / (total_motors as f64)))
     }
 }
 
-/// Blanket implementation for all `Arc<Mutex<T>>` wrappers of already implemented sensors.
-impl<T: RotarySensor> RotarySensor for Arc<Mutex<T>> {
+/// Blanket implementation for all `Rc<RefCell<T>>` wrappers of already implemented sensors.
+impl<T: RotarySensor> RotarySensor for Rc<RefCell<T>> {
     type Error = <T as RotarySensor>::Error;
 
     fn position(&self) -> Result<Position, Self::Error> {
-        let mut guard: Option<MutexGuard<'_, T>> = None;
-
-        while match self.try_lock() {
-            Some(lock) => {
-                guard = Some(lock);
-                false
-            }
-            None => true,
-        } {
-            core::hint::spin_loop();
-        }
-
-        guard.unwrap().position()
+        self.borrow().position()
     }
 }

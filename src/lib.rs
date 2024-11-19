@@ -4,18 +4,25 @@ extern crate alloc;
 
 pub mod command;
 pub mod control;
-pub mod differential;
+pub mod drivetrain;
 pub mod math;
 pub mod tracking;
 
 pub mod prelude {
     pub use crate::{
-        command::settler::Settler,
-        control::{pid::Pid, Feedback},
-        differential::{
-            commands::basic::BasicCommands, drive_motors, DifferentialDrivetrain, DriveMotors,
+        command::Settler,
+        control::{
+            pid::{AngularPid, Pid},
+            ControlLoop,
         },
-        math::vec2::Vec2,
-        tracking::{parallel_wheel::ParallelWheelTracking, wheel::TrackingWheel, Tracking},
+        drivetrain::{
+            differential::{shared_motors, Differential, Voltages},
+            Drivetrain,
+        },
+        math::{Angle, IntoAngle, Vec2},
+        tracking::{
+            wheeled::{ParallelWheelTracking, PerpendicularWheelTracking, TrackingWheel},
+            TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity,
+        },
     };
 }
