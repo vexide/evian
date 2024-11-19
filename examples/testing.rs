@@ -30,9 +30,7 @@ impl Compete for Robot {
         };
 
         basic_motion.drive_distance(dt, 10.0).await;
-        basic_motion
-            .turn_to_heading(dt, 90.0.deg())
-            .await;
+        basic_motion.turn_to_heading(dt, 90.0.deg()).await;
     }
 
     async fn driver(&mut self) {

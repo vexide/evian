@@ -270,7 +270,7 @@ impl ControlLoop for AngularPid {
         #[allow(clippy::float_cmp)]
         if self
             .integration_range
-            .is_none_or(|range| error.abs() < range)
+            .is_none_or(|range| error.as_radians().abs() < range.as_radians())
             && error.signum() == self.prev_error.signum()
         {
             self.integral += error.as_radians() * dt.as_secs_f64();
