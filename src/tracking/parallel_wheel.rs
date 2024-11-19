@@ -53,17 +53,19 @@ impl<T: RotarySensor, U: RotarySensor> ParallelWheelTracking<T, U> {
     }
 
     pub fn heading(&self) -> Angle {
+        let raw_heading = if let Some(imu) = &self.imu {
+            if let Ok(heading) = imu.heading() {
+                TAU - heading.to_radians()
+            } else {
+                (self.right_wheel.travel() - self.left_wheel.travel()) / self.track_width()
+            }
+        } else {
+            (self.right_wheel.travel() - self.left_wheel.travel()) / self.track_width()
+        };
+
         Angle::from_radians(
             (self.heading_offset.as_radians()
-                + if let Some(imu) = &self.imu {
-                    if let Ok(heading) = imu.heading() {
-                        TAU - heading.to_radians()
-                    } else {
-                        (self.right_wheel.travel() - self.left_wheel.travel()) / self.track_width()
-                    }
-                } else {
-                    (self.right_wheel.travel() - self.left_wheel.travel()) / self.track_width()
-                })
+                + raw_heading)
                 % TAU,
         )
     }

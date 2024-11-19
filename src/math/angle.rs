@@ -1,6 +1,6 @@
 use core::{
-    f64::consts::{FRAC_PI_2, PI},
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign},
+    f64::{self, consts::{FRAC_PI_2, PI, TAU}},
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 use vexide::{core::float::Float, devices::position::Position};
 
@@ -8,10 +8,23 @@ use vexide::{core::float::Float, devices::position::Position};
 pub struct Angle(f64);
 
 impl Angle {
+    pub const ZERO: Self = Self(0.0);
+    pub const QUARTER_TURN: Self = Self(FRAC_PI_2);
+    pub const HALF_TURN: Self = Self(PI);
+    pub const FULL_TURN: Self = Self(TAU);
+    pub const MIN: Self = Self(f64::MIN);
+    pub const MAX: Self = Self(f64::MAX);
+    pub const EPSILON: Self = Self(f64::EPSILON);
+
     #[inline]
     #[must_use]
     pub const fn from_radians(radians: f64) -> Self {
         Self(radians)
+    }
+
+    #[must_use]
+    pub const fn from_gradians(gradians: f64) -> Self {
+        Self(gradians * (PI / 180.0))
     }
 
     #[inline]
@@ -22,8 +35,44 @@ impl Angle {
 
     #[inline]
     #[must_use]
+    pub fn from_turns(turns: f64) -> Self {
+        Self(turns * TAU)
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn asin(y: f64) -> Self {
+        Self(y.asin())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn acos(x: f64) -> Self {
+        Self(x.asin())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn atan(tan: f64) -> Self {
+        Self(tan.asin())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn atan2(y: f64, x: f64) -> Self {
+        Self(y.atan2(x))
+    }
+
+    #[inline]
+    #[must_use]
     pub fn as_degrees(&self) -> f64 {
         self.0.to_degrees()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn as_turns(&self) -> f64 {
+        self.0 / TAU
     }
 
     #[inline]
@@ -34,123 +83,93 @@ impl Angle {
 
     #[inline]
     #[must_use]
-    pub fn wrapped_half_period(&self) -> Self {
-        Self(self.0 % FRAC_PI_2)
+    pub const fn as_gradians(&self) -> f64 {
+        self.0 * (180.0 / PI)
     }
 
     #[inline]
     #[must_use]
-    pub fn wrapped_period(&self) -> Self {
-        Self(self.0 % PI)
+    pub fn wrapped(&self) -> Self {
+        Self((-self.0 + PI).rem_euclid(TAU) - PI)
     }
 
     #[inline]
-    #[must_use]
-    pub const fn is_sign_positive(self) -> bool {
-        self.0.is_sign_positive()
-    }
-
-    #[inline]
-    #[must_use]
-    pub const fn is_sign_negative(self) -> bool {
-        self.0.is_sign_negative()
-    }
-
-    #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn min(self, other: Self) -> Self {
         Self(self.0.min(other.0))
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn max(self, other: Self) -> Self {
         Self(self.0.max(other.0))
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs(self) -> Self {
         Self(self.0.abs())
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn signum(self) -> f64 {
         self.0.signum()
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn copysign(self, sign: Self) -> Self {
         Self(self.0.copysign(sign.0))
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn mul_add(self, a: Self, b: Self) -> Self {
         Self(self.0.mul_add(a.0, b.0))
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn div_euclid(self, rhs: Self) -> Self {
         Self(self.0.div_euclid(rhs.0))
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn rem_euclid(self, rhs: Self) -> Self {
         Self(self.0.rem_euclid(rhs.0))
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs_sub(self, other: Self) -> Self {
         #[allow(deprecated)]
         Self(self.0.abs_sub(other.0))
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn sin(self) -> f64 {
         self.0.sin()
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn cos(self) -> f64 {
         self.0.cos()
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn tan(self) -> f64 {
         self.0.tan()
     }
 
     #[inline]
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn sin_cos(self) -> (f64, f64) {
         (self.sin(), self.cos())
-    }
-
-    #[inline]
-    #[must_use]
-    pub fn sinh(self) -> f64 {
-        self.0.sinh()
-    }
-
-    #[inline]
-    #[must_use]
-    pub fn cosh(self) -> f64 {
-        self.0.cosh()
-    }
-
-    #[inline]
-    #[must_use]
-    pub fn tanh(self) -> f64 {
-        self.0.tanh()
     }
 }
 
@@ -233,16 +252,27 @@ impl Neg for Angle {
     }
 }
 
-impl Rem<Angle> for Angle {
-    type Output = Self;
-
-    fn rem(self, rhs: Angle) -> Self::Output {
-        Self(self.0 % rhs.0)
-    }
+pub trait IntoAngle {
+    fn deg(self) -> Angle;
+    fn grad(self) -> Angle;
+    fn rad(self) -> Angle;
+    fn turns(self) -> Angle;
 }
 
-impl RemAssign for Angle {
-    fn rem_assign(&mut self, rhs: Self) {
-        self.0 %= rhs.0;
+impl IntoAngle for f64 {
+    fn deg(self) -> Angle {
+        Angle::from_degrees(self)
+    }
+
+    fn rad(self) -> Angle {
+        Angle::from_radians(self)
+    }
+
+    fn grad(self) -> Angle {
+        Angle::from_gradians(self)
+    }
+
+    fn turns(self) -> Angle {
+        Angle::from_turns(self)
     }
 }

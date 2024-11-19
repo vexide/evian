@@ -3,5 +3,5 @@
 mod angle;
 mod vec2;
 
-pub use angle::Angle;
+pub use angle::{Angle, IntoAngle};
 pub use vec2::Vec2;

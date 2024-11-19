@@ -15,7 +15,7 @@ pub mod prelude {
             ControlLoop,
         },
         differential::{shared_motors, DifferentialDrivetrain, SharedMotors, Voltages},
-        math::{Angle, Vec2},
+        math::{Angle, IntoAngle, Vec2},
         settler::Settler,
         tracking::{parallel_wheel::ParallelWheelTracking, wheel::TrackingWheel, Tracking},
     };

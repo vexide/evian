@@ -263,10 +263,11 @@ impl ControlLoop for AngularPid {
     type Output = f64;
 
     fn update(&mut self, measurement: Angle, setpoint: Angle, dt: Duration) -> f64 {
-        let error = (setpoint - measurement).wrapped_half_period();
+        let error = (setpoint - measurement).wrapped();
 
         // If an integration range is used and we are within it, add to the integral.
         // If we are outside of the range, or if we have crossed the setpoint, reset integration.
+        #[allow(clippy::float_cmp)]
         if self
             .integration_range
             .is_none_or(|range| error.abs() < range)
