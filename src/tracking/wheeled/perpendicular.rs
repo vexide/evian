@@ -72,7 +72,8 @@ impl PerpendicularWheelTracking {
                         * (delta_forward_travel / delta_heading.as_radians()
                             + forward_wheel.offset),
                 )
-            }.rotated(avg_heading.as_radians());
+            }
+            .rotated(avg_heading.as_radians());
 
             data.replace_with(|prev_data| TrackingData {
                 position: prev_data.position + displacement,
