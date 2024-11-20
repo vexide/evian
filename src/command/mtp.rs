@@ -2,7 +2,7 @@ use core::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 
 use vexide::{
     async_runtime::time::sleep,
-    core::{float::Float, time::Instant},
+    core::time::Instant,
     devices::smart::Motor,
 };
 
@@ -99,8 +99,8 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             let local_target = carrot - position;
 
-            let mut distance_error = local_target.length();
-            let mut angle_error = drivetrain.tracking.heading() - local_target.angle().rad();
+            let distance_error = local_target.length();
+            let angle_error = drivetrain.tracking.heading() - local_target.angle().rad();
 
             if self
                 .settler

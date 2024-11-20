@@ -13,7 +13,7 @@
 
 use core::cell::RefCell;
 
-use vexide::{core::float::Float, devices::smart::motor::MotorError};
+use vexide::devices::smart::motor::MotorError;
 
 use alloc::{rc::Rc, vec::Vec};
 use vexide::devices::smart::Motor;

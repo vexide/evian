@@ -74,8 +74,6 @@
 
 use core::{f64::consts::FRAC_PI_2, time::Duration};
 
-use vexide::prelude::Float;
-
 use crate::math::Angle;
 
 use super::ControlLoop;
