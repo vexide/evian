@@ -2,7 +2,7 @@ use alloc::rc::Rc;
 use core::{cell::RefCell, f64::consts::TAU};
 use vexide::{
     devices::smart::{InertialSensor, Motor},
-    prelude::{sleep, spawn, Task},
+    prelude::{sleep, spawn, Float, Task},
 };
 
 use crate::{
@@ -63,7 +63,7 @@ impl ParallelWheelTracking {
                     (right_wheel.travel() - left_wheel.travel()) / track_width
                 };
 
-                Angle::from_radians((heading_offset.as_radians() + raw_heading) % TAU)
+                Angle::from_radians((heading_offset.as_radians() + raw_heading).rem_euclid(TAU))
             };
 
             let delta_forward_travel = forward_travel - prev_forward_travel;

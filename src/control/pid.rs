@@ -158,7 +158,7 @@ impl ControlLoop for Pid {
     type Output = f64;
 
     fn update(&mut self, measurement: f64, setpoint: f64, dt: Duration) -> f64 {
-        let error = (setpoint - measurement) % FRAC_PI_2;
+        let error = setpoint - measurement;
 
         // If an integration range is used and we are within it, add to the integral.
         // If we are outside of the range, or if we have crossed the setpoint, reset integration.
