@@ -6,9 +6,11 @@
 //!
 //! [`Command`]: crate::command::Command
 
-pub mod basic;
-pub mod mtp;
+mod basic;
+mod mtp;
 
 mod settler;
 
 pub use settler::Settler;
+pub use basic::BasicMotion;
+pub use mtp::PointToPoint;

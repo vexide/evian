@@ -52,8 +52,8 @@ impl PerpendicularWheelTracking {
         loop {
             let forward_travel = forward_wheel.travel();
             let sideways_travel = sideways_wheel.travel();
-            let heading = (TAU - imu.heading().unwrap_or_default().to_radians()).rad();
             let heading_offset = data.borrow().heading_offset;
+            let heading = (TAU - imu.heading().unwrap_or_default().to_radians()).rad() + heading_offset;
 
             let delta_forward_travel = forward_travel - prev_forward_travel;
             let delta_sideways_travel = sideways_travel - prev_sideways_travel;

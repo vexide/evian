@@ -19,7 +19,7 @@ use crate::{
 use super::Settler;
 
 #[derive(PartialEq)]
-pub struct MoveToPoint<
+pub struct PointToPoint<
     L: ControlLoop<Input = f64, Output = f64>,
     A: ControlLoop<Input = Angle, Output = f64>,
 > {
@@ -29,7 +29,7 @@ pub struct MoveToPoint<
 }
 
 impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>
-    MoveToPoint<L, A>
+    PointToPoint<L, A>
 {
     pub async fn move_to_point<T: TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,

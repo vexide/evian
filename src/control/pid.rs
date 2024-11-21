@@ -72,7 +72,7 @@
 //!    which defines a range of error where integration will occur. When `|error| > integration_range`,
 //!    no integration will occur if used.
 
-use core::{f64::consts::FRAC_PI_2, time::Duration};
+use core::time::Duration;
 
 use crate::math::Angle;
 

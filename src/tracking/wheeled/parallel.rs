@@ -2,7 +2,7 @@ use alloc::rc::Rc;
 use core::{cell::RefCell, f64::consts::TAU};
 use vexide::{
     devices::smart::{InertialSensor, Motor},
-    prelude::{sleep, spawn, Float, Task},
+    prelude::{sleep, spawn, Task},
 };
 
 use crate::{
@@ -39,32 +39,44 @@ impl ParallelWheelTracking {
         }
     }
 
+    fn pre_offset_heading<T: RotarySensor, U: RotarySensor>(
+        left_wheel: &TrackingWheel<T>,
+        right_wheel: &TrackingWheel<U>,
+        imu: Option<&InertialSensor>,
+        initial_raw_heading: Angle,
+    ) -> Angle {
+        let track_width = left_wheel.offset + right_wheel.offset;
+        Angle::from_radians(if let Some(imu) = imu {
+            if let Ok(heading) = imu.heading() {
+                TAU - heading.to_radians()
+            } else {
+                (right_wheel.travel() - left_wheel.travel()) / track_width
+            }
+        } else {
+            (right_wheel.travel() - left_wheel.travel()) / track_width
+        }) - initial_raw_heading
+    }
+
     async fn task<T: RotarySensor, U: RotarySensor>(
         left_wheel: TrackingWheel<T>,
         right_wheel: TrackingWheel<U>,
         imu: Option<InertialSensor>,
         data: Rc<RefCell<TrackingData>>,
     ) {
+        let initial_raw_heading =
+            Self::pre_offset_heading(&left_wheel, &right_wheel, imu.as_ref(), Angle::ZERO);
         let mut prev_forward_travel = 0.0;
         let mut prev_heading = Angle::ZERO;
 
         loop {
             let forward_travel = (left_wheel.travel() + right_wheel.travel()) / 2.0;
             let heading_offset = data.borrow().heading_offset;
-            let heading = {
-                let track_width = left_wheel.offset + right_wheel.offset;
-                let raw_heading = if let Some(ref imu) = imu {
-                    if let Ok(heading) = imu.heading() {
-                        TAU - heading.to_radians()
-                    } else {
-                        (right_wheel.travel() - left_wheel.travel()) / track_width
-                    }
-                } else {
-                    (right_wheel.travel() - left_wheel.travel()) / track_width
-                };
-
-                Angle::from_radians((heading_offset.as_radians() + raw_heading).rem_euclid(TAU))
-            };
+            let heading = Self::pre_offset_heading(
+                &left_wheel,
+                &right_wheel,
+                imu.as_ref(),
+                initial_raw_heading,
+            ) + heading_offset;
 
             let delta_forward_travel = forward_travel - prev_forward_travel;
             let delta_heading = heading - prev_heading;
