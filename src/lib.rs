@@ -7,6 +7,7 @@ pub mod control;
 pub mod drivetrain;
 pub mod math;
 pub mod tracking;
+pub mod mp;
 
 pub mod prelude {
     pub use crate::{
