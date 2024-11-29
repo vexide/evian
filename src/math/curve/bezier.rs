@@ -1,5 +1,5 @@
+use super::Curve;
 use crate::math::Vec2;
-use super::TrajectoryCurve;
 
 pub struct CubicBezier {
     p0: Vec2<f64>,
@@ -19,7 +19,7 @@ impl CubicBezier {
     }
 }
 
-impl TrajectoryCurve for CubicBezier {
+impl Curve for CubicBezier {
     fn max_t(&self) -> f64 {
         1.0
     }

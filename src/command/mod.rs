@@ -11,6 +11,6 @@ mod mtp;
 
 mod settler;
 
-pub use settler::Settler;
 pub use basic::BasicMotion;
 pub use mtp::PointToPoint;
+pub use settler::Settler;

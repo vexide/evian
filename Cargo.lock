@@ -27,12 +27,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8334215b81e418a0a7bdb8ef0849474f40bb10c8b71f1c4ed315cff49f32494d"
 
 [[package]]
-name = "cfg-if"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
-
-[[package]]
 name = "compile-time"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -56,21 +50,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "dlmalloc"
-version = "0.2.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b5e0d321d61de16390ed273b647ce51605b575916d3c25e6ddf27a1e140035"
-dependencies = [
- "cfg-if",
- "libc",
- "windows-sys",
-]
-
-[[package]]
 name = "evian"
-version = "0.3.0-beta.1"
+version = "0.3.1-test.3"
 dependencies = [
- "replace_with",
  "vexide",
 ]
 
@@ -91,12 +73,6 @@ name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
-
-[[package]]
-name = "libc"
-version = "0.2.161"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e9489c2807c139ffd9c1794f4af0ebe86a828db53ecdc7fea2111d0fed085d1"
 
 [[package]]
 name = "libm"
@@ -343,15 +319,15 @@ checksum = "1eddc26a00312b0b53ee4df6574e4c09488c89361d3beb6f4cbe75267af32f50"
 
 [[package]]
 name = "vex-sdk"
-version = "0.23.0"
+version = "0.25.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cddff1d9785c5e35e031340c0a24afbeb911a654f99fec062c5ec94281c189ed"
+checksum = "51fd78fa0da279b45c56d3d328080706df9b3b7816100c6446dc8605a15601d8"
 
 [[package]]
 name = "vexide"
-version = "0.5.0-rc.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fdc23f100f3fb276cb2956fe5721c759125a97c948df0f57bce4fb8ee31e0a34"
+checksum = "6392ef20d3718f243bbb109f09e8390f4d4f0ef14273a4d6570d8e0932716d9a"
 dependencies = [
  "vex-sdk",
  "vexide-async",
@@ -364,9 +340,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-async"
-version = "0.1.6-rc.1"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65ef1b4261a210ca16f5e814a4d9d5c37a1a99eee09384481da0a43728807f19"
+checksum = "48e19851e275ddf9ef268eccdfbb8bbca4ba4dfd80dd9f5bd71302453a736812"
 dependencies = [
  "async-task",
  "vex-sdk",
@@ -376,12 +352,11 @@ dependencies = [
 
 [[package]]
 name = "vexide-core"
-version = "0.5.0-rc.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6074d84dcfa006eafbce872c61349dd407b779829f789c48288007cb7cdce72"
+checksum = "5261ad90a82396608306aedb6c181005791619433f50c315a7c36d81131652c2"
 dependencies = [
  "bitflags",
- "dlmalloc",
  "futures-core",
  "libm",
  "lock_api",
@@ -396,9 +371,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-devices"
-version = "0.5.0-rc.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8e5710fe51d26f261c0579ca7f43689184340b1c446b7f9329db09710ac02a1"
+checksum = "4a29d45d02ae04e5d994f63e00fc59d62fbe8a7a693f0662611cbb32a6c9526e"
 dependencies = [
  "bitflags",
  "mint",
@@ -411,9 +386,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-macro"
-version = "0.3.1-rc.1"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "891688ed5c0a7eae16c5855afc5694531d76ea5a28da9658228904f7c7add9cd"
+checksum = "e1fdf008f4199cdd6329b53c5e264ddd238070b0f0e54ca023c64977b2069928"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -422,9 +397,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-panic"
-version = "0.1.6-rc.1"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e632954901a80b875981668939a57d486253b8da96a6653194e3b3b51a90277"
+checksum = "dc2e9b353a97656819c387fe0c72b1182fc44fdf114ace2e76128c337c3ed371"
 dependencies = [
  "snafu",
  "vex-sdk",
@@ -434,9 +409,9 @@ dependencies = [
 
 [[package]]
 name = "vexide-startup"
-version = "0.3.3-rc.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a9b1b3cbe1394704e68354c68bf77ff5bf632fe0a3e16d301698ccb4c92211e"
+checksum = "433106fdad37f00b58e416fe45943ba8341a19c6d375e274b0b56208a1cf44a4"
 dependencies = [
  "bitflags",
  "compile-time",
@@ -449,76 +424,3 @@ name = "waker-fn"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "317211a0dc0ceedd78fb2ca9a44aed3d7b9b26f81870d485c07122b4350673b7"
-
-[[package]]
-name = "windows-sys"
-version = "0.59.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b"
-dependencies = [
- "windows-targets",
-]
-
-[[package]]
-name = "windows-targets"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b724f72796e036ab90c1021d4780d4d3d648aca59e491e6b98e725b84e99973"
-dependencies = [
- "windows_aarch64_gnullvm",
- "windows_aarch64_msvc",
- "windows_i686_gnu",
- "windows_i686_gnullvm",
- "windows_i686_msvc",
- "windows_x86_64_gnu",
- "windows_x86_64_gnullvm",
- "windows_x86_64_msvc",
-]
-
-[[package]]
-name = "windows_aarch64_gnullvm"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32a4622180e7a0ec044bb555404c800bc9fd9ec262ec147edd5989ccd0c02cd3"
-
-[[package]]
-name = "windows_aarch64_msvc"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09ec2a7bb152e2252b53fa7803150007879548bc709c039df7627cabbd05d469"
-
-[[package]]
-name = "windows_i686_gnu"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e9b5ad5ab802e97eb8e295ac6720e509ee4c243f69d781394014ebfe8bbfa0b"
-
-[[package]]
-name = "windows_i686_gnullvm"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0eee52d38c090b3caa76c563b86c3a4bd71ef1a819287c19d586d7334ae8ed66"
-
-[[package]]
-name = "windows_i686_msvc"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "240948bc05c5e7c6dabba28bf89d89ffce3e303022809e73deaefe4f6ec56c66"
-
-[[package]]
-name = "windows_x86_64_gnu"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "147a5c80aabfbf0c7d901cb5895d1de30ef2907eb21fbbab29ca94c5b08b1a78"
-
-[[package]]
-name = "windows_x86_64_gnullvm"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24d5b23dc417412679681396f2b49f3de8c1473deb516bd34410872eff51ed0d"
-
-[[package]]
-name = "windows_x86_64_msvc"
-version = "0.52.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"

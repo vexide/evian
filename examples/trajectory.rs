@@ -1,13 +1,13 @@
 #![no_main]
 #![no_std]
 
-extern crate alloc;
-
-use evian::mp::bezier::*;
-use evian::mp::trajectory::*;
 use evian::prelude::*;
-use vexide::core::time::Instant;
 use vexide::prelude::*;
+
+use vexide::core::time::Instant;
+
+use evian::math::curve::CubicBezier;
+use evian::trajectory::{Constraints, Trajectory};
 
 #[vexide::main]
 async fn main(_peripherals: Peripherals) {

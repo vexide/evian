@@ -2,11 +2,9 @@ extern crate alloc;
 
 use core::f64::{self, consts::FRAC_PI_4};
 
+use crate::math::{curve::Curve, Angle, Vec2};
 use alloc::{vec, vec::Vec};
-use crate::math::{Angle, Vec2};
 use vexide::prelude::Float;
-
-use super::TrajectoryCurve;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Constraints {
@@ -50,7 +48,7 @@ pub struct Trajectory {
 }
 
 impl Trajectory {
-    pub fn generate(curve: impl TrajectoryCurve, spacing: f64, constraints: Constraints) -> Self {
+    pub fn generate(curve: impl Curve, spacing: f64, constraints: Constraints) -> Self {
         Self {
             spacing,
             profile: {
@@ -69,13 +67,9 @@ impl Trajectory {
                     let second_derivative = curve.second_derivative(t);
 
                     let curvature = {
-                        let mut denominator =
-                            derivative.x * derivative.x + derivative.y * derivative.y;
-                        denominator = denominator * denominator * denominator;
-                        denominator = denominator.sqrt();
-
-                        (derivative.x * second_derivative.y - derivative.y * second_derivative.x)
-                            / denominator
+                        let mut denominator = derivative.dot(derivative);
+                        denominator *= denominator.sqrt();
+                        derivative.cross(second_derivative) / denominator
                     };
                     curvature_cache.push(curvature);
 

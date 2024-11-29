@@ -1,10 +1,6 @@
 use core::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 
-use vexide::{
-    async_runtime::time::sleep,
-    core::time::Instant,
-    devices::smart::Motor,
-};
+use vexide::{async_runtime::time::sleep, core::time::Instant, devices::smart::Motor};
 
 use crate::{
     control::ControlLoop,
