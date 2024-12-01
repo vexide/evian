@@ -30,7 +30,7 @@ impl Ramsete {
         trajectory: Trajectory,
     ) {
         let mut prev_position = drivetrain.tracking.position();
-        let mut distance = 0.0;
+        let mut distance = 0.1; // Starting on trajectory.profile[1] because trajectory.profile[0] has no starting velocity
 
         loop {
             sleep(Motor::WRITE_INTERVAL).await;
