@@ -42,7 +42,9 @@ impl Ramsete {
             let profile = trajectory.at(distance);
 
             if *trajectory.profile.last().unwrap() == profile {
-                _ = drivetrain.motors.set_voltages(DifferentialVoltages::default());
+                _ = drivetrain
+                    .motors
+                    .set_voltages(DifferentialVoltages::default());
                 return;
             }
 
@@ -75,21 +77,28 @@ impl Ramsete {
             let linear_velocity =
                 desired_linear_velocity * heading_error.cos() + k * position_error.x;
 
-            _ = drivetrain.motors.set_velocities(
-                DifferentialVoltages(
-                    to_motor_rpm(
-                        linear_velocity - angular_velocity,
-                        self.wheel_diameter,
-                        self.external_gearing,
-                    ),
-                    to_motor_rpm(
-                        linear_velocity + angular_velocity,
-                        self.wheel_diameter,
-                        self.external_gearing,
-                    ),
-                )
-                .normalized(600.0),
-            );
+            // Not actually voltages, but i'm not going to make a type for wheel speeds quite yet.
+            let velocities = DifferentialVoltages(
+                to_motor_rpm(
+                    linear_velocity - angular_velocity,
+                    self.wheel_diameter,
+                    self.external_gearing,
+                ),
+                to_motor_rpm(
+                    linear_velocity + angular_velocity,
+                    self.wheel_diameter,
+                    self.external_gearing,
+                ),
+            )
+            .normalized(600.0);
+
+            // Spin motors with builtin PID for now.
+            for motor in drivetrain.motors.left.borrow_mut().iter_mut() {
+                _ = motor.set_velocity(velocities.0 as i32);
+            }
+            for motor in drivetrain.motors.right.borrow_mut().iter_mut() {
+                _ = motor.set_velocity(velocities.1 as i32);
+            }
         }
     }
 }

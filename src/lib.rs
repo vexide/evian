@@ -12,7 +12,7 @@ pub mod prelude {
     pub use crate::{
         control::{ControlLoop, Settler},
         differential::{
-            trajectory::{TrajectoryConstraints, Trajectory},
+            trajectory::{Trajectory, TrajectoryConstraints},
             Differential, DifferentialVoltages,
         },
         drivetrain::{shared_motors, Drivetrain},

@@ -7,11 +7,11 @@
 use core::time::Duration;
 
 mod pid;
-mod settler;
 mod profile;
+mod settler;
 
 pub use pid::{AngularPid, Pid};
-pub use profile::{TrapezoidalProfile, TrapezoidalConstraints};
+pub use profile::{TrapezoidalConstraints, TrapezoidalProfile};
 pub use settler::Settler;
 
 pub trait ControlLoop {

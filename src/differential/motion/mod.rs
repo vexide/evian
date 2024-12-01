@@ -1,7 +1,7 @@
 mod basic;
-mod seeking;
 mod ramsete;
+mod seeking;
 
 pub use basic::BasicMotion;
-pub use seeking::Seeking;
 pub use ramsete::Ramsete;
+pub use seeking::Seeking;

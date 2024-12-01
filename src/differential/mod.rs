@@ -18,8 +18,8 @@ use crate::drivetrain::SharedMotors;
 ///
 /// Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
 pub struct Differential {
-    left_motors: SharedMotors,
-    right_motors: SharedMotors,
+    left: SharedMotors,
+    right: SharedMotors,
 }
 
 impl Differential {
@@ -28,11 +28,8 @@ impl Differential {
     /// Motors created with the [`drive_motors`] macro may be safely cloned, as they are wrapped
     /// in an [`Arc`] to allow sharing across tasks and between the drivetrain and its tracking
     /// instance if needed.
-    pub const fn new(left_motors: SharedMotors, right_motors: SharedMotors) -> Self {
-        Self {
-            left_motors,
-            right_motors,
-        }
+    pub const fn new(left: SharedMotors, right: SharedMotors) -> Self {
+        Self { left, right }
     }
 
     /// Sets the voltage of the left and right motors.
@@ -40,34 +37,18 @@ impl Differential {
     /// # Errors
     ///
     /// See [`Motor::set_voltage`].
-    pub fn set_voltages(&mut self, voltages: impl Into<DifferentialVoltages>) -> Result<(), MotorError> {
+    pub fn set_voltages(
+        &mut self,
+        voltages: impl Into<DifferentialVoltages>,
+    ) -> Result<(), MotorError> {
         let voltages = voltages.into();
 
-        for motor in self.left_motors.borrow_mut().iter_mut() {
+        for motor in self.left.borrow_mut().iter_mut() {
             motor.set_voltage(voltages.0)?;
         }
 
-        for motor in self.right_motors.borrow_mut().iter_mut() {
+        for motor in self.right.borrow_mut().iter_mut() {
             motor.set_voltage(voltages.1)?;
-        }
-
-        Ok(())
-    }
-
-    /// Sets the velocity of the left and right motors.
-    ///
-    /// # Errors
-    ///
-    /// See [`Motor::set_voltage`].
-    pub fn set_velocities(&mut self, voltages: impl Into<DifferentialVoltages>) -> Result<(), MotorError> {
-        let voltages = voltages.into();
-
-        for motor in self.left_motors.borrow_mut().iter_mut() {
-            motor.set_velocity(voltages.0 as i32)?;
-        }
-
-        for motor in self.right_motors.borrow_mut().iter_mut() {
-            motor.set_velocity(voltages.1 as i32)?;
         }
 
         Ok(())
