@@ -1,7 +1,7 @@
 mod basic;
-mod mtp;
+mod seeking;
 mod ramsete;
 
 pub use basic::BasicMotion;
-pub use mtp::Seeking;
+pub use seeking::Seeking;
 pub use ramsete::Ramsete;

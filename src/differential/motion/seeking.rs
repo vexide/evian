@@ -4,9 +4,9 @@ use vexide::{async_runtime::time::sleep, core::time::Instant, devices::smart::Mo
 
 use crate::{
     control::{ControlLoop, Settler},
-    differential::{Differential, Voltages},
+    differential::{Differential, DifferentialVoltages},
     drivetrain::Drivetrain,
-    math::{Angle, IntoAngle, Vec2},
+    math::{curve::Curve, Angle, IntoAngle, Vec2},
     tracking::{TracksHeading, TracksPosition, TracksVelocity},
 };
 
@@ -62,7 +62,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
                 self.distance_controller.update(distance_error, 0.0, dt) * angle_error.cos();
 
             _ = drivetrain.motors.set_voltages(
-                Voltages::from_arcade(linear_output, angular_output)
+                DifferentialVoltages::from_arcade(linear_output, angular_output)
                     .normalized(Motor::V5_MAX_VOLTAGE),
             );
 
@@ -108,11 +108,19 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
                 self.distance_controller.update(distance_error, 0.0, dt) * angle_error.cos();
 
             _ = drivetrain.motors.set_voltages(
-                Voltages::from_arcade(linear_output, angular_output)
+                DifferentialVoltages::from_arcade(linear_output, angular_output)
                     .normalized(Motor::V5_MAX_VOLTAGE),
             );
 
             prev_time = Instant::now();
         }
+    }
+
+    pub async fn follow<T: TracksPosition + TracksHeading + TracksVelocity>(
+        &mut self,
+        drivetrain: &mut Drivetrain<Differential, T>,
+        curve: impl Curve,
+    ) {
+
     }
 }

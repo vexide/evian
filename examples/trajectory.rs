@@ -55,7 +55,7 @@ async fn main(peripherals: Peripherals) {
             None,
         ),
     );
-    let constraints = Constraints {
+    let constraints = TrajectoryConstraints {
         max_velocity: from_drive_rpm(DRIVE_RPM, WHEEL_DIAMETER) / 2.0,
         max_acceleration: 200.0,
         max_deceleration: 200.0,

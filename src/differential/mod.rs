@@ -40,7 +40,7 @@ impl Differential {
     /// # Errors
     ///
     /// See [`Motor::set_voltage`].
-    pub fn set_voltages(&mut self, voltages: impl Into<Voltages>) -> Result<(), MotorError> {
+    pub fn set_voltages(&mut self, voltages: impl Into<DifferentialVoltages>) -> Result<(), MotorError> {
         let voltages = voltages.into();
 
         for motor in self.left_motors.borrow_mut().iter_mut() {
@@ -59,7 +59,7 @@ impl Differential {
     /// # Errors
     ///
     /// See [`Motor::set_voltage`].
-    pub fn set_velocities(&mut self, voltages: impl Into<Voltages>) -> Result<(), MotorError> {
+    pub fn set_velocities(&mut self, voltages: impl Into<DifferentialVoltages>) -> Result<(), MotorError> {
         let voltages = voltages.into();
 
         for motor in self.left_motors.borrow_mut().iter_mut() {
@@ -85,9 +85,9 @@ impl Differential {
 /// [`Command`]: crate::command::Command
 /// [`DifferentialDrivetrain`]: crate::differential::DifferentialDrivetrain
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct Voltages(pub f64, pub f64);
+pub struct DifferentialVoltages(pub f64, pub f64);
 
-impl Voltages {
+impl DifferentialVoltages {
     #[must_use]
     pub const fn from_arcade(linear: f64, angular: f64) -> Self {
         Self(linear + angular, linear - angular)
@@ -125,7 +125,7 @@ impl Voltages {
     }
 }
 
-impl From<(f64, f64)> for Voltages {
+impl From<(f64, f64)> for DifferentialVoltages {
     fn from(value: (f64, f64)) -> Self {
         Self(value.0, value.1)
     }

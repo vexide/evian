@@ -6,7 +6,7 @@ use vexide::{
 
 use crate::{
     control::{ControlLoop, Settler},
-    differential::{Differential, Voltages},
+    differential::{Differential, DifferentialVoltages},
     drivetrain::Drivetrain,
     math::{Angle, IntoAngle, Vec2},
     tracking::{TracksForwardTravel, TracksHeading, TracksPosition},
@@ -52,7 +52,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             let angular_output = self.angular_controller.update(heading, target_heading, dt);
 
             _ = drivetrain.motors.set_voltages(
-                Voltages(
+                DifferentialVoltages(
                     linear_output + angular_output,
                     linear_output - angular_output,
                 )
@@ -108,7 +108,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
                     .update(heading, (point - position).angle().rad(), dt);
 
             _ = drivetrain.motors.set_voltages(
-                Voltages::from_arcade(linear_output, angular_output)
+                DifferentialVoltages::from_arcade(linear_output, angular_output)
                     .normalized(Motor::V5_MAX_VOLTAGE),
             );
 

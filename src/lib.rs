@@ -12,8 +12,8 @@ pub mod prelude {
     pub use crate::{
         control::{ControlLoop, Settler},
         differential::{
-            trajectory::{Constraints, Trajectory},
-            Differential, Voltages,
+            trajectory::{TrajectoryConstraints, Trajectory},
+            Differential, DifferentialVoltages,
         },
         drivetrain::{shared_motors, Drivetrain},
         math::{curve::CubicBezier, Angle, IntoAngle, Vec2},

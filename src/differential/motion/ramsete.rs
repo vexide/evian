@@ -3,7 +3,7 @@ use core::f64::consts::PI;
 use vexide::{async_runtime::time::sleep, devices::smart::Motor, prelude::Float};
 
 use crate::{
-    differential::{trajectory::Trajectory, Differential, Voltages},
+    differential::{trajectory::Trajectory, Differential, DifferentialVoltages},
     drivetrain::Drivetrain,
     tracking::{TracksHeading, TracksPosition},
 };
@@ -42,7 +42,7 @@ impl Ramsete {
             let profile = trajectory.at(distance);
 
             if *trajectory.profile.last().unwrap() == profile {
-                _ = drivetrain.motors.set_voltages(Voltages::default());
+                _ = drivetrain.motors.set_voltages(DifferentialVoltages::default());
                 return;
             }
 
@@ -76,7 +76,7 @@ impl Ramsete {
                 desired_linear_velocity * heading_error.cos() + k * position_error.x;
 
             _ = drivetrain.motors.set_velocities(
-                Voltages(
+                DifferentialVoltages(
                     to_motor_rpm(
                         linear_velocity - angular_velocity,
                         self.wheel_diameter,

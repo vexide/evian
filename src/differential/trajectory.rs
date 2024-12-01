@@ -5,7 +5,7 @@ use alloc::{vec, vec::Vec};
 use vexide::prelude::Float;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct Constraints {
+pub struct TrajectoryConstraints {
     pub max_velocity: f64,
     pub max_acceleration: f64,
     pub max_deceleration: f64,
@@ -13,7 +13,7 @@ pub struct Constraints {
     pub track_width: f64,
 }
 
-impl Constraints {
+impl TrajectoryConstraints {
     #[must_use]
     pub fn max_speed(&self, curvature: f64) -> f64 {
         let max_turn_speed = ((2.0 * self.max_velocity / self.track_width) * self.max_velocity)
@@ -46,7 +46,7 @@ pub struct Trajectory {
 }
 
 impl Trajectory {
-    pub fn generate(curve: impl Curve, spacing: f64, constraints: Constraints) -> Self {
+    pub fn generate(curve: impl Curve, spacing: f64, constraints: TrajectoryConstraints) -> Self {
         Self {
             spacing,
             profile: {
