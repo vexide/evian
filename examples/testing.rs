@@ -7,7 +7,10 @@ use evian::prelude::*;
 use vexide::prelude::*;
 
 use core::time::Duration;
-use evian::command::mtp::MoveToPoint;
+use evian::{
+    control::pid::{AngularPid, Pid},
+    differential::motion::Seeking,
+};
 
 struct Robot {
     controller: Controller,
@@ -17,7 +20,7 @@ struct Robot {
 impl Compete for Robot {
     async fn autonomous(&mut self) {
         let dt = &mut self.drivetrain;
-        let mut mtp = MoveToPoint {
+        let mut seeking = Seeking {
             distance_controller: Pid::new(0.5, 0.0, 0.0, None),
             angle_controller: AngularPid::new(0.5, 0.0, 0.0, None),
             settler: Settler::new()
@@ -26,7 +29,7 @@ impl Compete for Robot {
                 .timeout(Duration::from_secs(2)),
         };
 
-        mtp.move_to_point(dt, (24.0, 24.0)).await;
+        seeking.move_to_point(dt, (24.0, 24.0)).await;
     }
 
     async fn driver(&mut self) {

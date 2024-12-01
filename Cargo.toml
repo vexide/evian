@@ -6,7 +6,7 @@ authors = ["Tropical"]
 license-file = "LICENSE.md"
 categories = ["science::robotics", "no-std", "mathematics", "embedded"]
 keywords = ["vex", "vexide", "vex-robotics", "robotics", "autonomous"]
-version = "0.3.0-beta.1"
+version = "0.3.0"
 edition = "2021"
 
 [lints.clippy]
@@ -31,8 +31,7 @@ opt-level = "z"
 lto = true
 
 [dependencies]
-vexide = { version = "0.5.0-rc.2" }
-replace_with = { version = "0.1.7", default-features = false }
+vexide = { version = "0.5.0" }
 
 [package.metadata.docs.rs]
-targets = ["armv7a-none-eabi"]
+targets = ["./armv7a-vex-v5.json"]

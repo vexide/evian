@@ -1,24 +1,22 @@
-//! Differential Drivetrain Control
-//!
-//! A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot whose movement is
-//! controlled by two independently driven sets of motors on the left and right sides of its
-//! chassis. The system operates by adjusting the speed and direction of the left and right
-//! motors, enabling the robot to drive straight or execute turns.
-//!
-//! - If both sets of motors move at the same speed, the robot moves straight.
-//! - If one set of motors moves faster than the other, the robot will turn.
-//! - If the motors on one side move forward while the other side moves backward, the robot will rotate in place.
-//!
-//! Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
-
-use core::cell::RefCell;
+pub mod motion;
+pub mod trajectory;
 
 use vexide::devices::smart::motor::MotorError;
 
-use alloc::{rc::Rc, vec::Vec};
-use vexide::devices::smart::Motor;
+use crate::drivetrain::SharedMotors;
 
 /// A collection of motors mounted in a differential (left/right) configuration.
+///
+/// A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot whose movement is
+/// controlled by two independently driven sets of motors on the left and right sides of its
+/// chassis. The system operates by adjusting the speed and direction of the left and right
+/// motors, enabling the robot to drive straight or execute turns.
+///
+/// - If both sets of motors move at the same speed, the robot moves straight.
+/// - If one set of motors moves faster than the other, the robot will turn.
+/// - If the motors on one side move forward while the other side moves backward, the robot will rotate in place.
+///
+/// Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
 pub struct Differential {
     left_motors: SharedMotors,
     right_motors: SharedMotors,
@@ -55,39 +53,26 @@ impl Differential {
 
         Ok(())
     }
-}
 
-// Internal alias so I don't have to type this shit out a million times.
-pub type SharedMotors = Rc<RefCell<Vec<Motor>>>;
+    /// Sets the velocity of the left and right motors.
+    ///
+    /// # Errors
+    ///
+    /// See [`Motor::set_voltage`].
+    pub fn set_velocities(&mut self, voltages: impl Into<Voltages>) -> Result<(), MotorError> {
+        let voltages = voltages.into();
 
-/// A macro that creates a set of motors for a [`DifferentialDrivetrain`].
-///
-/// This macro simplifies the creation of a [`DriveMotors`] collection, which is a sharable, threadsafe
-/// wrapper around vexide's non-copyable [`Motor`](vexide::devices::smart::motor::Motor) struct.
-///
-/// # Examples
-///
-/// ```
-/// let motors = drive_motors![motor1, motor2, motor3];
-/// ```
-#[macro_export]
-macro_rules! shared_motors {
-    ( $( $item:expr ),* $(,)?) => {
-        {
-            use ::core::cell::RefCell;
-            use ::alloc::{rc::Rc, vec::Vec};
-
-            let mut temp_vec: Vec<Motor> = Vec::new();
-
-            $(
-                temp_vec.push($item);
-            )*
-
-            Rc::new(RefCell::new(temp_vec))
+        for motor in self.left_motors.borrow_mut().iter_mut() {
+            motor.set_velocity(voltages.0 as i32)?;
         }
-    };
+
+        for motor in self.right_motors.borrow_mut().iter_mut() {
+            motor.set_velocity(voltages.1 as i32)?;
+        }
+
+        Ok(())
+    }
 }
-pub use shared_motors;
 
 /// Left/Right Motor Voltages
 ///
