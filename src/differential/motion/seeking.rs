@@ -6,7 +6,7 @@ use crate::{
     control::{ControlLoop, Settler},
     differential::{Differential, DifferentialVoltages},
     drivetrain::Drivetrain,
-    math::{curve::Curve, Angle, IntoAngle, Vec2},
+    math::{Angle, IntoAngle, Vec2},
     tracking::{TracksHeading, TracksPosition, TracksVelocity},
 };
 
@@ -114,13 +114,5 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             prev_time = Instant::now();
         }
-    }
-
-    pub async fn follow<T: TracksPosition + TracksHeading + TracksVelocity>(
-        &mut self,
-        drivetrain: &mut Drivetrain<Differential, T>,
-        curve: impl Curve,
-    ) {
-
     }
 }
