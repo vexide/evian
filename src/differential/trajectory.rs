@@ -1,7 +1,5 @@
 extern crate alloc;
 
-use core::f64::{self, consts::FRAC_PI_4};
-
 use crate::math::{curve::Curve, Angle, Vec2};
 use alloc::{vec, vec::Vec};
 use vexide::prelude::Float;
@@ -38,13 +36,13 @@ pub struct TrajectoryPoint {
     pub angular_velocity: f64,
     pub position: Vec2<f64>,
     pub heading: Angle,
-    distance: f64,
-    curvature: f64,
+    pub distance: f64,
+    pub curvature: f64,
 }
 
 pub struct Trajectory {
     spacing: f64,
-    profile: Vec<TrajectoryPoint>,
+    pub profile: Vec<TrajectoryPoint>,
 }
 
 impl Trajectory {
@@ -89,7 +87,7 @@ impl Trajectory {
                         linear_velocity,
                         angular_velocity: Default::default(), // filled in by reverse pass
                         position: curve.point(t),
-                        heading: Angle::from_radians(FRAC_PI_4 - derivative.y.atan2(derivative.x)),
+                        heading: Angle::from_radians(derivative.y.atan2(derivative.x)),
                         distance,
                         curvature,
                     });

@@ -120,10 +120,10 @@ impl TracksForwardTravel for PerpendicularWheelTracking {
 
 impl TracksVelocity for PerpendicularWheelTracking {
     fn angular_velocity(&self) -> f64 {
-        todo!()
+        todo!("velocity tracking is not implemented for PerpendicularWheelTracking yet.")
     }
 
     fn linear_velocity(&self) -> f64 {
-        todo!()
+        todo!("velocity tracking is not implemented for PerpendicularWheelTracking yet.")
     }
 }

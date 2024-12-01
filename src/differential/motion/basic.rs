@@ -5,16 +5,12 @@ use vexide::{
 };
 
 use crate::{
-    control::ControlLoop,
-    drivetrain::{
-        differential::{Differential, Voltages},
-        Drivetrain,
-    },
+    control::{ControlLoop, Settler},
+    differential::{Differential, Voltages},
+    drivetrain::Drivetrain,
     math::{Angle, IntoAngle, Vec2},
     tracking::{TracksForwardTravel, TracksHeading, TracksPosition},
 };
-
-use super::Settler;
 
 #[derive(PartialEq)]
 pub struct BasicMotion<

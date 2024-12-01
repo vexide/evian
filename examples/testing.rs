@@ -3,30 +3,85 @@
 
 extern crate alloc;
 
-use evian::mp::bezier::*;
-use evian::mp::trajectory::*;
 use evian::prelude::*;
-use vexide::core::time::Instant;
 use vexide::prelude::*;
 
+use core::time::Duration;
+use evian::{
+    control::pid::{AngularPid, Pid},
+    differential::motion::Seeking,
+};
+
+struct Robot {
+    controller: Controller,
+    drivetrain: Drivetrain<Differential, ParallelWheelTracking>,
+}
+
+impl Compete for Robot {
+    async fn autonomous(&mut self) {
+        let dt = &mut self.drivetrain;
+        let mut seeking = Seeking {
+            distance_controller: Pid::new(0.5, 0.0, 0.0, None),
+            angle_controller: AngularPid::new(0.5, 0.0, 0.0, None),
+            settler: Settler::new()
+                .error_tolerance(0.3)
+                .tolerance_duration(Duration::from_millis(100))
+                .timeout(Duration::from_secs(2)),
+        };
+
+        seeking.move_to_point(dt, (24.0, 24.0)).await;
+    }
+
+    async fn driver(&mut self) {
+        loop {
+            let controller = self.controller.state().unwrap_or_default();
+
+            _ = self.drivetrain.motors.set_voltages((
+                controller.left_stick.y() * Motor::V5_MAX_VOLTAGE,
+                controller.right_stick.y() * Motor::V5_MAX_VOLTAGE,
+            ));
+
+            sleep(Duration::from_millis(25)).await;
+        }
+    }
+}
+
 #[vexide::main]
-async fn main(_peripherals: Peripherals) {
-    let constraints = Constraints {
-        max_velocity: 76.0,
-        max_acceleration: 200.0,
-        max_deceleration: 200.0,
-        friction_coefficient: 1.0,
-        track_width: 3.25,
-    };
-    let curve = CubicBezier::new(
-        (6.456, -62.624),
-        (45.2, -63.999),
-        (63.999, -57.809),
-        (64.916, -17.002),
-    );
-    let start = Instant::now();
-    let trajectory = Trajectory::generate(curve, 0.1, constraints);
-    let elapsed = start.elapsed();
-    println!("{:?}", elapsed);
-    println!("{:?}", trajectory.at(0.0));
+async fn main(peripherals: Peripherals) {
+    Robot {
+        controller: peripherals.primary_controller,
+        drivetrain: Drivetrain::new(
+            Differential::new(
+                shared_motors![
+                    Motor::new(peripherals.port_2, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
+                ],
+                shared_motors![
+                    Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
+                    Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
+                    Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
+                ],
+            ),
+            ParallelWheelTracking::new(
+                Vec2::default(),
+                0.0.deg(),
+                TrackingWheel::new(
+                    RotationSensor::new(peripherals.port_10, Direction::Forward),
+                    3.25,
+                    7.5,
+                    Some(36.0 / 48.0),
+                ),
+                TrackingWheel::new(
+                    RotationSensor::new(peripherals.port_11, Direction::Forward),
+                    3.25,
+                    7.5,
+                    Some(36.0 / 48.0),
+                ),
+                None,
+            ),
+        ),
+    }
+    .compete()
+    .await;
 }

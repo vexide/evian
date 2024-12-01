@@ -6,7 +6,11 @@
 
 use core::time::Duration;
 
-pub mod pid;
+mod pid;
+mod settler;
+
+pub use pid::{AngularPid, Pid};
+pub use settler::Settler;
 
 pub trait ControlLoop {
     type Input;

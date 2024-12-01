@@ -3,19 +3,15 @@ use core::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 use vexide::{async_runtime::time::sleep, core::time::Instant, devices::smart::Motor};
 
 use crate::{
-    control::ControlLoop,
-    drivetrain::{
-        differential::{Differential, Voltages},
-        Drivetrain,
-    },
+    control::{ControlLoop, Settler},
+    differential::{Differential, Voltages},
+    drivetrain::Drivetrain,
     math::{Angle, IntoAngle, Vec2},
     tracking::{TracksHeading, TracksPosition, TracksVelocity},
 };
 
-use super::Settler;
-
 #[derive(PartialEq)]
-pub struct PointToPoint<
+pub struct Seeking<
     L: ControlLoop<Input = f64, Output = f64>,
     A: ControlLoop<Input = Angle, Output = f64>,
 > {
@@ -25,7 +21,7 @@ pub struct PointToPoint<
 }
 
 impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>
-    PointToPoint<L, A>
+    Seeking<L, A>
 {
     pub async fn move_to_point<T: TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,
