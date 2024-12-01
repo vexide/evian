@@ -51,7 +51,7 @@ dependencies = [
 
 [[package]]
 name = "evian"
-version = "0.3.0"
+version = "0.3.0-beta.2"
 dependencies = [
  "vexide",
 ]
