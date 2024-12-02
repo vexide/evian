@@ -23,7 +23,7 @@ pub struct Differential {
 }
 
 impl Differential {
-    /// Creates a new drivetrain with the provided left/right motors and a tracking system.
+    /// Creates a new drivetrain with the provided left/right motors.
     ///
     /// Motors created with the [`drive_motors`] macro may be safely cloned, as they are wrapped
     /// in an [`Arc`] to allow sharing across tasks and between the drivetrain and its tracking
@@ -56,26 +56,21 @@ impl Differential {
 }
 
 /// Left/Right Motor Voltages
-///
-/// Used as the standard output of a [`Command`] when working with the [`DifferentialDrivetrain`]
-/// struct.
-///
-/// This struct is additionally a [`Command`] in itself, and can be used to run a drivetrain at a
-/// fixed voltage.
-///
-/// [`Command`]: crate::command::Command
-/// [`DifferentialDrivetrain`]: crate::differential::DifferentialDrivetrain
+/// 
+/// These voltages are used to control a [`Differential`] motor configuration. They describe
+/// the voltages of the respective left and right motors.
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct DifferentialVoltages(pub f64, pub f64);
 
 impl DifferentialVoltages {
+    /// Creates a [`DifferentialVoltages`] instance from a provided linear and angular voltage.
     #[must_use]
     pub const fn from_arcade(linear: f64, angular: f64) -> Self {
         Self(linear + angular, linear - angular)
     }
 
-    /// Returns [`Voltages`] that are less than a provided `max` value while preserving
-    /// the ratio between the original left and right values.
+    /// Returns [`DifferentialVoltages`] that are less than a provided `max` value while
+    /// preserving the ratio between the original left and right values.
     ///
     /// If either motor is over a `max_voltage`, both values will be decresed by the amount
     /// that is "oversaturated" to preserve the ratio between left and right power.
