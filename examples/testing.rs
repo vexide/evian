@@ -23,7 +23,7 @@ impl Compete for Robot {
         let mut seeking = Seeking {
             distance_controller: Pid::new(0.5, 0.0, 0.0, None),
             angle_controller: AngularPid::new(0.5, 0.0, 0.0, None),
-            settler: Settler::new()
+            tolerances: Tolerances::new()
                 .error_tolerance(0.3)
                 .tolerance_duration(Duration::from_millis(100))
                 .timeout(Duration::from_secs(2)),

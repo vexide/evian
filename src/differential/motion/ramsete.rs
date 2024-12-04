@@ -1,11 +1,9 @@
 use core::f64::consts::PI;
 
-use vexide::{async_runtime::time::sleep, devices::smart::Motor, prelude::Float};
+use vexide::{async_runtime::time::sleep, core::println, devices::smart::Motor, prelude::Float};
 
 use crate::{
-    differential::{trajectory::Trajectory, Differential, DifferentialVoltages},
-    drivetrain::Drivetrain,
-    tracking::{TracksHeading, TracksPosition},
+    differential::{trajectory::Trajectory, Differential, DifferentialVoltages}, drivetrain::Drivetrain, math::IntoAngle, tracking::{TracksHeading, TracksPosition}
 };
 
 /// RAMSETE Unicycle Controller
@@ -62,12 +60,11 @@ impl Ramsete {
             let position_error =
                 (profile.position - position).rotated(-drivetrain.tracking.heading().as_radians());
             let heading_error = (profile.heading - drivetrain.tracking.heading())
-                .wrapped()
                 .as_radians();
 
             // Linear/angular velocity commands
             let angular_velocity = (desired_angular_velocity
-                + k * heading_error
+                + k * heading_error.rad().wrapped().as_radians()
                 + self.b
                     * desired_linear_velocity
                     * (heading_error.sin() / heading_error)
@@ -76,6 +73,8 @@ impl Ramsete {
                 * self.track_width;
             let linear_velocity =
                 desired_linear_velocity * heading_error.cos() + k * position_error.x;
+
+            println!("Expected: {}, Tracked: {}", profile.position, drivetrain.tracking.position());
 
             // Not actually voltages, but i'm not going to make a type for wheel speeds quite yet.
             let velocities = DifferentialVoltages(

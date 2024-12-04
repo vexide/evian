@@ -3,13 +3,22 @@ use core::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 use vexide::{async_runtime::time::sleep, core::time::Instant, devices::smart::Motor};
 
 use crate::{
-    control::{ControlLoop, Settler},
+    control::{ControlLoop, Tolerances},
     differential::{Differential, DifferentialVoltages},
     drivetrain::Drivetrain,
     math::{Angle, IntoAngle, Vec2},
     tracking::{TracksHeading, TracksPosition, TracksVelocity},
 };
 
+/// Point-to-Point Feedback Seeking
+/// 
+/// This struct provides implementations of adaptive feedback seeking algorithms, which
+/// utilize two feedback controllers (one for straight driving and one for turning) to
+/// reach a desired point. This is most commonly done using two PID controllers.
+/// 
+/// Seeking motions include:
+/// - [`move_to_point`](Seeking::move_to_point), which moves the drivetrain to a desired point.
+/// - [`boomerang`](Seeking::move_to_point), which moves the drivetrain to a desired pose (including heading).
 #[derive(PartialEq)]
 pub struct Seeking<
     L: ControlLoop<Input = f64, Output = f64>,
@@ -17,7 +26,7 @@ pub struct Seeking<
 > {
     pub distance_controller: L,
     pub angle_controller: A,
-    pub settler: Settler,
+    pub tolerances: Tolerances,
 }
 
 impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>
@@ -44,7 +53,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             let mut angle_error = heading - local_target.angle().rad();
 
             if self
-                .settler
+                .tolerances
                 .is_settled(distance_error, drivetrain.tracking.linear_velocity())
             {
                 break;
@@ -95,7 +104,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             let angle_error = drivetrain.tracking.heading() - local_target.angle().rad();
 
             if self
-                .settler
+                .tolerances
                 .is_settled(distance_error, drivetrain.tracking.linear_velocity())
             {
                 break;

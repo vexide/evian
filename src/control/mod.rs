@@ -8,11 +8,11 @@ use core::time::Duration;
 
 mod pid;
 mod profile;
-mod settler;
+mod tolerances;
 
 pub use pid::{AngularPid, Pid};
 pub use profile::{TrapezoidalConstraints, TrapezoidalProfile};
-pub use settler::Settler;
+pub use tolerances::Tolerances;
 
 pub trait ControlLoop {
     type Input;

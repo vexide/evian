@@ -1,4 +1,6 @@
-extern crate alloc;
+//! 2D Trajectory Generation for Differential Drivetrains
+//! 
+//! 
 
 use crate::math::{curve::Curve, Angle, Vec2};
 use alloc::{vec, vec::Vec};
@@ -41,7 +43,7 @@ pub struct TrajectoryPoint {
 }
 
 pub struct Trajectory {
-    spacing: f64,
+    pub spacing: f64,
     pub profile: Vec<TrajectoryPoint>,
 }
 

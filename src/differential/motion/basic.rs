@@ -5,22 +5,36 @@ use vexide::{
 };
 
 use crate::{
-    control::{ControlLoop, Settler},
+    control::{ControlLoop, Tolerances},
     differential::{Differential, DifferentialVoltages},
     drivetrain::Drivetrain,
     math::{Angle, IntoAngle, Vec2},
     tracking::{TracksForwardTravel, TracksHeading, TracksPosition},
 };
 
+
+/// Basic Driving & Turning Motion
+/// 
+/// This struct provides motion algorithms for basic control of a differential drivetrain. It
+/// includes straight distance driving and turning (both to a angle through [`turn_to_heading`](BasicMotion::turn_to_heading)
+/// and to points through [`turn_to_point`](BasicMotion::turn_to_point)). This is acomplished through two feedback
+/// control loops (typically PID controllers) for controlling the robot's desired heading and distance traveled.
 #[derive(PartialEq)]
 pub struct BasicMotion<
     L: ControlLoop<Input = f64, Output = f64>,
     A: ControlLoop<Input = Angle, Output = f64>,
 > {
+    /// Linear (forward driving) feedback controller
     pub linear_controller: L,
+
+    /// Angular (turning) feedback controller
     pub angular_controller: A,
-    pub linear_settler: Settler,
-    pub angular_settler: Settler,
+
+    /// Linear settling conditions
+    pub linear_tolerances: Tolerances,
+
+    /// Angular settling conditions
+    pub angular_tolerances: Tolerances,
 }
 
 impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>

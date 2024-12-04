@@ -10,7 +10,7 @@ pub mod tracking;
 
 pub mod prelude {
     pub use crate::{
-        control::{ControlLoop, Settler},
+        control::{ControlLoop, Tolerances},
         differential::{
             trajectory::{Trajectory, TrajectoryConstraints},
             Differential, DifferentialVoltages,

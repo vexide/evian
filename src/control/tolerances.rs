@@ -3,13 +3,13 @@
 //! This module provides utilities for determining when a control system (typically a [`Command`])
 //! has "settled" at its target state, signaling that the algorithm has successfully reached its goal.
 //! While different control algorithms may define "completeness" in varying ways, this module's
-//! [`Settler`] struct implements the common approach of settling via *tolerances*.
+//! [`Tolerances`] struct implements the common approach of settling via *tolerances*.
 //!
 //! # Tolerances
 //!
 //! *Tolerances* define an acceptable range of values around a target state. This is useful to define,
 //! because physical systems will never achieve their exact target due to real-world factors
-//! like friction, sensor noise, and mechanical limitations. Under the [`Settler`] struct, a system is considered
+//! like friction, sensor noise, and mechanical limitations. Under the [`Tolerances`] struct, a system is considered
 //! "settled" when it meets specified error and velocity tolerances for a given duration, after when a timeout is
 //! reached.
 
@@ -27,14 +27,14 @@ use vexide::core::time::Instant;
 /// # Settling Logic
 ///
 /// A system is considered settled if either:
-/// - The specified timeout has elapsed since the first call to [`Settler::is_settled`], OR
+/// - The specified timeout has elapsed since the first call to [`Tolerances::is_settled`], OR
 /// - Both:
 ///   1. The error and velocity are within their respective tolerances.
 ///   2. The system has maintained these tolerances for the specified duration.
 ///
 /// If the system leaves the tolerance window before the duration is met, the tolerance timer resets.
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
-pub struct Settler {
+pub struct Tolerances {
     start_timestamp: Option<Instant>,
     tolerance_timestamp: Option<Instant>,
     tolerance_duration: Option<Duration>,
@@ -43,8 +43,8 @@ pub struct Settler {
     timeout: Option<Duration>,
 }
 
-impl Settler {
-    /// Creates a new [`Settler`] with no configured tolerances or timings.
+impl Tolerances {
+    /// Creates a new [`Tolerances`] instance with no configured tolerances or timings.
     ///
     /// Until tolerances are configured using the builder methods, all tolerance
     /// checks will pass immediately.
@@ -92,7 +92,7 @@ impl Settler {
 
     /// Sets a maximum duration to wait for settling before forcing completion.
     ///
-    /// If this timeout elapses before the system settles normally, the settler
+    /// If this timeout elapses before the system settles normally, this struct
     /// will report as settled regardless of the actual system state. This prevents
     /// commands from hanging indefinitely if settling proves impossible for whatever
     /// reason.

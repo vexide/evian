@@ -22,6 +22,8 @@ async fn main(peripherals: Peripherals) {
     const GEARING: f64 = 36.0 / 48.0;
     const WHEEL_DIAMETER: f64 = 3.25;
 
+    let mut imu = InertialSensor::new(peripherals.port_11);
+    imu.calibrate().await.unwrap();
     let left_motors = shared_motors![
         Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
@@ -52,11 +54,12 @@ async fn main(peripherals: Peripherals) {
                 TRACK_WIDTH / 2.0,
                 Some(GEARING),
             ),
-            None,
+            Some(imu),
         ),
     );
+    
     let constraints = TrajectoryConstraints {
-        max_velocity: from_drive_rpm(DRIVE_RPM, WHEEL_DIAMETER) / 2.0,
+        max_velocity: from_drive_rpm(DRIVE_RPM, WHEEL_DIAMETER),
         max_acceleration: 200.0,
         max_deceleration: 200.0,
         friction_coefficient: 1.0,
@@ -64,20 +67,20 @@ async fn main(peripherals: Peripherals) {
     };
 
     let mut ramsete = Ramsete {
-        b: 0.2,
-        zeta: 0.07,
+        b: 0.00129,
+        zeta: 0.2,
         track_width: TRACK_WIDTH,
         wheel_diameter: WHEEL_DIAMETER,
         external_gearing: GEARING,
     };
 
-    let curve = CubicBezier::new((0.0, 0.0), (0.0, 50.0), (50.0, 0.0), (50.0, 50.0));
+    let curve = CubicBezier::new((0.0, 0.0), (18.0, 33.0), (50.0, -29.0), (46.0, 8.0));
     let trajectory = Trajectory::generate(curve, 0.1, constraints);
 
     ramsete.follow(&mut drivetrain, trajectory).await;
 
     loop {
-        println!("{:?}", drivetrain.tracking.heading().as_degrees());
+        println!("{:?} {}", drivetrain.tracking.position(), drivetrain.tracking.heading().as_degrees());
         sleep(Duration::from_millis(500)).await;
     }
 }
