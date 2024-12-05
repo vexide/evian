@@ -79,6 +79,7 @@ use crate::math::Angle;
 use super::ControlLoop;
 
 /// A proportional-integral-derivative (PID) feedback controller with integral windup prevention.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Pid {
     kp: f64,
     ki: f64,
@@ -182,6 +183,7 @@ impl ControlLoop for Pid {
 }
 
 /// A proportional-integral-derivative (PID) feedback controller with integral windup prevention.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AngularPid {
     kp: f64,
     ki: f64,
