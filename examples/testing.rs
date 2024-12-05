@@ -65,7 +65,7 @@ async fn main(peripherals: Peripherals) {
             ),
             ParallelWheelTracking::new(
                 Vec2::default(),
-                0.0.deg(),
+                90.0.deg(),
                 TrackingWheel::new(
                     RotationSensor::new(peripherals.port_10, Direction::Forward),
                     3.25,

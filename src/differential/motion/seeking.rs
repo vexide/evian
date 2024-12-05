@@ -11,11 +11,11 @@ use crate::{
 };
 
 /// Point-to-Point Feedback Seeking
-/// 
+///
 /// This struct provides implementations of adaptive feedback seeking algorithms, which
 /// utilize two feedback controllers (one for straight driving and one for turning) to
 /// reach a desired point. This is most commonly done using two PID controllers.
-/// 
+///
 /// Seeking motions include:
 /// - [`move_to_point`](Seeking::move_to_point), which moves the drivetrain to a desired point.
 /// - [`boomerang`](Seeking::move_to_point), which moves the drivetrain to a desired pose (including heading).

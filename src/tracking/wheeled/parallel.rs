@@ -1,7 +1,8 @@
 use alloc::rc::Rc;
-use core::{cell::RefCell, f64::consts::TAU};
+use core::{cell::RefCell, f64::consts::TAU, time::Duration};
 use vexide::{
-    devices::smart::{InertialSensor, Motor},
+    core::time::Instant,
+    devices::smart::InertialSensor,
     prelude::{sleep, spawn, Task},
 };
 
@@ -63,13 +64,24 @@ impl ParallelWheelTracking {
         imu: Option<InertialSensor>,
         data: Rc<RefCell<TrackingData>>,
     ) {
+        let track_width = left_wheel.offset + right_wheel.offset;
         let initial_raw_heading =
             Self::pre_offset_heading(&left_wheel, &right_wheel, imu.as_ref(), Angle::ZERO);
-        let mut prev_forward_travel = 0.0;
+
+        let mut prev_left_travel = 0.0;
+        let mut prev_right_travel = 0.0;
+
         let mut prev_heading = Angle::ZERO;
+        let mut prev_time = Instant::now();
 
         loop {
+            sleep(Duration::from_millis(5)).await;
+            let dt = prev_time.elapsed();
+
+            let left_travel = left_wheel.travel();
+            let right_travel = right_wheel.travel();
             let forward_travel = (left_wheel.travel() + right_wheel.travel()) / 2.0;
+
             let heading_offset = data.borrow().heading_offset;
             let heading = Self::pre_offset_heading(
                 &left_wheel,
@@ -78,7 +90,9 @@ impl ParallelWheelTracking {
                 initial_raw_heading,
             ) + heading_offset;
 
-            let delta_forward_travel = forward_travel - prev_forward_travel;
+            let delta_left_travel = left_travel - prev_left_travel;
+            let delta_right_travel = right_travel - prev_right_travel;
+            let delta_forward_travel = (delta_left_travel + delta_right_travel) / 2.0;
             let delta_heading = heading - prev_heading;
             let avg_heading = prev_heading + (delta_heading / 2.0);
 
@@ -97,12 +111,22 @@ impl ParallelWheelTracking {
                 heading,
                 forward_travel,
                 heading_offset,
+                linear_velocity: delta_forward_travel / dt.as_secs_f64(),
+                angular_velocity: if let Some(imu) = imu.as_ref() {
+                    if let Ok(gyro_rate) = imu.gyro_rate() {
+                        gyro_rate.z.to_radians()
+                    } else {
+                        0.0
+                    }
+                } else {
+                    (delta_right_travel - delta_left_travel) / (track_width * dt.as_secs_f64())
+                },
             });
 
-            prev_forward_travel = forward_travel;
+            prev_left_travel = left_travel;
+            prev_right_travel = right_travel;
             prev_heading = heading;
-
-            sleep(Motor::WRITE_INTERVAL).await;
+            prev_time = Instant::now();
         }
     }
 
@@ -135,10 +159,10 @@ impl TracksForwardTravel for ParallelWheelTracking {
 
 impl TracksVelocity for ParallelWheelTracking {
     fn angular_velocity(&self) -> f64 {
-        todo!("velocity tracking is not implemented for ParallelWheelTracking yet.")
+        self.data.borrow().angular_velocity
     }
 
     fn linear_velocity(&self) -> f64 {
-        todo!("velocity tracking is not implemented for ParallelWheelTracking yet.")
+        self.data.borrow().linear_velocity
     }
 }

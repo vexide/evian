@@ -5,16 +5,11 @@ use vexide::{
 };
 
 use crate::{
-    control::{ControlLoop, Tolerances},
-    differential::{Differential, DifferentialVoltages},
-    drivetrain::Drivetrain,
-    math::{Angle, IntoAngle, Vec2},
-    tracking::{TracksForwardTravel, TracksHeading, TracksPosition},
+    control::{ControlLoop, Tolerances}, differential::{Differential, DifferentialVoltages}, drivetrain::Drivetrain, math::{Angle, IntoAngle, Vec2}, prelude::TracksVelocity, tracking::{TracksForwardTravel, TracksHeading, TracksPosition}
 };
 
-
 /// Basic Driving & Turning Motion
-/// 
+///
 /// This struct provides motion algorithms for basic control of a differential drivetrain. It
 /// includes straight distance driving and turning (both to a angle through [`turn_to_heading`](BasicMotion::turn_to_heading)
 /// and to points through [`turn_to_point`](BasicMotion::turn_to_point)). This is acomplished through two feedback
@@ -40,7 +35,7 @@ pub struct BasicMotion<
 impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>
     BasicMotion<L, A>
 {
-    pub async fn drive_distance_at_heading<T: TracksForwardTravel + TracksHeading>(
+    pub async fn drive_distance_at_heading<T: TracksForwardTravel + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &mut Drivetrain<Differential, T>,
         target_distance: f64,
@@ -55,8 +50,6 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             let forward_travel = drivetrain.tracking.forward_travel();
             let heading = drivetrain.tracking.heading();
-
-            // TODO: settle
 
             let linear_output = self.linear_controller.update(
                 forward_travel,
@@ -77,7 +70,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
         }
     }
 
-    pub async fn drive_distance<T: TracksForwardTravel + TracksHeading>(
+    pub async fn drive_distance<T: TracksForwardTravel + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &mut Drivetrain<Differential, T>,
         distance: f64,
@@ -86,7 +79,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             .await;
     }
 
-    pub async fn turn_to_heading<T: TracksForwardTravel + TracksHeading>(
+    pub async fn turn_to_heading<T: TracksForwardTravel + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &mut Drivetrain<Differential, T>,
         heading: Angle,
@@ -95,7 +88,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             .await;
     }
 
-    pub async fn turn_to_point<T: TracksForwardTravel + TracksPosition + TracksHeading>(
+    pub async fn turn_to_point<T: TracksForwardTravel + TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &mut Drivetrain<Differential, T>,
         point: impl Into<Vec2<f64>>,

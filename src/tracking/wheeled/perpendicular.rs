@@ -81,6 +81,9 @@ impl PerpendicularWheelTracking {
                 heading,
                 forward_travel,
                 heading_offset,
+                // TODO
+                linear_velocity: 0.0,
+                angular_velocity: 0.0,
             });
 
             prev_sideways_travel = sideways_travel;

@@ -57,7 +57,7 @@ async fn main(peripherals: Peripherals) {
             Some(imu),
         ),
     );
-    
+
     let constraints = TrajectoryConstraints {
         max_velocity: from_drive_rpm(DRIVE_RPM, WHEEL_DIAMETER),
         max_acceleration: 200.0,
@@ -80,7 +80,11 @@ async fn main(peripherals: Peripherals) {
     ramsete.follow(&mut drivetrain, trajectory).await;
 
     loop {
-        println!("{:?} {}", drivetrain.tracking.position(), drivetrain.tracking.heading().as_degrees());
+        println!(
+            "{:?} {}",
+            drivetrain.tracking.position(),
+            drivetrain.tracking.heading().as_degrees()
+        );
         sleep(Duration::from_millis(500)).await;
     }
 }

@@ -15,4 +15,6 @@ pub(crate) struct TrackingData {
     heading: Angle,
     heading_offset: Angle,
     forward_travel: f64,
+    linear_velocity: f64,
+    angular_velocity: f64,
 }

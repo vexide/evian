@@ -1,6 +1,6 @@
 //! 2D Trajectory Generation for Differential Drivetrains
-//! 
-//! 
+//!
+//!
 
 use crate::math::{curve::Curve, Angle, Vec2};
 use alloc::{vec, vec::Vec};

@@ -1,15 +1,15 @@
 //! Differential Drivetrains
-//! 
+//!
 //! This module provides support for drivetrains configured in a differential (left/right) wheel
 //! configuration.
-//! 
+//!
 //! # Overview
-//! 
+//!
 //! A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot whose
 //! movement is controlled by two independently driven sets of wheels on the left and right sides
 //! of its chassis. The system operates by adjusting the speed and direction of the left and right
 //! motors, enabling the robot to drive straight or execute turns.
-//! 
+//!
 //! This module provides motor control through the [`Differential`] and [`DifferentialVoltages`],
 //! motion control and algorithms through the [`motion`] module, and 2D trajectory generation and
 //! motion profiling through the [`trajectory`] module.
@@ -44,12 +44,12 @@ impl Differential {
     /// Motors created with the [`shared_motors`] macro may be safely cloned, as they are wrapped
     /// in an [`Arc`] to allow sharing across tasks and between the drivetrain and its tracking
     /// instance if needed.
-    /// 
+    ///
     /// [`shared_motors`]: crate::drivetrain::SharedMotors
     /// [`Arc`]: alloc::arc::Arc
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// let motors = Differential::new(
     ///     shared_motors![
@@ -71,11 +71,11 @@ impl Differential {
     /// # Errors
     ///
     /// See [`Motor::set_voltage`].
-    /// 
+    ///
     /// [`Motor::set_voltage`]: vexide::devices::smart::motor::Motor::set_voltage
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// let motors = Differential::new(
     ///     shared_motors![
@@ -85,7 +85,7 @@ impl Differential {
     ///         Motor::new(peripherals.port_2, Gearset::Green, Direction::Reverse),
     ///     ],
     /// );
-    /// 
+    ///
     /// motors.set_voltages(DifferentialVoltages(12.0, 12.0))?;
     /// ```
     pub fn set_voltages(
@@ -107,7 +107,7 @@ impl Differential {
 }
 
 /// Left/Right Motor Voltages
-/// 
+///
 /// These voltages are used to control a [`Differential`] motor configuration. They describe
 /// the voltages of the respective left and right motors.
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
@@ -115,9 +115,9 @@ pub struct DifferentialVoltages(pub f64, pub f64);
 
 impl DifferentialVoltages {
     /// Creates a [`DifferentialVoltages`] instance from a provided linear and angular voltage.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// let voltages = DifferentialVoltages::from_arcade(5.0, 2.0);
     /// assert_eq!(voltages, DifferentialVoltages(7.0, 3.0));
@@ -132,12 +132,12 @@ impl DifferentialVoltages {
     ///
     /// If either motor is over a `max_voltage`, both values will be decresed by the amount
     /// that is "oversaturated" to preserve the ratio between left and right power.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// let voltages = DifferentialVoltages::from_arcade(12.0, 13.0).normalized(12.0);
-    /// 
+    ///
     /// assert_eq!(voltages, voltages.left() <= 12.0);
     /// assert_eq!(voltages, voltages.right() <= 12.0);
     /// ```
@@ -156,9 +156,9 @@ impl DifferentialVoltages {
     }
 
     /// Returns the left voltage.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// let voltages = DifferentialVoltages(5.0, 2.0);
     /// assert_eq!(voltages.left(), 5.0);
@@ -169,7 +169,7 @@ impl DifferentialVoltages {
     }
 
     /// Returns the right voltage.
-    /// 
+    ///
     /// ```
     /// let voltages = DifferentialVoltages(5.0, 2.0);
     /// assert_eq!(voltages.right(), 2.0);
