@@ -1,6 +1,6 @@
 use core::f64::consts::{PI, FRAC_PI_4};
 
-use vexide::{async_runtime::time::sleep, core::time::Instant, devices::smart::Motor};
+use vexide::{async_runtime::time::sleep, core::{println, time::Instant}, devices::smart::Motor};
 
 use crate::{
     control::{ControlLoop, Tolerances},
@@ -66,7 +66,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             let angular_output =
                 self.angle_controller
-                    .update(heading, local_target.angle().rad(), dt);
+                    .update(angle_error, Angle::ZERO, dt);
             let linear_output =
                 self.distance_controller.update(-distance_error, 0.0, dt) * angle_error.cos();
 

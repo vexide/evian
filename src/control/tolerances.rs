@@ -37,10 +37,10 @@ use vexide::core::time::Instant;
 pub struct Tolerances {
     start_timestamp: Option<Instant>,
     tolerance_timestamp: Option<Instant>,
-    tolerance_duration: Option<Duration>,
-    error_tolerance: Option<f64>,
-    velocity_tolerance: Option<f64>,
-    timeout: Option<Duration>,
+    pub tolerance_duration: Option<Duration>,
+    pub error_tolerance: Option<f64>,
+    pub velocity_tolerance: Option<f64>,
+    pub timeout: Option<Duration>,
 }
 
 impl Tolerances {
@@ -53,6 +53,7 @@ impl Tolerances {
         Self {
             start_timestamp: None,
             tolerance_timestamp: None,
+            
             tolerance_duration: None,
             error_tolerance: None,
             velocity_tolerance: None,
@@ -124,6 +125,8 @@ impl Tolerances {
         // If we have timed out, then we are settled.
         if let Some(timeout) = self.timeout {
             if self.start_timestamp.unwrap().elapsed() > timeout {
+                self.tolerance_timestamp = None;
+                self.start_timestamp = None;
                 return true;
             }
         }
@@ -149,6 +152,8 @@ impl Tolerances {
                 .tolerance_duration
                 .is_none_or(|time| self.tolerance_timestamp.unwrap().elapsed() > time)
             {
+                self.tolerance_timestamp = None;
+                self.start_timestamp = None;
                 return true;
             }
         } else if self.tolerance_timestamp.is_some() {
