@@ -1,4 +1,4 @@
-use core::f64::consts::{FRAC_PI_2, FRAC_PI_4};
+use core::f64::consts::{PI, FRAC_PI_4};
 
 use vexide::{async_runtime::time::sleep, core::time::Instant, devices::smart::Motor};
 
@@ -58,10 +58,10 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             {
                 break;
             }
-
+            
             if angle_error.as_radians().abs() > FRAC_PI_4 {
-                distance_error = -distance_error;
-                angle_error -= FRAC_PI_2.rad();
+                distance_error *= -1.0;
+                angle_error = (angle_error - PI.rad()).wrapped();
             }
 
             let angular_output =
@@ -77,6 +77,8 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             prev_time = Instant::now();
         }
+
+        _ = drivetrain.motors.set_voltages((0.0, 0.0));
     }
 
     pub async fn boomerang<T: TracksPosition + TracksHeading + TracksVelocity>(
@@ -123,5 +125,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             prev_time = Instant::now();
         }
+
+        _ = drivetrain.motors.set_voltages((0.0, 0.0));
     }
 }
