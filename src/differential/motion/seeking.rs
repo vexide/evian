@@ -50,11 +50,11 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             let local_target = point - position;
 
             let mut distance_error = local_target.length();
-            let mut angle_error = heading - local_target.angle().rad();
+            let mut angle_error = (heading - local_target.angle().rad()).wrapped();
 
             if self
                 .tolerances
-                .is_settled(distance_error, drivetrain.tracking.linear_velocity())
+                .check(distance_error, drivetrain.tracking.linear_velocity())
             {
                 break;
             }
@@ -68,7 +68,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
                 self.angle_controller
                     .update(heading, local_target.angle().rad(), dt);
             let linear_output =
-                self.distance_controller.update(distance_error, 0.0, dt) * angle_error.cos();
+                self.distance_controller.update(-distance_error, 0.0, dt) * angle_error.cos();
 
             _ = drivetrain.motors.set_voltages(
                 DifferentialVoltages::from_arcade(linear_output, angular_output)
@@ -105,7 +105,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             if self
                 .tolerances
-                .is_settled(distance_error, drivetrain.tracking.linear_velocity())
+                .check(distance_error, drivetrain.tracking.linear_velocity())
             {
                 break;
             }

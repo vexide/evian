@@ -115,7 +115,7 @@ impl Tolerances {
     ///
     /// * `error` - Difference between the setpoint and measured state of the system.
     /// * `velocity` - Measurement of how fast the system response is changing over time.
-    pub fn is_settled(&mut self, error: f64, velocity: f64) -> bool {
+    pub fn check(&mut self, error: f64, velocity: f64) -> bool {
         // Initialize timing on first call.
         if self.start_timestamp.is_none() {
             self.start_timestamp = Some(Instant::now());
@@ -131,10 +131,10 @@ impl Tolerances {
         // Check if we are within the tolerance range for either error and velocity.
         let in_tolerances = self
             .error_tolerance
-            .is_none_or(|tolerance| error < tolerance)
+            .is_none_or(|tolerance| error.abs() < tolerance)
             && self
                 .velocity_tolerance
-                .is_none_or(|tolerance| velocity < tolerance);
+                .is_none_or(|tolerance| velocity.abs() < tolerance);
 
         if in_tolerances {
             // We are now within tolerance, so we record the timestamp that this occurred if

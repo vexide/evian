@@ -5,7 +5,12 @@ use vexide::{
 };
 
 use crate::{
-    control::{ControlLoop, Tolerances}, differential::{Differential, DifferentialVoltages}, drivetrain::Drivetrain, math::{Angle, IntoAngle, Vec2}, prelude::TracksVelocity, tracking::{TracksForwardTravel, TracksHeading, TracksPosition}
+    control::{ControlLoop, Tolerances},
+    differential::{Differential, DifferentialVoltages},
+    drivetrain::Drivetrain,
+    math::{Angle, IntoAngle, Vec2},
+    prelude::TracksVelocity,
+    tracking::{TracksForwardTravel, TracksHeading, TracksPosition},
 };
 
 /// Basic Driving & Turning Motion
@@ -35,7 +40,9 @@ pub struct BasicMotion<
 impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>
     BasicMotion<L, A>
 {
-    pub async fn drive_distance_at_heading<T: TracksForwardTravel + TracksHeading + TracksVelocity>(
+    pub async fn drive_distance_at_heading<
+        T: TracksForwardTravel + TracksHeading + TracksVelocity,
+    >(
         &mut self,
         drivetrain: &mut Drivetrain<Differential, T>,
         target_distance: f64,
@@ -50,6 +57,20 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             let forward_travel = drivetrain.tracking.forward_travel();
             let heading = drivetrain.tracking.heading();
+
+            let linear_error = (target_distance + initial_forward_travel) - forward_travel;
+            let angular_error = (target_heading - heading).wrapped();
+
+            if self
+                .linear_tolerances
+                .check(linear_error, drivetrain.tracking.linear_velocity())
+                && self.angular_tolerances.check(
+                    angular_error.as_radians(),
+                    drivetrain.tracking.angular_velocity(),
+                )
+            {
+                break;
+            }
 
             let linear_output = self.linear_controller.update(
                 forward_travel,
@@ -68,6 +89,8 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             prev_time = Instant::now();
         }
+
+        _ = drivetrain.motors.set_voltages((0.0, 0.0));
     }
 
     pub async fn drive_distance<T: TracksForwardTravel + TracksHeading + TracksVelocity>(
@@ -88,7 +111,9 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             .await;
     }
 
-    pub async fn turn_to_point<T: TracksForwardTravel + TracksPosition + TracksHeading + TracksVelocity>(
+    pub async fn turn_to_point<
+        T: TracksForwardTravel + TracksPosition + TracksHeading + TracksVelocity,
+    >(
         &mut self,
         drivetrain: &mut Drivetrain<Differential, T>,
         point: impl Into<Vec2<f64>>,
@@ -105,7 +130,19 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             let position = drivetrain.tracking.position();
             let heading = drivetrain.tracking.heading();
 
-            // TODO: settle
+            let linear_error = initial_forward_travel - forward_travel;
+            let angular_error = ((point - position).angle().rad() - heading).wrapped();
+
+            if self
+                .linear_tolerances
+                .check(linear_error, drivetrain.tracking.linear_velocity())
+                && self.angular_tolerances.check(
+                    angular_error.as_radians(),
+                    drivetrain.tracking.angular_velocity(),
+                )
+            {
+                break;
+            }
 
             let linear_output =
                 self.linear_controller
@@ -121,5 +158,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
 
             prev_time = Instant::now();
         }
+
+        _ = drivetrain.motors.set_voltages((0.0, 0.0));
     }
 }

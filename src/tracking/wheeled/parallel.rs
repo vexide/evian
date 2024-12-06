@@ -30,6 +30,7 @@ impl ParallelWheelTracking {
     ) -> Self {
         let data = Rc::new(RefCell::new(TrackingData {
             position: origin,
+            heading,
             heading_offset: heading,
             ..Default::default()
         }));
