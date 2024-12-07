@@ -53,7 +53,7 @@ impl Tolerances {
         Self {
             start_timestamp: None,
             tolerance_timestamp: None,
-            
+
             tolerance_duration: None,
             error_tolerance: None,
             velocity_tolerance: None,

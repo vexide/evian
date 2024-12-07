@@ -1,7 +1,7 @@
 use alloc::rc::Rc;
 use core::{cell::RefCell, f64::consts::TAU, time::Duration};
 use vexide::{
-    core::time::Instant,
+    core::{println, time::Instant},
     devices::smart::InertialSensor,
     prelude::{sleep, spawn, Task},
 };
@@ -132,11 +132,11 @@ impl ParallelWheelTracking {
     }
 
     pub fn set_heading(&mut self, heading: Angle) {
-        self.data.borrow_mut().heading_offset = heading - self.heading();
+        self.data.borrow_mut().heading_offset = heading;
     }
 
-    pub fn set_position(&mut self, position: Vec2<f64>) {
-        self.data.borrow_mut().position = position;
+    pub fn set_position(&mut self, position: impl Into<Vec2<f64>>) {
+        self.data.borrow_mut().position = position.into();
     }
 }
 

@@ -1,6 +1,10 @@
-use core::f64::consts::{PI, FRAC_PI_4};
+use core::f64::consts::{FRAC_PI_2, PI};
 
-use vexide::{async_runtime::time::sleep, core::{println, time::Instant}, devices::smart::Motor};
+use vexide::{
+    async_runtime::time::sleep,
+    core::{println, time::Instant},
+    devices::smart::Motor,
+};
 
 use crate::{
     control::{ControlLoop, Tolerances},
@@ -52,21 +56,19 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             let mut distance_error = local_target.length();
             let mut angle_error = (heading - local_target.angle().rad()).wrapped();
 
+            if angle_error.as_radians().abs() > FRAC_PI_2 {
+                distance_error *= -1.0;
+                angle_error = (PI.rad() - angle_error).wrapped();
+            }
+
             if self
                 .tolerances
                 .check(distance_error, drivetrain.tracking.linear_velocity())
             {
                 break;
             }
-            
-            if angle_error.as_radians().abs() > FRAC_PI_4 {
-                distance_error *= -1.0;
-                angle_error = (angle_error - PI.rad()).wrapped();
-            }
 
-            let angular_output =
-                self.angle_controller
-                    .update(angle_error, Angle::ZERO, dt);
+            let angular_output = self.angle_controller.update(-angle_error, Angle::ZERO, dt);
             let linear_output =
                 self.distance_controller.update(-distance_error, 0.0, dt) * angle_error.cos();
 
