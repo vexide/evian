@@ -31,7 +31,7 @@ impl Ramsete {
         trajectory: Trajectory,
     ) {
         let mut prev_position = drivetrain.tracking.position();
-        let mut distance = 0.1; // Starting on trajectory.profile[1] because trajectory.profile[0] has no starting velocity
+        let mut distance = 0.3; // Starting on trajectory.profile[1] because trajectory.profile[0] has no starting velocity
 
         loop {
             sleep(Motor::WRITE_INTERVAL).await;
@@ -43,10 +43,7 @@ impl Ramsete {
             let profile = trajectory.at(distance);
 
             if *trajectory.profile.last().unwrap() == profile {
-                _ = drivetrain
-                    .motors
-                    .set_voltages(DifferentialVoltages::default());
-                return;
+                break;
             }
 
             let desired_linear_velocity = profile.linear_velocity;
@@ -99,5 +96,7 @@ impl Ramsete {
                 _ = motor.set_velocity(velocities.1 as i32);
             }
         }
+
+        _ = drivetrain.motors.set_voltages((0.0, 0.0));
     }
 }
