@@ -32,13 +32,13 @@ impl Angle {
 
     #[inline]
     #[must_use]
-    pub fn from_degrees(degrees: f64) -> Self {
+    pub const fn from_degrees(degrees: f64) -> Self {
         Self(degrees.to_radians())
     }
 
     #[inline]
     #[must_use]
-    pub fn from_turns(turns: f64) -> Self {
+    pub const fn from_turns(turns: f64) -> Self {
         Self(turns * TAU)
     }
 
@@ -68,7 +68,7 @@ impl Angle {
 
     #[inline]
     #[must_use]
-    pub fn as_degrees(&self) -> f64 {
+    pub const fn as_degrees(&self) -> f64 {
         self.0.to_degrees()
     }
 
@@ -98,19 +98,19 @@ impl Angle {
 
     #[inline]
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn abs(self) -> Self {
+    pub const fn abs(self) -> Self {
         Self(self.0.abs())
     }
 
     #[inline]
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn signum(self) -> f64 {
+    pub const fn signum(self) -> f64 {
         self.0.signum()
     }
 
     #[inline]
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn copysign(self, sign: Self) -> Self {
+    pub const fn copysign(self, sign: Self) -> Self {
         Self(self.0.copysign(sign.0))
     }
 

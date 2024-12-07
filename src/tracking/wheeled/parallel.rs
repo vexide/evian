@@ -1,7 +1,7 @@
 use alloc::rc::Rc;
 use core::{cell::RefCell, f64::consts::TAU, time::Duration};
 use vexide::{
-    core::{println, time::Instant},
+    core::time::Instant,
     devices::smart::InertialSensor,
     prelude::{sleep, spawn, Task},
 };

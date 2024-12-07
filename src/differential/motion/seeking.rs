@@ -2,7 +2,7 @@ use core::f64::consts::{FRAC_PI_2, PI};
 
 use vexide::{
     async_runtime::time::sleep,
-    core::{println, time::Instant},
+    core::time::Instant,
     devices::smart::Motor,
 };
 

@@ -93,16 +93,25 @@ impl Differential {
         voltages: impl Into<DifferentialVoltages>,
     ) -> Result<(), MotorError> {
         let voltages = voltages.into();
+        let mut rtn = Ok(());
 
         for motor in self.left.borrow_mut().iter_mut() {
-            motor.set_voltage(voltages.left())?;
+            let result = motor.set_voltage(voltages.left());
+
+            if result.is_err() {
+                rtn = result;
+            }
         }
 
         for motor in self.right.borrow_mut().iter_mut() {
-            motor.set_voltage(voltages.right())?;
+            let result = motor.set_voltage(voltages.left());
+
+            if result.is_err() {
+                rtn = result;
+            }
         }
 
-        Ok(())
+        rtn
     }
 }
 
