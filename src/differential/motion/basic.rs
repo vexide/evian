@@ -129,9 +129,10 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             let forward_travel = drivetrain.tracking.forward_travel();
             let position = drivetrain.tracking.position();
             let heading = drivetrain.tracking.heading();
+            let target_heading = (point - position).angle().rad();
 
             let linear_error = initial_forward_travel - forward_travel;
-            let angular_error = ((point - position).angle().rad() - heading).wrapped();
+            let angular_error = (target_heading - heading).wrapped();
 
             if self
                 .linear_tolerances
@@ -147,9 +148,7 @@ impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Ou
             let linear_output =
                 self.linear_controller
                     .update(forward_travel, initial_forward_travel, dt);
-            let angular_output =
-                self.angular_controller
-                    .update(heading, (point - position).angle().rad(), dt);
+            let angular_output = self.angular_controller.update(heading, target_heading, dt);
 
             _ = drivetrain.motors.set_voltages(
                 DifferentialVoltages::from_arcade(linear_output, angular_output)
