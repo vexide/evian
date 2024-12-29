@@ -27,7 +27,7 @@ impl Angle {
 
     #[must_use]
     pub const fn from_gradians(gradians: f64) -> Self {
-        Self(gradians * (PI / 180.0))
+        Self(gradians * (PI / 200.0))
     }
 
     #[inline]
@@ -87,7 +87,7 @@ impl Angle {
     #[inline]
     #[must_use]
     pub const fn as_gradians(&self) -> f64 {
-        self.0 * (180.0 / PI)
+        self.0 * (200.0 / PI)
     }
 
     #[inline]
