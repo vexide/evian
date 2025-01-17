@@ -104,7 +104,7 @@ impl Differential {
         }
 
         for motor in self.right.borrow_mut().iter_mut() {
-            let result = motor.set_voltage(voltages.left());
+            let result = motor.set_voltage(voltages.right());
 
             if result.is_err() {
                 rtn = result;
