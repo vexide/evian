@@ -87,6 +87,7 @@ pub struct Pid {
 
     integral: f64,
     integration_range: Option<f64>,
+    output_limit: Option<f64>,
     prev_error: f64,
 }
 
@@ -99,6 +100,7 @@ impl Pid {
             ki,
             kd,
             integration_range,
+            output_limit: None,
             integral: 0.0,
             prev_error: 0.0,
         }
@@ -152,6 +154,10 @@ impl Pid {
     pub fn set_integration_range(&mut self, range: Option<f64>) {
         self.integration_range = range;
     }
+
+    pub fn set_output_limit(&mut self, range: Option<f64>) {
+        self.output_limit = range;
+    }
 }
 
 impl ControlLoop for Pid {
@@ -178,7 +184,13 @@ impl ControlLoop for Pid {
         self.prev_error = error;
 
         // Control signal = error * kp + integral + ki + derivative * kd.
-        (error * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
+        let mut output = (error * self.kp) + (self.integral * self.ki) + (derivative * self.kd);
+
+        if let Some(range) = self.output_limit {
+            output = output.clamp(-range, range);
+        }
+
+        output
     }
 }
 
