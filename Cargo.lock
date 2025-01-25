@@ -22,9 +22,9 @@ checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
 name = "bytemuck"
-version = "1.19.0"
+version = "1.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8334215b81e418a0a7bdb8ef0849474f40bb10c8b71f1c4ed315cff49f32494d"
+checksum = "ef657dfab802224e671f5818e9a4935f9b1957ed18e58292690cc39e7a4092a3"
 
 [[package]]
 name = "compile-time"
@@ -76,9 +76,9 @@ checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
 
 [[package]]
 name = "libm"
-version = "0.2.8"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
+checksum = "8355be11b20d696c8f18f6cc018c4e372165b1fa8126cef092399c9951984ffa"
 
 [[package]]
 name = "lock_api"
@@ -304,8 +304,7 @@ checksum = "e91b56cd4cadaeb79bbf1a5645f6b4f8dc5bde8834ad5894a8db35fda9efa1fe"
 [[package]]
 name = "vex-libunwind"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a93b1794031a6ec542ca31c3c19ee54a1c7ad78bad188577d75452d2f344780"
+source = "git+https://github.com/vexide/vex-libunwind.git#ba3b4b6243fd0962b2d44b71efb30e3b891480c3"
 dependencies = [
  "snafu",
  "vex-libunwind-sys",
@@ -314,8 +313,7 @@ dependencies = [
 [[package]]
 name = "vex-libunwind-sys"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1eddc26a00312b0b53ee4df6574e4c09488c89361d3beb6f4cbe75267af32f50"
+source = "git+https://github.com/vexide/vex-libunwind.git#ba3b4b6243fd0962b2d44b71efb30e3b891480c3"
 
 [[package]]
 name = "vex-sdk"
@@ -326,8 +324,7 @@ checksum = "be1b586dd8546706564cf20c94bae51c8f9e4891d70360d3fb63d563350df3d1"
 [[package]]
 name = "vexide"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b53931b4d885c56f3fdf44a1d60a9068447dd79b78d8e2e337080dab1f358836"
+source = "git+https://github.com/vexide/vexide.git#4df7237b117e90cf56f51ff7d940894da9a07f43"
 dependencies = [
  "vex-sdk",
  "vexide-async",
@@ -341,8 +338,7 @@ dependencies = [
 [[package]]
 name = "vexide-async"
 version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4c3df6f61ba36c1769dff3e5cc7186a0a6cf8b7b0ad06058c61ac9b2dd8a542"
+source = "git+https://github.com/vexide/vexide.git#4df7237b117e90cf56f51ff7d940894da9a07f43"
 dependencies = [
  "async-task",
  "vex-sdk",
@@ -353,8 +349,7 @@ dependencies = [
 [[package]]
 name = "vexide-core"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "713cc15c51999e980ea1bc0db672a4a4648f738b86862cfea50ae26746059f5c"
+source = "git+https://github.com/vexide/vexide.git#4df7237b117e90cf56f51ff7d940894da9a07f43"
 dependencies = [
  "bitflags",
  "futures-core",
@@ -372,8 +367,7 @@ dependencies = [
 [[package]]
 name = "vexide-devices"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18510f25a28e08c30f81be963f561a4f0db8978a7560a3698cd843727b180ccc"
+source = "git+https://github.com/vexide/vexide.git#4df7237b117e90cf56f51ff7d940894da9a07f43"
 dependencies = [
  "bitflags",
  "mint",
@@ -387,8 +381,7 @@ dependencies = [
 [[package]]
 name = "vexide-macro"
 version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1fdf008f4199cdd6329b53c5e264ddd238070b0f0e54ca023c64977b2069928"
+source = "git+https://github.com/vexide/vexide.git#4df7237b117e90cf56f51ff7d940894da9a07f43"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -398,8 +391,7 @@ dependencies = [
 [[package]]
 name = "vexide-panic"
 version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8eb2296d2dd75e7309e7cf03472cade808e568a5b987f5d3ffdf0051298d21bb"
+source = "git+https://github.com/vexide/vexide.git#4df7237b117e90cf56f51ff7d940894da9a07f43"
 dependencies = [
  "snafu",
  "vex-sdk",
@@ -410,8 +402,7 @@ dependencies = [
 [[package]]
 name = "vexide-startup"
 version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "028800c3119437dd25493d8cb04986c19654a36922bf98d63f2a140041a8da54"
+source = "git+https://github.com/vexide/vexide.git#4df7237b117e90cf56f51ff7d940894da9a07f43"
 dependencies = [
  "bitflags",
  "compile-time",
