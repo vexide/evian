@@ -202,6 +202,7 @@ pub struct AngularPid {
     kd: f64,
 
     integral: f64,
+    output_limit: Option<f64>,
     integration_range: Option<Angle>,
     prev_error: Angle,
 }
@@ -216,6 +217,7 @@ impl AngularPid {
             kd,
             integration_range,
             integral: 0.0,
+            output_limit: None,
             prev_error: Angle::from_radians(0.0),
         }
     }
@@ -268,6 +270,10 @@ impl AngularPid {
     pub fn set_integration_range(&mut self, range: Option<Angle>) {
         self.integration_range = range;
     }
+
+    pub fn set_output_limit(&mut self, range: Option<f64>) {
+        self.output_limit = range;
+    }
 }
 
 impl ControlLoop for AngularPid {
@@ -294,7 +300,12 @@ impl ControlLoop for AngularPid {
         let derivative = (error - self.prev_error).as_radians() / dt.as_secs_f64();
         self.prev_error = error;
 
-        // Control signal = error * kp + integral + ki + derivative * kd.
-        (error.as_radians() * self.kp) + (self.integral * self.ki) + (derivative * self.kd)
+        let mut output = (error.as_radians() * self.kp) + (self.integral * self.ki) + (derivative * self.kd);
+
+        if let Some(range) = self.output_limit {
+            output = output.clamp(-range, range);
+        }
+
+        output
     }
 }
