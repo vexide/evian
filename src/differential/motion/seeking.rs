@@ -276,6 +276,7 @@ impl<
         this.sleep = sleep(Duration::from_millis(5));
         this.prev_time = Instant::now();
 
+        cx.waker().wake_by_ref();
         Poll::Pending
     }
 }
@@ -472,6 +473,7 @@ impl<
         this.sleep = sleep(Duration::from_millis(5));
         this.prev_time = Instant::now();
 
+        cx.waker().wake_by_ref();
         Poll::Pending
     }
 }
