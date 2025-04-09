@@ -13,12 +13,12 @@ pub mod prelude {
         control::{ControlLoop, Tolerances},
         differential::{
             trajectory::{Trajectory, TrajectoryConstraints},
-            Differential, DifferentialVoltages,
+            Differential, Voltages,
         },
         drivetrain::{shared_motors, Drivetrain},
         math::{curve::CubicBezier, Angle, IntoAngle, Vec2},
         tracking::{
-            wheeled::{ParallelWheelTracking, PerpendicularWheelTracking, TrackingWheel},
+            wheeled::{TrackingWheel, WheeledTracking},
             TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity,
         },
     };

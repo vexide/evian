@@ -2,7 +2,7 @@ use core::{
     fmt,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-use vexide::{core::float::Float, devices::math::Point2};
+use vexide::{devices::math::Point2, float::Float};
 
 /// A vector in 2D space.
 ///

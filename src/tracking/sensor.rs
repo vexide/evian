@@ -2,7 +2,7 @@ use core::cell::RefCell;
 
 use alloc::{rc::Rc, vec::Vec};
 use vexide::devices::{
-    adi::{encoder::EncoderError, AdiEncoder},
+    adi::AdiEncoder,
     position::Position,
     smart::{
         motor::{Motor, MotorError},
@@ -37,7 +37,7 @@ macro_rules! impl_rotary_sensor {
 
 impl_rotary_sensor!(Motor, position, MotorError);
 impl_rotary_sensor!(RotationSensor, position, PortError);
-impl_rotary_sensor!(AdiEncoder, position, EncoderError);
+impl_rotary_sensor!(AdiEncoder, position, PortError);
 
 impl RotarySensor for Vec<Motor> {
     type Error = MotorError;

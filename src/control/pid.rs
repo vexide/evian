@@ -133,29 +133,29 @@ impl Pid {
     }
 
     /// Sets the PID gains to provided values.
-    pub fn set_gains(&mut self, kp: f64, ki: f64, kd: f64) {
+    pub const fn set_gains(&mut self, kp: f64, ki: f64, kd: f64) {
         self.kp = kp;
         self.ki = ki;
         self.kd = kd;
     }
 
-    pub fn set_kp(&mut self, kp: f64) {
+    pub const fn set_kp(&mut self, kp: f64) {
         self.kp = kp;
     }
 
-    pub fn set_ki(&mut self, ki: f64) {
+    pub const fn set_ki(&mut self, ki: f64) {
         self.ki = ki;
     }
 
-    pub fn set_kd(&mut self, kd: f64) {
+    pub const fn set_kd(&mut self, kd: f64) {
         self.kd = kd;
     }
 
-    pub fn set_integration_range(&mut self, range: Option<f64>) {
+    pub const fn set_integration_range(&mut self, range: Option<f64>) {
         self.integration_range = range;
     }
 
-    pub fn set_output_limit(&mut self, range: Option<f64>) {
+    pub const fn set_output_limit(&mut self, range: Option<f64>) {
         self.output_limit = range;
     }
 }
@@ -249,29 +249,29 @@ impl AngularPid {
     }
 
     /// Sets the PID gains to provided values.
-    pub fn set_gains(&mut self, kp: f64, ki: f64, kd: f64) {
+    pub const fn set_gains(&mut self, kp: f64, ki: f64, kd: f64) {
         self.kp = kp;
         self.ki = ki;
         self.kd = kd;
     }
 
-    pub fn set_kp(&mut self, kp: f64) {
+    pub const fn set_kp(&mut self, kp: f64) {
         self.kp = kp;
     }
 
-    pub fn set_ki(&mut self, ki: f64) {
+    pub const fn set_ki(&mut self, ki: f64) {
         self.ki = ki;
     }
 
-    pub fn set_kd(&mut self, kd: f64) {
+    pub const fn set_kd(&mut self, kd: f64) {
         self.kd = kd;
     }
 
-    pub fn set_integration_range(&mut self, range: Option<Angle>) {
+    pub const fn set_integration_range(&mut self, range: Option<Angle>) {
         self.integration_range = range;
     }
 
-    pub fn set_output_limit(&mut self, range: Option<f64>) {
+    pub const fn set_output_limit(&mut self, range: Option<f64>) {
         self.output_limit = range;
     }
 }
@@ -300,7 +300,8 @@ impl ControlLoop for AngularPid {
         let derivative = (error - self.prev_error).as_radians() / dt.as_secs_f64();
         self.prev_error = error;
 
-        let mut output = (error.as_radians() * self.kp) + (self.integral * self.ki) + (derivative * self.kd);
+        let mut output =
+            (error.as_radians() * self.kp) + (self.integral * self.ki) + (derivative * self.kd);
 
         if let Some(range) = self.output_limit {
             output = output.clamp(-range, range);

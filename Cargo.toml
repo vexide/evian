@@ -31,7 +31,7 @@ opt-level = "z"
 lto = true
 
 [dependencies]
-vexide = { git = "https://github.com/vexide/vexide.git" }
+vexide = "0.7.0-beta.3"
 
 [package.metadata.docs.rs]
 targets = ["armv7a-none-eabi"]

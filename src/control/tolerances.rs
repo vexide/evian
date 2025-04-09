@@ -14,8 +14,7 @@
 //! reached.
 
 use core::time::Duration;
-
-use vexide::core::time::Instant;
+use vexide::time::Instant;
 
 /// A utility for determining when a control system has stabilized reasonably near its setpoint.
 ///
@@ -35,12 +34,10 @@ use vexide::core::time::Instant;
 /// If the system leaves the tolerance window before the duration is met, the tolerance timer resets.
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Tolerances {
-    start_timestamp: Option<Instant>,
     tolerance_timestamp: Option<Instant>,
-    pub tolerance_duration: Option<Duration>,
+    pub duration: Option<Duration>,
     pub error_tolerance: Option<f64>,
     pub velocity_tolerance: Option<f64>,
-    pub timeout: Option<Duration>,
 }
 
 impl Tolerances {
@@ -51,13 +48,10 @@ impl Tolerances {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            start_timestamp: None,
             tolerance_timestamp: None,
-
-            tolerance_duration: None,
+            duration: None,
             error_tolerance: None,
             velocity_tolerance: None,
-            timeout: None,
         }
     }
 
@@ -66,7 +60,7 @@ impl Tolerances {
     /// The error tolerance defines how close to the target position the system
     /// must be to be considered "within tolerance".
     #[must_use]
-    pub const fn error_tolerance(&mut self, tolerance: f64) -> Self {
+    pub const fn error(&mut self, tolerance: f64) -> Self {
         self.error_tolerance = Some(tolerance);
         *self
     }
@@ -76,7 +70,7 @@ impl Tolerances {
     /// The velocity tolerance defines how slow the system must be moving to be
     /// considered "stable".
     #[must_use]
-    pub const fn velocity_tolerance(&mut self, tolerance: f64) -> Self {
+    pub const fn velocity(&mut self, tolerance: f64) -> Self {
         self.velocity_tolerance = Some(tolerance);
         *self
     }
@@ -86,20 +80,8 @@ impl Tolerances {
     /// This duration acts as a "debounce" to ensure the system has truly stabilized
     /// and isn't just passing through the tolerance window momentarily.
     #[must_use]
-    pub const fn tolerance_duration(&mut self, duration: Duration) -> Self {
-        self.tolerance_duration = Some(duration);
-        *self
-    }
-
-    /// Sets a maximum duration to wait for settling before forcing completion.
-    ///
-    /// If this timeout elapses before the system settles normally, this struct
-    /// will report as settled regardless of the actual system state. This prevents
-    /// commands from hanging indefinitely if settling proves impossible for whatever
-    /// reason.
-    #[must_use]
-    pub const fn timeout(&mut self, timeout: Duration) -> Self {
-        self.timeout = Some(timeout);
+    pub const fn duration(&mut self, duration: Duration) -> Self {
+        self.duration = Some(duration);
         *self
     }
 
@@ -117,20 +99,6 @@ impl Tolerances {
     /// * `error` - Difference between the setpoint and measured state of the system.
     /// * `velocity` - Measurement of how fast the system response is changing over time.
     pub fn check(&mut self, error: f64, velocity: f64) -> bool {
-        // Initialize timing on first call.
-        if self.start_timestamp.is_none() {
-            self.start_timestamp = Some(Instant::now());
-        }
-
-        // If we have timed out, then we are settled.
-        if let Some(timeout) = self.timeout {
-            if self.start_timestamp.unwrap().elapsed() > timeout {
-                self.tolerance_timestamp = None;
-                self.start_timestamp = None;
-                return true;
-            }
-        }
-
         // Check if we are within the tolerance range for either error and velocity.
         let in_tolerances = self
             .error_tolerance
@@ -149,11 +117,10 @@ impl Tolerances {
             // If we have a tolerance time (required time to be within tolerance to settle), then compare that with
             // the elapsed tolerance timer. If we've been settled for greater than that time, then we are now settled.
             if self
-                .tolerance_duration
+                .duration
                 .is_none_or(|time| self.tolerance_timestamp.unwrap().elapsed() > time)
             {
                 self.tolerance_timestamp = None;
-                self.start_timestamp = None;
                 return true;
             }
         } else if self.tolerance_timestamp.is_some() {

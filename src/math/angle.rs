@@ -5,7 +5,7 @@ use core::{
     },
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-use vexide::{core::float::Float, devices::position::Position};
+use vexide::{devices::position::Position, float::Float};
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Angle(f64);

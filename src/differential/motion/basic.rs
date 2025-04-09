@@ -1,28 +1,28 @@
+use core::{
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll},
+    time::Duration,
+};
+
 use vexide::{
-    core::time::Instant,
     devices::smart::Motor,
-    prelude::{sleep, SmartDevice},
+    time::{sleep, Instant, Sleep},
 };
 
 use crate::{
-    control::{ControlLoop, Tolerances},
-    differential::{Differential, DifferentialVoltages},
+    control::{AngularPid, ControlLoop, Pid, Tolerances},
+    differential::{Differential, Voltages},
     drivetrain::Drivetrain,
     math::{Angle, IntoAngle, Vec2},
     prelude::TracksVelocity,
     tracking::{TracksForwardTravel, TracksHeading, TracksPosition},
 };
 
-/// Basic Driving & Turning Motion
-///
-/// This struct provides motion algorithms for basic control of a differential drivetrain. It
-/// includes straight distance driving and turning (both to a angle through [`turn_to_heading`](BasicMotion::turn_to_heading)
-/// and to points through [`turn_to_point`](BasicMotion::turn_to_point)). This is acomplished through two feedback
-/// control loops (typically PID controllers) for controlling the robot's desired heading and distance traveled.
 #[derive(PartialEq)]
 pub struct BasicMotion<
-    L: ControlLoop<Input = f64, Output = f64>,
-    A: ControlLoop<Input = Angle, Output = f64>,
+    L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
 > {
     /// Linear (forward driving) feedback controller
     pub linear_controller: L,
@@ -35,129 +35,535 @@ pub struct BasicMotion<
 
     /// Angular settling conditions
     pub angular_tolerances: Tolerances,
+
+    pub timeout: Option<Duration>,
 }
 
-impl<L: ControlLoop<Input = f64, Output = f64>, A: ControlLoop<Input = Angle, Output = f64>>
-    BasicMotion<L, A>
+impl<
+        L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
+        A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
+    > BasicMotion<L, A>
 {
-    pub async fn drive_distance_at_heading<
+    pub fn drive_distance_at_heading<
+        'a,
         T: TracksForwardTravel + TracksHeading + TracksVelocity,
     >(
         &mut self,
-        drivetrain: &mut Drivetrain<Differential, T>,
+        drivetrain: &'a mut Drivetrain<Differential, T>,
         target_distance: f64,
         target_heading: Angle,
-    ) {
-        let initial_forward_travel = drivetrain.tracking.forward_travel();
-        let mut prev_time = Instant::now();
-
-        loop {
-            sleep(Motor::UPDATE_INTERVAL).await;
-            let dt = prev_time.elapsed();
-
-            let forward_travel = drivetrain.tracking.forward_travel();
-            let heading = drivetrain.tracking.heading();
-
-            let linear_error = (target_distance + initial_forward_travel) - forward_travel;
-            let angular_error = (target_heading - heading).wrapped();
-
-            if self
-                .linear_tolerances
-                .check(linear_error, drivetrain.tracking.linear_velocity())
-                && self.angular_tolerances.check(
-                    angular_error.as_radians(),
-                    drivetrain.tracking.angular_velocity(),
-                )
-            {
-                break;
-            }
-
-            let linear_output = self.linear_controller.update(
-                forward_travel,
-                target_distance + initial_forward_travel,
-                dt,
-            );
-            let angular_output = self.angular_controller.update(heading, target_heading, dt);
-
-            _ = drivetrain.motors.set_voltages(
-                DifferentialVoltages(
-                    linear_output + angular_output,
-                    linear_output - angular_output,
-                )
-                .normalized(Motor::V5_MAX_VOLTAGE),
-            );
-
-            prev_time = Instant::now();
+    ) -> DriveDistanceAtHeadingFuture<'a, L, A, T> {
+        DriveDistanceAtHeadingFuture {
+            sleep: sleep(Duration::from_millis(5)),
+            target_distance,
+            target_heading,
+            start_time: Instant::now(),
+            prev_time: Instant::now(),
+            timeout: self.timeout,
+            initial_forward_travel: drivetrain.tracking.forward_travel(),
+            linear_tolerances: self.linear_tolerances,
+            angular_tolerances: self.angular_tolerances,
+            linear_settled: false,
+            angular_settled: false,
+            linear_controller: self.linear_controller.clone(),
+            angular_controller: self.angular_controller.clone(),
+            drivetrain,
         }
-
-        _ = drivetrain.motors.set_voltages((0.0, 0.0));
     }
 
-    pub async fn drive_distance<T: TracksForwardTravel + TracksHeading + TracksVelocity>(
+    pub fn drive_distance<'a, T: TracksForwardTravel + TracksHeading + TracksVelocity>(
         &mut self,
-        drivetrain: &mut Drivetrain<Differential, T>,
+        drivetrain: &'a mut Drivetrain<Differential, T>,
         distance: f64,
-    ) {
+    ) -> DriveDistanceAtHeadingFuture<'a, L, A, T> {
         self.drive_distance_at_heading(drivetrain, distance, drivetrain.tracking.heading())
-            .await;
     }
 
-    pub async fn turn_to_heading<T: TracksForwardTravel + TracksHeading + TracksVelocity>(
+    pub fn turn_to_heading<'a, T: TracksForwardTravel + TracksHeading + TracksVelocity>(
         &mut self,
-        drivetrain: &mut Drivetrain<Differential, T>,
+        drivetrain: &'a mut Drivetrain<Differential, T>,
         heading: Angle,
-    ) {
+    ) -> DriveDistanceAtHeadingFuture<'a, L, A, T> {
         self.drive_distance_at_heading(drivetrain, 0.0, heading)
-            .await;
     }
 
-    pub async fn turn_to_point<
+    pub fn turn_to_point<
+        'a,
         T: TracksForwardTravel + TracksPosition + TracksHeading + TracksVelocity,
     >(
         &mut self,
-        drivetrain: &mut Drivetrain<Differential, T>,
+        drivetrain: &'a mut Drivetrain<Differential, T>,
         point: impl Into<Vec2<f64>>,
-    ) {
-        let point = point.into();
-        let initial_forward_travel = drivetrain.tracking.forward_travel();
-        let mut prev_time = Instant::now();
+    ) -> TurnToPointFuture<'a, L, A, T> {
+        TurnToPointFuture {
+            sleep: sleep(Duration::from_millis(5)),
+            point: point.into(),
+            start_time: Instant::now(),
+            prev_time: Instant::now(),
+            timeout: self.timeout,
+            initial_forward_travel: drivetrain.tracking.forward_travel(),
+            linear_tolerances: self.linear_tolerances,
+            angular_tolerances: self.angular_tolerances,
+            linear_settled: false,
+            angular_settled: false,
+            linear_controller: self.linear_controller.clone(),
+            angular_controller: self.angular_controller.clone(),
+            drivetrain,
+        }
+    }
+}
 
-        loop {
-            sleep(Motor::UPDATE_INTERVAL).await;
-            let dt = prev_time.elapsed();
+pub struct DriveDistanceAtHeadingFuture<
+    'a,
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksForwardTravel + TracksHeading + TracksVelocity,
+> {
+    sleep: Sleep,
+    target_distance: f64,
+    target_heading: Angle,
+    start_time: Instant,
+    prev_time: Instant,
+    timeout: Option<Duration>,
+    initial_forward_travel: f64,
+    linear_tolerances: Tolerances,
+    angular_tolerances: Tolerances,
+    linear_controller: L,
+    angular_controller: A,
+    linear_settled: bool,
+    angular_settled: bool,
+    drivetrain: &'a mut Drivetrain<Differential, T>,
+}
 
-            let forward_travel = drivetrain.tracking.forward_travel();
-            let position = drivetrain.tracking.position();
-            let heading = drivetrain.tracking.heading();
-            let target_heading = (point - position).angle().rad();
+impl<
+        L: ControlLoop<Input = f64, Output = f64> + Unpin,
+        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity,
+    > Future for DriveDistanceAtHeadingFuture<'_, L, A, T>
+{
+    type Output = ();
 
-            let linear_error = initial_forward_travel - forward_travel;
-            let angular_error = (target_heading - heading).wrapped();
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.get_mut();
 
-            if self
-                .linear_tolerances
-                .check(linear_error, drivetrain.tracking.linear_velocity())
-                && self.angular_tolerances.check(
-                    angular_error.as_radians(),
-                    drivetrain.tracking.angular_velocity(),
-                )
-            {
-                break;
-            }
-
-            let linear_output =
-                self.linear_controller
-                    .update(forward_travel, initial_forward_travel, dt);
-            let angular_output = self.angular_controller.update(heading, target_heading, dt);
-
-            _ = drivetrain.motors.set_voltages(
-                DifferentialVoltages::from_arcade(linear_output, angular_output)
-                    .normalized(Motor::V5_MAX_VOLTAGE),
-            );
-
-            prev_time = Instant::now();
+        if Pin::new(&mut this.sleep).poll(cx).is_pending() {
+            return Poll::Pending;
         }
 
-        _ = drivetrain.motors.set_voltages((0.0, 0.0));
+        let dt = this.prev_time.elapsed();
+
+        let forward_travel = this.drivetrain.tracking.forward_travel();
+        let heading = this.drivetrain.tracking.heading();
+
+        let linear_error = (this.target_distance + this.initial_forward_travel) - forward_travel;
+        let angular_error = (this.target_heading - heading).wrapped();
+
+        if this
+            .linear_tolerances
+            .check(linear_error, this.drivetrain.tracking.linear_velocity())
+        {
+            this.linear_settled = true;
+        }
+        if this.angular_tolerances.check(
+            angular_error.as_radians(),
+            this.drivetrain.tracking.angular_velocity(),
+        ) {
+            this.angular_settled = true;
+        }
+
+        if (this.linear_settled && this.angular_settled)
+            || this
+                .timeout
+                .is_some_and(|timeout| this.start_time.elapsed() > timeout)
+        {
+            _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
+            cx.waker().wake_by_ref();
+            return Poll::Ready(());
+        }
+
+        let linear_output = this.linear_controller.update(
+            forward_travel,
+            this.target_distance + this.initial_forward_travel,
+            dt,
+        );
+        let angular_output = this
+            .angular_controller
+            .update(heading, this.target_heading, dt);
+
+        _ = this.drivetrain.motors.set_voltages(
+            Voltages(
+                linear_output + angular_output,
+                linear_output - angular_output,
+            )
+            .normalized(Motor::V5_MAX_VOLTAGE),
+        );
+
+        this.sleep = sleep(Duration::from_millis(5));
+        this.prev_time = Instant::now();
+
+        Poll::Pending
+    }
+}
+
+impl<
+        L: ControlLoop<Input = f64, Output = f64> + Unpin,
+        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity,
+    > DriveDistanceAtHeadingFuture<'_, L, A, T>
+{
+    pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
+        self.linear_controller = controller;
+        self
+    }
+
+    pub fn with_angular_controller(&mut self, controller: A) -> &mut Self {
+        self.angular_controller = controller;
+        self
+    }
+
+    pub const fn with_timeout(&mut self, timeout: Duration) -> &mut Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    pub const fn with_linear_tolerances(&mut self, tolerances: Tolerances) -> &mut Self {
+        self.linear_tolerances = tolerances;
+        self
+    }
+
+    pub const fn with_linear_error_tolerance(&mut self, tolerance: f64) -> &mut Self {
+        self.linear_tolerances.error_tolerance = Some(tolerance);
+        self
+    }
+
+    pub const fn with_linear_velocity_tolerance(&mut self, tolerance: f64) -> &mut Self {
+        self.linear_tolerances.velocity_tolerance = Some(tolerance);
+        self
+    }
+
+    pub const fn with_linear_tolerance_duration(&mut self, duration: Duration) -> &mut Self {
+        self.linear_tolerances.duration = Some(duration);
+        self
+    }
+
+    pub const fn with_angular_tolerances(&mut self, tolerances: Tolerances) -> &mut Self {
+        self.angular_tolerances = tolerances;
+        self
+    }
+
+    pub const fn with_angular_error_tolerance(&mut self, tolerance: f64) -> &mut Self {
+        self.angular_tolerances.error_tolerance = Some(tolerance);
+        self
+    }
+
+    pub const fn with_angular_velocity_tolerance(&mut self, tolerance: f64) -> &mut Self {
+        self.angular_tolerances.velocity_tolerance = Some(tolerance);
+        self
+    }
+
+    pub const fn with_angular_tolerance_duration(&mut self, duration: Duration) -> &mut Self {
+        self.angular_tolerances.duration = Some(duration);
+        self
+    }
+}
+
+impl<
+        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity,
+    > DriveDistanceAtHeadingFuture<'_, Pid, A, T>
+{
+    pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
+        self.linear_controller.set_gains(kp, ki, kd);
+        self
+    }
+
+    pub const fn with_linear_kp(&mut self, kp: f64) -> &mut Self {
+        self.linear_controller.set_kp(kp);
+        self
+    }
+
+    pub const fn with_linear_ki(&mut self, ki: f64) -> &mut Self {
+        self.linear_controller.set_ki(ki);
+        self
+    }
+
+    pub const fn with_linear_kd(&mut self, kd: f64) -> &mut Self {
+        self.linear_controller.set_kd(kd);
+        self
+    }
+
+    pub const fn with_linear_integration_range(&mut self, integration_range: f64) -> &mut Self {
+        self.linear_controller
+            .set_integration_range(Some(integration_range));
+        self
+    }
+
+    pub const fn with_linear_output_limit(&mut self, limit: f64) -> &mut Self {
+        self.linear_controller.set_output_limit(Some(limit));
+        self
+    }
+}
+
+impl<
+        L: ControlLoop<Input = f64, Output = f64> + Unpin,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity,
+    > DriveDistanceAtHeadingFuture<'_, L, AngularPid, T>
+{
+    pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
+        self.angular_controller.set_gains(kp, ki, kd);
+        self
+    }
+
+    pub const fn with_angular_kp(&mut self, kp: f64) -> &mut Self {
+        self.angular_controller.set_kp(kp);
+        self
+    }
+
+    pub const fn with_angular_ki(&mut self, ki: f64) -> &mut Self {
+        self.angular_controller.set_ki(ki);
+        self
+    }
+
+    pub const fn with_angular_kd(&mut self, kd: f64) -> &mut Self {
+        self.angular_controller.set_kd(kd);
+        self
+    }
+
+    pub const fn with_angular_integration_range(&mut self, integration_range: Angle) -> &mut Self {
+        self.angular_controller
+            .set_integration_range(Some(integration_range));
+        self
+    }
+
+    pub const fn with_angular_output_limit(&mut self, limit: f64) -> &mut Self {
+        self.angular_controller.set_output_limit(Some(limit));
+        self
+    }
+}
+
+pub struct TurnToPointFuture<
+    'a,
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> {
+    sleep: Sleep,
+    point: Vec2<f64>,
+    start_time: Instant,
+    prev_time: Instant,
+    timeout: Option<Duration>,
+    initial_forward_travel: f64,
+    linear_tolerances: Tolerances,
+    angular_tolerances: Tolerances,
+    linear_controller: L,
+    angular_controller: A,
+    linear_settled: bool,
+    angular_settled: bool,
+    drivetrain: &'a mut Drivetrain<Differential, T>,
+}
+
+impl<
+        L: ControlLoop<Input = f64, Output = f64> + Unpin,
+        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
+    > Future for TurnToPointFuture<'_, L, A, T>
+{
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.get_mut();
+
+        if Pin::new(&mut this.sleep).poll(cx).is_pending() {
+            return Poll::Pending;
+        }
+
+        let dt = this.prev_time.elapsed();
+
+        let forward_travel = this.drivetrain.tracking.forward_travel();
+        let position = this.drivetrain.tracking.position();
+        let heading = this.drivetrain.tracking.heading();
+        let target_heading = (this.point - position).angle().rad();
+
+        let linear_error = this.initial_forward_travel - forward_travel;
+        let angular_error = (heading - target_heading).wrapped();
+
+        if this
+            .linear_tolerances
+            .check(linear_error, this.drivetrain.tracking.linear_velocity())
+        {
+            this.linear_settled = true;
+        }
+        if this.angular_tolerances.check(
+            angular_error.as_radians(),
+            this.drivetrain.tracking.angular_velocity(),
+        ) {
+            this.angular_settled = true;
+        }
+
+        if (this.linear_settled && this.angular_settled)
+            || this
+                .timeout
+                .is_some_and(|timeout| this.start_time.elapsed() > timeout)
+        {
+            _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
+            cx.waker().wake_by_ref();
+            return Poll::Ready(());
+        }
+
+        let linear_output =
+            this.linear_controller
+                .update(forward_travel, this.initial_forward_travel, dt);
+        let angular_output = this
+            .angular_controller
+            .update(-angular_error, Angle::ZERO, dt);
+
+        _ = this.drivetrain.motors.set_voltages(
+            Voltages(
+                linear_output + angular_output,
+                linear_output - angular_output,
+            )
+            .normalized(Motor::V5_MAX_VOLTAGE),
+        );
+
+        this.sleep = sleep(Duration::from_millis(5));
+        this.prev_time = Instant::now();
+
+        Poll::Pending
+    }
+}
+
+impl<
+        L: ControlLoop<Input = f64, Output = f64> + Unpin,
+        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
+    > TurnToPointFuture<'_, L, A, T>
+{
+    pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
+        self.linear_controller = controller;
+        self
+    }
+
+    pub fn with_angular_controller(&mut self, controller: A) -> &mut Self {
+        self.angular_controller = controller;
+        self
+    }
+
+    pub const fn with_timeout(&mut self, timeout: Duration) -> &mut Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    pub const fn with_linear_tolerances(&mut self, tolerances: Tolerances) -> &mut Self {
+        self.linear_tolerances = tolerances;
+        self
+    }
+
+    pub const fn with_linear_error_tolerance(&mut self, tolerance: f64) -> &mut Self {
+        self.linear_tolerances.error_tolerance = Some(tolerance);
+        self
+    }
+
+    pub const fn with_linear_velocity_tolerance(&mut self, tolerance: f64) -> &mut Self {
+        self.linear_tolerances.velocity_tolerance = Some(tolerance);
+        self
+    }
+
+    pub const fn with_linear_tolerance_duration(&mut self, duration: Duration) -> &mut Self {
+        self.linear_tolerances.duration = Some(duration);
+        self
+    }
+
+    pub const fn with_angular_tolerances(&mut self, tolerances: Tolerances) -> &mut Self {
+        self.angular_tolerances = tolerances;
+        self
+    }
+
+    pub const fn with_angular_error_tolerance(&mut self, tolerance: f64) -> &mut Self {
+        self.angular_tolerances.error_tolerance = Some(tolerance);
+        self
+    }
+
+    pub const fn with_angular_velocity_tolerance(&mut self, tolerance: f64) -> &mut Self {
+        self.angular_tolerances.velocity_tolerance = Some(tolerance);
+        self
+    }
+
+    pub const fn with_angular_tolerance_duration(&mut self, duration: Duration) -> &mut Self {
+        self.angular_tolerances.duration = Some(duration);
+        self
+    }
+}
+
+impl<
+        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
+    > TurnToPointFuture<'_, Pid, A, T>
+{
+    pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
+        self.linear_controller.set_gains(kp, ki, kd);
+        self
+    }
+
+    pub const fn with_linear_kp(&mut self, kp: f64) -> &mut Self {
+        self.linear_controller.set_kp(kp);
+        self
+    }
+
+    pub const fn with_linear_ki(&mut self, ki: f64) -> &mut Self {
+        self.linear_controller.set_ki(ki);
+        self
+    }
+
+    pub const fn with_linear_kd(&mut self, kd: f64) -> &mut Self {
+        self.linear_controller.set_kd(kd);
+        self
+    }
+
+    pub const fn with_linear_integration_range(&mut self, integration_range: f64) -> &mut Self {
+        self.linear_controller
+            .set_integration_range(Some(integration_range));
+        self
+    }
+
+    pub const fn with_linear_output_limit(&mut self, limit: f64) -> &mut Self {
+        self.linear_controller.set_output_limit(Some(limit));
+        self
+    }
+}
+
+impl<
+        L: ControlLoop<Input = f64, Output = f64> + Unpin,
+        T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
+    > TurnToPointFuture<'_, L, AngularPid, T>
+{
+    pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
+        self.angular_controller.set_gains(kp, ki, kd);
+        self
+    }
+
+    pub const fn with_angular_kp(&mut self, kp: f64) -> &mut Self {
+        self.angular_controller.set_kp(kp);
+        self
+    }
+
+    pub const fn with_angular_ki(&mut self, ki: f64) -> &mut Self {
+        self.angular_controller.set_ki(ki);
+        self
+    }
+
+    pub const fn with_angular_kd(&mut self, kd: f64) -> &mut Self {
+        self.angular_controller.set_kd(kd);
+        self
+    }
+
+    pub const fn with_angular_integration_range(&mut self, integration_range: Angle) -> &mut Self {
+        self.angular_controller
+            .set_integration_range(Some(integration_range));
+        self
+    }
+
+    pub const fn with_angular_output_limit(&mut self, limit: f64) -> &mut Self {
+        self.angular_controller.set_output_limit(Some(limit));
+        self
     }
 }

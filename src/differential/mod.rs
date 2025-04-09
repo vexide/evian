@@ -33,6 +33,7 @@ use crate::drivetrain::SharedMotors;
 /// - If the motors on one side move forward while the other side moves backward, the robot will rotate in place.
 ///
 /// Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Differential {
     left: SharedMotors,
     right: SharedMotors,
@@ -88,10 +89,7 @@ impl Differential {
     ///
     /// motors.set_voltages(DifferentialVoltages(12.0, 12.0))?;
     /// ```
-    pub fn set_voltages(
-        &mut self,
-        voltages: impl Into<DifferentialVoltages>,
-    ) -> Result<(), MotorError> {
+    pub fn set_voltages(&mut self, voltages: impl Into<Voltages>) -> Result<(), MotorError> {
         let voltages = voltages.into();
         let mut rtn = Ok(());
 
@@ -120,9 +118,9 @@ impl Differential {
 /// These voltages are used to control a [`Differential`] motor configuration. They describe
 /// the voltages of the respective left and right motors.
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct DifferentialVoltages(pub f64, pub f64);
+pub struct Voltages(pub f64, pub f64);
 
-impl DifferentialVoltages {
+impl Voltages {
     /// Creates a [`DifferentialVoltages`] instance from a provided linear and angular voltage.
     ///
     /// # Examples
@@ -189,7 +187,7 @@ impl DifferentialVoltages {
     }
 }
 
-impl From<(f64, f64)> for DifferentialVoltages {
+impl From<(f64, f64)> for Voltages {
     fn from(value: (f64, f64)) -> Self {
         Self(value.0, value.1)
     }

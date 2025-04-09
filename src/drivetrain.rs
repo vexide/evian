@@ -1,10 +1,9 @@
-use core::cell::RefCell;
-
 use alloc::{rc::Rc, vec::Vec};
+use core::cell::RefCell;
 use vexide::prelude::Motor;
 
 /// A mobile robot capable of measuring data about itself.
-#[derive(Default, Debug, Eq, PartialEq, Hash)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Drivetrain<M, T> {
     pub motors: M,
     pub tracking: T,

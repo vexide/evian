@@ -8,25 +8,26 @@ use vexide::prelude::*;
 
 use core::time::Duration;
 use evian::{
-    control::pid::{AngularPid, Pid},
+    control::{AngularPid, Pid},
     differential::motion::Seeking,
 };
 
 struct Robot {
     controller: Controller,
-    drivetrain: Drivetrain<Differential, ParallelWheelTracking>,
+    drivetrain: Drivetrain<Differential, WheeledTracking>,
 }
 
 impl Compete for Robot {
     async fn autonomous(&mut self) {
         let dt = &mut self.drivetrain;
         let mut seeking = Seeking {
-            distance_controller: Pid::new(0.5, 0.0, 0.0, None),
-            angle_controller: AngularPid::new(0.5, 0.0, 0.0, None),
+            linear_controller: Pid::new(0.5, 0.0, 0.0, None),
+            angular_controller: AngularPid::new(0.5, 0.0, 0.0, None),
             tolerances: Tolerances::new()
-                .error_tolerance(0.3)
-                .tolerance_duration(Duration::from_millis(100))
-                .timeout(Duration::from_secs(2)),
+                .error(0.3)
+                .velocity(0.1)
+                .duration(Duration::from_millis(100)),
+            timeout: Some(Duration::from_secs(2)),
         };
 
         seeking.move_to_point(dt, (24.0, 24.0)).await;
@@ -63,21 +64,23 @@ async fn main(peripherals: Peripherals) {
                     Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
                 ],
             ),
-            ParallelWheelTracking::new(
+            WheeledTracking::forward_only(
                 Vec2::default(),
                 90.0.deg(),
-                TrackingWheel::new(
-                    RotationSensor::new(peripherals.port_10, Direction::Forward),
-                    3.25,
-                    7.5,
-                    Some(36.0 / 48.0),
-                ),
-                TrackingWheel::new(
-                    RotationSensor::new(peripherals.port_11, Direction::Forward),
-                    3.25,
-                    7.5,
-                    Some(36.0 / 48.0),
-                ),
+                [
+                    TrackingWheel::new(
+                        RotationSensor::new(peripherals.port_10, Direction::Forward),
+                        3.25,
+                        7.5,
+                        Some(36.0 / 48.0),
+                    ),
+                    TrackingWheel::new(
+                        RotationSensor::new(peripherals.port_11, Direction::Forward),
+                        3.25,
+                        7.5,
+                        Some(36.0 / 48.0),
+                    ),
+                ],
                 None,
             ),
         ),
