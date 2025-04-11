@@ -7,7 +7,8 @@ use core::{
 };
 use vexide::{
     devices::smart::{InertialSensor, Motor},
-    prelude::{sleep, spawn, Task}, time::Instant,
+    prelude::{sleep, spawn, Task},
+    time::Instant,
 };
 
 use crate::tracking::sensor::RotarySensor;
@@ -172,12 +173,10 @@ impl WheeledTracking {
 
             // Sum up all of our wheel values to determine average forward wheel travel and average local
             // x-axis displacement.
-            for data in initial_forward_wheel_data.iter() {
-                if let Ok((travel, _)) = data {
-                    travel_sum += travel;
-                    count += 1;
-                }
-            };
+            for (travel, _) in initial_forward_wheel_data.iter().flatten() {
+                travel_sum += travel;
+                count += 1;
+            }
 
             if count != 0 {
                 travel_sum / f64::from(count)
@@ -298,7 +297,11 @@ impl WheeledTracking {
         }
     }
 
-    #[allow(clippy::cast_precision_loss, clippy::too_many_arguments)]
+    #[allow(
+        clippy::cast_precision_loss,
+        clippy::too_many_arguments,
+        clippy::too_many_lines
+    )]
     async fn task<
         T: RotarySensor,
         U: RotarySensor,
@@ -312,7 +315,7 @@ impl WheeledTracking {
         parallel_forward_indicies: Option<(usize, usize)>,
         mut prev_forward_wheel_data: [Result<(f64, f64), <T as RotarySensor>::Error>; NUM_FORWARD],
         mut prev_sideways_wheel_data: [Result<(f64, f64), <U as RotarySensor>::Error>;
-        NUM_SIDEWAYS],
+            NUM_SIDEWAYS],
         mut prev_raw_heading: Angle,
         mut prev_forward_travel: f64,
     ) {

@@ -44,18 +44,18 @@ impl RotarySensor for Vec<Motor> {
 
     fn position(&self) -> Result<Position, Self::Error> {
         // The total motors to be used in the average later
-        let mut total_motors = self.len();
+        let mut total_motors = 0;
         let mut degree_sum = 0.0;
         let mut last_error = None;
 
         for motor in self {
             degree_sum += match motor.position() {
                 Ok(position) => {
+                    total_motors += 1;
                     position.as_degrees()
                 },
                 Err(error) => {
                     // Since this motor isn't being counted in the average, decrement the count
-                    total_motors -= 1;
                     last_error = Some(error);
                     continue;
                 }
@@ -74,7 +74,7 @@ impl RotarySensor for Vec<Motor> {
         }
 
         #[allow(clippy::cast_precision_loss)]
-        Ok(Position::from_degrees(degree_sum / (total_motors as f64)))
+        Ok(Position::from_degrees(degree_sum / f64::from(total_motors)))
     }
 }
 
