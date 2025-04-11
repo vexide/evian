@@ -469,27 +469,27 @@ impl WheeledTracking {
                 prev_forward_wheel_data = forward_wheel_data;
             };
 
+            // Used for estimating instantaneous velocity from wheel deltas.
+            let dt = prev_time.elapsed();
+            prev_time = Instant::now();
+
+            // Linear/angular drivetrain velocity estimation
+            data.linear_velocity = (data.forward_travel - prev_forward_travel) / dt.as_secs_f64();
+            prev_forward_travel = data.forward_travel;
+
+            data.angular_velocity = imu
+                .as_ref()
+                .and_then(|imu| imu.gyro_rate().ok())
+                .map_or(delta_heading.as_radians() / dt.as_secs_f64(), |gyro_rate| {
+                    gyro_rate.z.to_radians()
+                });
+
             // Update global position by converting our local displacement vector into a global offset (by
             // rotating our local offset by our heading). Each iteration, we apply this estimate of our change
             // in position to get a new estimate of the global position.
             //
             // If all this seems like gibberish to you, check out <https://www.youtube.com/watch?v=ZW7T6EFyYnc>.
             data.position += local_displacement.rotated(avg_heading.as_radians());
-
-            // Linear/angular drivetrain velocity estimation
-            let dt = prev_time.elapsed();
-            data.linear_velocity = (data.forward_travel - prev_forward_travel) / dt.as_secs_f64();
-            prev_forward_travel = data.forward_travel;
-
-            data.angular_velocity = if let Some(imu) = imu.as_ref() {
-                if let Ok(gyro_rate) = imu.gyro_rate() {
-                    gyro_rate.z.to_radians()
-                } else {
-                    delta_heading.as_radians() / dt.as_secs_f64()
-                }
-            } else {
-                delta_heading.as_radians() / dt.as_secs_f64()
-            };
         }
     }
 
