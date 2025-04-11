@@ -6,7 +6,8 @@ use core::{
     f64::consts::{PI, TAU},
 };
 use vexide::{
-    devices::smart::{InertialSensor, Motor}, float::Float, prelude::{sleep, spawn, Task}
+    devices::smart::{InertialSensor, Motor},
+    prelude::{sleep, spawn, Task}, time::Instant,
 };
 
 use crate::tracking::sensor::RotarySensor;
@@ -164,6 +165,26 @@ impl WheeledTracking {
             }
             _ => Angle::default(),
         };
+        let initial_forward_travel = {
+            let mut travel_sum = 0.0;
+
+            let mut count = 0;
+
+            // Sum up all of our wheel values to determine average forward wheel travel and average local
+            // x-axis displacement.
+            for data in initial_forward_wheel_data.iter() {
+                if let Ok((travel, _)) = data {
+                    travel_sum += travel;
+                    count += 1;
+                }
+            };
+
+            if count != 0 {
+                travel_sum / f64::from(count)
+            } else {
+                0.0
+            }
+        };
 
         let data = Rc::new(RefCell::new(TrackingData {
             position: origin,
@@ -183,6 +204,7 @@ impl WheeledTracking {
                 initial_forward_wheel_data,
                 initial_sideways_wheel_data,
                 initial_raw_heading,
+                initial_forward_travel,
             )),
         }
     }
@@ -203,27 +225,27 @@ impl WheeledTracking {
     }
 
     /// Determines the orientation of the robot.
-    /// 
+    ///
     /// "raw" in this case refers to the fact that the angle returned by this method has not been offset by any amount
     /// (meaning the user's "initial heading" configuration isn't considered), and has unspecified bounds (it may be
     /// out of the range of [0, 2π]). The angle is guaranteed to be counterclockwise-positive, but is otherwise a raw
     /// reading from whatever sensor is being used to determine orientation (either tracking wheels or an IMU).
-    /// 
+    ///
     /// To determine the final heading value returned by [`Self::heading`], you must add the heading offset value and
     /// wrap the angle from [0, 2π] using [`Angle::wrapped_positive`].
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// There are two ways to determine robot orientation with wheeled tracking. You can either use an IMU, or you can
     /// use two parallel tracking wheels with roughly the same offset (spacing) from the center of rotation on the robot.
-    /// 
+    ///
     /// - If the IMU fails to return a value, then [`HeadingError::Imu`] will be returned, and a fallback wheeled heading
     ///   may be available to use in this error type if the tracking setup has parallel tracking wheels that support it.
     /// - If a tracking wheel fails then [`HeadingError::RotarySensor`] will be returned containing the underlying error
     ///   that occurred.
-    /// 
+    ///
     /// # Panics
-    /// 
+    ///
     /// An assertion will panic if both `imu` and `parallel_wheels` is `None`. This should never happen.
     fn compute_raw_heading<T: RotarySensor>(
         imu: Option<&InertialSensor>,
@@ -276,10 +298,7 @@ impl WheeledTracking {
         }
     }
 
-    #[allow(
-        clippy::cast_precision_loss,
-        clippy::too_many_arguments
-    )]
+    #[allow(clippy::cast_precision_loss, clippy::too_many_arguments)]
     async fn task<
         T: RotarySensor,
         U: RotarySensor,
@@ -293,9 +312,12 @@ impl WheeledTracking {
         parallel_forward_indicies: Option<(usize, usize)>,
         mut prev_forward_wheel_data: [Result<(f64, f64), <T as RotarySensor>::Error>; NUM_FORWARD],
         mut prev_sideways_wheel_data: [Result<(f64, f64), <U as RotarySensor>::Error>;
-            NUM_SIDEWAYS],
+        NUM_SIDEWAYS],
         mut prev_raw_heading: Angle,
+        mut prev_forward_travel: f64,
     ) {
+        let mut prev_time = Instant::now();
+
         loop {
             sleep(Motor::WRITE_INTERVAL).await;
 
@@ -322,7 +344,7 @@ impl WheeledTracking {
                 // Cool
                 Ok(raw_heading) => raw_heading,
 
-                // We got an error from the IMU, which means it likely disconnected. Once an IMU disconnects it 
+                // We got an error from the IMU, which means it likely disconnected. Once an IMU disconnects it
                 // will reclibrate upon regaining power, which will mess tracking up badly, so we need to stop using
                 // it in this case and switched to a wheeled method of determining heading.
                 Err(HeadingError::Imu(raw_wheel_heading)) => {
@@ -386,7 +408,7 @@ impl WheeledTracking {
                         local_displacement += local_y_sum / f64::from(count);
                     }
                 }
-                
+
                 prev_sideways_wheel_data = sideways_wheel_data;
             }
 
@@ -407,7 +429,7 @@ impl WheeledTracking {
 
                         // For x-axis displacement, we need to calculate a delta of how much our wheel travel
                         // has changed. To do this, we need to have a record of both our current and previous
-                        // wheel travel, meaning we can only consider wheels that returned `Ok(_)` in both the 
+                        // wheel travel, meaning we can only consider wheels that returned `Ok(_)` in both the
                         // current AND previous loop iteration here.
                         if let Ok((prev_travel, offset)) = prev_data {
                             let delta_travel = travel - prev_travel;
@@ -432,7 +454,7 @@ impl WheeledTracking {
                 if prev_count != 0 {
                     local_displacement.x = local_x_sum / f64::from(prev_count);
                 }
-                
+
                 // Calculate the forward wheel travel.
                 //
                 // This calculates the average of all forward tracking sensors on the robot as an estimate of
@@ -444,7 +466,27 @@ impl WheeledTracking {
                 prev_forward_wheel_data = forward_wheel_data;
             };
 
+            // Update global position by converting our local displacement vector into a global offset (by
+            // rotating our local offset by our heading). Each iteration, we apply this estimate of our change
+            // in position to get a new estimate of the global position.
+            //
+            // If all this seems like gibberish to you, check out <https://www.youtube.com/watch?v=ZW7T6EFyYnc>.
             data.position += local_displacement.rotated(avg_heading.as_radians());
+
+            // Linear/angular drivetrain velocity estimation
+            let dt = prev_time.elapsed();
+            data.linear_velocity = (data.forward_travel - prev_forward_travel) / dt.as_secs_f64();
+            prev_forward_travel = data.forward_travel;
+
+            data.angular_velocity = if let Some(imu) = imu.as_ref() {
+                if let Ok(gyro_rate) = imu.gyro_rate() {
+                    gyro_rate.z.to_radians()
+                } else {
+                    delta_heading.as_radians() / dt.as_secs_f64()
+                }
+            } else {
+                delta_heading.as_radians() / dt.as_secs_f64()
+            };
         }
     }
 
@@ -468,7 +510,7 @@ impl TracksHeading for WheeledTracking {
     fn heading(&self) -> Angle {
         let data = self.data.borrow();
 
-        // Wrap to [0, 360]
+        // Apply heading offset and wrap from [0, 2π]
         (data.raw_heading + data.heading_offset).wrapped_positive()
     }
 }
