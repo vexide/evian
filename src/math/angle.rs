@@ -97,6 +97,12 @@ impl Angle {
     }
 
     #[inline]
+    #[must_use]
+    pub fn wrapped_positive(&self) -> Self {
+        Self(self.0.rem_euclid(TAU))
+    }
+
+    #[inline]
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn abs(self) -> Self {
         Self(self.0.abs())

@@ -43,17 +43,33 @@ impl RotarySensor for Vec<Motor> {
     type Error = MotorError;
 
     fn position(&self) -> Result<Position, Self::Error> {
-        let mut degree_sum = 0.0;
         // The total motors to be used in the average later
         let mut total_motors = self.len();
+        let mut degree_sum = 0.0;
+        let mut last_error = None;
 
         for motor in self {
-            degree_sum += if let Ok(position) = motor.position() {
-                position.as_degrees()
+            degree_sum += match motor.position() {
+                Ok(position) => {
+                    position.as_degrees()
+                },
+                Err(error) => {
+                    // Since this motor isn't being counted in the average, decrement the count
+                    total_motors -= 1;
+                    last_error = Some(error);
+                    continue;
+                }
+            };
+        }
+
+        // Handle a case where no motors were added to the total.
+        if total_motors == 0 {
+            return if let Some(error) = last_error {
+                // Return the error from the last motor that failed.
+                Err(error)
             } else {
-                // Since this motor isn't being counted in the average, decrement the count
-                total_motors -= 1;
-                continue;
+                // This means there were no motors in the group. We don't want to divide by zero here.
+                Ok(Position::default())
             };
         }
 

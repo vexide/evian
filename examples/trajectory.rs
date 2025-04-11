@@ -24,6 +24,7 @@ async fn main(peripherals: Peripherals) {
 
     let mut imu = InertialSensor::new(peripherals.port_11);
     imu.calibrate().await.unwrap();
+
     let left_motors = shared_motors![
         Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
@@ -39,21 +40,23 @@ async fn main(peripherals: Peripherals) {
 
     let mut drivetrain = Drivetrain::new(
         Differential::new(left_motors.clone(), right_motors.clone()),
-        ParallelWheelTracking::new(
+        WheeledTracking::forward_only(
             Vec2::default(),
             90.0.deg(),
-            TrackingWheel::new(
-                left_motors.clone(),
-                WHEEL_DIAMETER,
-                TRACK_WIDTH / 2.0,
-                Some(GEARING),
-            ),
-            TrackingWheel::new(
-                right_motors.clone(),
-                WHEEL_DIAMETER,
-                TRACK_WIDTH / 2.0,
-                Some(GEARING),
-            ),
+            [
+                TrackingWheel::new(
+                    left_motors.clone(),
+                    WHEEL_DIAMETER,
+                    TRACK_WIDTH / 2.0,
+                    Some(GEARING),
+                ),
+                TrackingWheel::new(
+                    right_motors.clone(),
+                    WHEEL_DIAMETER,
+                    TRACK_WIDTH / 2.0,
+                    Some(GEARING),
+                ),
+            ],
             Some(imu),
         ),
     );
