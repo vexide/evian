@@ -38,5 +38,8 @@ vexide = { version = "0.7.0", default-features = false, features = [
     "devices",
 ] }
 
+[dev-dependencies]
+vexide = "0.7.0"
+
 [package.metadata.docs.rs]
 targets = ["armv7a-none-eabi"]

@@ -14,12 +14,10 @@
 //! motion control and algorithms through the [`motion`] module, and 2D trajectory generation and
 //! motion profiling through the [`trajectory`] module.
 
-pub mod motion;
-pub mod trajectory;
+use core::cell::RefCell;
 
-use vexide::devices::smart::motor::MotorError;
-
-use crate::drivetrain::SharedMotors;
+use alloc::{rc::Rc, vec::Vec};
+use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 
 /// A collection of motors mounted in a differential (left/right) configuration.
 ///
@@ -35,8 +33,8 @@ use crate::drivetrain::SharedMotors;
 /// Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Differential {
-    left: SharedMotors,
-    right: SharedMotors,
+    pub left: Rc<RefCell<Vec<Motor>>>,
+    pub right: Rc<RefCell<Vec<Motor>>>,
 }
 
 impl Differential {
@@ -63,7 +61,7 @@ impl Differential {
     ///     ],
     /// );
     /// ```
-    pub const fn new(left: SharedMotors, right: SharedMotors) -> Self {
+    pub const fn new(left: Rc<RefCell<Vec<Motor>>>, right: Rc<RefCell<Vec<Motor>>>) -> Self {
         Self { left, right }
     }
 

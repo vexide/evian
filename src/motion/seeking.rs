@@ -13,7 +13,7 @@ use vexide::{
 
 use crate::{
     control::{AngularPid, ControlLoop, Pid, Tolerances},
-    differential::{Differential, Voltages},
+    drivetrain::differential::{Differential, Voltages},
     drivetrain::Drivetrain,
     math::{Angle, IntoAngle, Vec2},
     tracking::{TracksHeading, TracksPosition, TracksVelocity},
@@ -439,8 +439,10 @@ impl<
         let position = this.drivetrain.tracking.position();
 
         let carrot = this.point
-            - Vec2::from_polar(position.distance(this.point), this.target_heading.as_radians())
-                * this.d_lead;
+            - Vec2::from_polar(
+                position.distance(this.point),
+                this.target_heading.as_radians(),
+            ) * this.d_lead;
 
         let local_target = carrot - position;
 

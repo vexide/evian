@@ -1,8 +1,6 @@
-use alloc::{rc::Rc, vec::Vec};
-use core::cell::RefCell;
-use vexide::prelude::Motor;
+pub mod differential;
 
-/// A mobile robot capable of measuring data about itself.
+/// A mobile robot drivetrain capable of measuring data about itself.
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Drivetrain<M, T> {
     pub motors: M,
@@ -15,18 +13,15 @@ impl<M, T> Drivetrain<M, T> {
     }
 }
 
-// Internal alias so I don't have to type this shit out a million times.
-pub type SharedMotors = Rc<RefCell<Vec<Motor>>>;
-
-/// A macro that creates a set of motors for a [`DifferentialDrivetrain`].
+/// Creates a shared motor collection.
 ///
-/// This macro simplifies the creation of a [`DriveMotors`] collection, which is a sharable, threadsafe
-/// wrapper around vexide's non-copyable [`Motor`](vexide::devices::smart::motor::Motor) struct.
+/// This macro simplifies the creation of an `Rc<RefCell<Vec<Motor>>>` collection, which
+/// is a shareable wrapper around vexide's non-copyable [`Motor`](vexide::devices::smart::motor::Motor) struct.
 ///
 /// # Examples
 ///
 /// ```
-/// let motors = drive_motors![motor1, motor2, motor3];
+/// let motors = shared_motors![motor1, motor2, motor3];
 /// ```
 #[macro_export]
 macro_rules! shared_motors {

@@ -12,15 +12,17 @@ use vexide::{
 
 use crate::{
     control::{AngularPid, ControlLoop, Pid, Tolerances},
-    differential::{Differential, Voltages},
-    drivetrain::Drivetrain,
+    drivetrain::{
+        differential::{Differential, Voltages},
+        Drivetrain,
+    },
     math::{Angle, IntoAngle, Vec2},
     prelude::TracksVelocity,
     tracking::{TracksForwardTravel, TracksHeading, TracksPosition},
 };
 
 #[derive(PartialEq)]
-pub struct BasicMotion<
+pub struct Basic<
     L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
     A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
 > {
@@ -42,7 +44,7 @@ pub struct BasicMotion<
 impl<
         L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
         A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
-    > BasicMotion<L, A>
+    > Basic<L, A>
 {
     pub fn drive_distance_at_heading<
         'a,
@@ -200,7 +202,7 @@ impl<
 
         this.sleep = sleep(Duration::from_millis(5));
         this.prev_time = Instant::now();
-        
+
         cx.waker().wake_by_ref();
         Poll::Pending
     }
