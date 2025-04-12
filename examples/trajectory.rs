@@ -3,14 +3,18 @@
 
 extern crate alloc;
 
-use core::time::Duration;
+use core::{cell::RefCell, time::Duration};
 
-use evian::prelude::*;
+use alloc::rc::Rc;
+use evian::{
+    control::trajectory::{Trajectory, TrajectoryConstraints},
+    motion::Ramsete,
+    prelude::*,
+};
 use vexide::prelude::*;
 
-use evian::differential::motion::Ramsete;
-
 #[inline]
+#[must_use]
 pub const fn from_drive_rpm(rpm: f64, wheel_diameter: f64) -> f64 {
     (rpm / 60.0) * (core::f64::consts::PI * wheel_diameter)
 }
@@ -25,21 +29,21 @@ async fn main(peripherals: Peripherals) {
     let mut imu = InertialSensor::new(peripherals.port_11);
     imu.calibrate().await.unwrap();
 
-    let left_motors = shared_motors![
+    let left_motors = Rc::new(RefCell::new([
         Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_10, Gearset::Blue, Direction::Reverse),
-    ];
-    let right_motors = shared_motors![
+    ]));
+    let right_motors = Rc::new(RefCell::new([
         Motor::new(peripherals.port_1, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_4, Gearset::Blue, Direction::Reverse),
-    ];
+    ]));
 
     let mut drivetrain = Drivetrain::new(
-        Differential::new(left_motors.clone(), right_motors.clone()),
+        Differential::from_shared(left_motors.clone(), right_motors.clone()),
         WheeledTracking::forward_only(
             Vec2::default(),
             90.0.deg(),

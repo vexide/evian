@@ -16,7 +16,7 @@
 
 use core::cell::RefCell;
 
-use alloc::{rc::Rc, vec::Vec};
+use alloc::rc::Rc;
 use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 
 /// A collection of motors mounted in a differential (left/right) configuration.
@@ -31,10 +31,9 @@ use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 /// - If the motors on one side move forward while the other side moves backward, the robot will rotate in place.
 ///
 /// Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
-#[derive(Debug, Clone, PartialEq)]
 pub struct Differential {
-    pub left: Rc<RefCell<Vec<Motor>>>,
-    pub right: Rc<RefCell<Vec<Motor>>>,
+    pub(crate) left: Rc<RefCell<dyn AsMut<[Motor]>>>,
+    pub(crate) right: Rc<RefCell<dyn AsMut<[Motor]>>>,
 }
 
 impl Differential {
@@ -61,7 +60,20 @@ impl Differential {
     ///     ],
     /// );
     /// ```
-    pub const fn new(left: Rc<RefCell<Vec<Motor>>>, right: Rc<RefCell<Vec<Motor>>>) -> Self {
+    pub fn new<L: AsMut<[Motor]> + 'static, R: AsMut<[Motor]> + 'static>(
+        left: L,
+        right: R,
+    ) -> Self {
+        Self {
+            left: Rc::new(RefCell::new(left)),
+            right: Rc::new(RefCell::new(right)),
+        }
+    }
+
+    pub fn from_shared<L: AsMut<[Motor]> + 'static, R: AsMut<[Motor]> + 'static>(
+        left: Rc<RefCell<L>>,
+        right: Rc<RefCell<R>>,
+    ) -> Self {
         Self { left, right }
     }
 
@@ -91,7 +103,7 @@ impl Differential {
         let voltages = voltages.into();
         let mut rtn = Ok(());
 
-        for motor in self.left.borrow_mut().iter_mut() {
+        for motor in self.left.borrow_mut().as_mut() {
             let result = motor.set_voltage(voltages.left());
 
             if result.is_err() {
@@ -99,7 +111,7 @@ impl Differential {
             }
         }
 
-        for motor in self.right.borrow_mut().iter_mut() {
+        for motor in self.right.borrow_mut().as_mut() {
             let result = motor.set_voltage(voltages.right());
 
             if result.is_err() {

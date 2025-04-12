@@ -9,12 +9,11 @@ use core::time::Duration;
 mod pid;
 mod profile;
 mod tolerances;
-mod trajectory;
+pub mod trajectory;
 
 pub use pid::{AngularPid, Pid};
 pub use profile::{TrapezoidalConstraints, TrapezoidalProfile};
 pub use tolerances::Tolerances;
-pub use trajectory::Trajectory;
 
 pub trait ControlLoop {
     type Input;

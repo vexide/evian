@@ -2,18 +2,18 @@
 
 extern crate alloc;
 
-pub mod drivetrain;
 pub mod control;
-pub mod motion;
+pub mod drivetrain;
 pub mod math;
+pub mod motion;
 pub mod tracking;
 
 pub mod prelude {
     pub use crate::{
         control::{ControlLoop, Tolerances},
         drivetrain::{
-            Drivetrain,
             differential::{Differential, Voltages},
+            Drivetrain,
         },
         math::{curve::CubicBezier, Angle, IntoAngle, Vec2},
         tracking::{

@@ -3,7 +3,7 @@ use core::f64::consts::PI;
 use vexide::{devices::smart::Motor, float::Float, time::sleep};
 
 use crate::{
-    control::Trajectory,
+    control::trajectory::Trajectory,
     drivetrain::differential::{Differential, Voltages},
     drivetrain::Drivetrain,
     math::IntoAngle,
@@ -90,10 +90,10 @@ impl Ramsete {
             .normalized(600.0);
 
             // Spin motors with builtin PID for now.
-            for motor in drivetrain.motors.left.borrow_mut().iter_mut() {
+            for motor in drivetrain.motors.left.borrow_mut().as_mut() {
                 _ = motor.set_velocity(velocities.0 as i32);
             }
-            for motor in drivetrain.motors.right.borrow_mut().iter_mut() {
+            for motor in drivetrain.motors.right.borrow_mut().as_mut() {
                 _ = motor.set_velocity(velocities.1 as i32);
             }
         }

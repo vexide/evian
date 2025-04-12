@@ -74,13 +74,7 @@ async fn main(peripherals: Peripherals) {
         controller: peripherals.primary_controller,
         drivetrain: Drivetrain::new(
             Differential::new(left_motors.clone(), right_motors.clone()),
-            WheeledTracking::forward_only(
-                Vec2::default(),
-                90.0.deg(),
-                [
-                ],
-                None,
-            ),
+            WheeledTracking::forward_only(Vec2::default(), 90.0.deg(), [], None),
         ),
     }
     .compete()

@@ -1,6 +1,6 @@
 mod basic;
-mod seeking;
 mod ramsete;
+mod seeking;
 
 pub use basic::Basic;
 pub use ramsete::Ramsete;
