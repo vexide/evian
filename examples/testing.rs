@@ -73,8 +73,16 @@ async fn main(peripherals: Peripherals) {
     Robot {
         controller: peripherals.primary_controller,
         drivetrain: Drivetrain::new(
-            Differential::new(left_motors.clone(), right_motors.clone()),
-            WheeledTracking::forward_only(Vec2::default(), 90.0.deg(), [], None),
+            Differential::from_shared(left_motors.clone(), right_motors.clone()),
+            WheeledTracking::forward_only(
+                Vec2::default(),
+                90.0.deg(),
+                [
+                    TrackingWheel::new(left_motors, 2.75, -5.75, None),
+                    TrackingWheel::new(right_motors, 2.75, 5.25, None),
+                ],
+                None,
+            ),
         ),
     }
     .compete()
