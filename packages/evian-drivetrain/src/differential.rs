@@ -50,11 +50,11 @@ impl Differential {
     ///
     /// ```
     /// let motors = Differential::new(
-    ///     shared_motors![
+    ///     [
     ///         Motor::new(peripherals.port_1, Gearset::Green, Direction::Forward),
     ///         Motor::new(peripherals.port_2, Gearset::Green, Direction::Forward),
     ///     ],
-    ///     shared_motors![
+    ///     [
     ///         Motor::new(peripherals.port_3, Gearset::Green, Direction::Reverse),
     ///         Motor::new(peripherals.port_4, Gearset::Green, Direction::Reverse),
     ///     ],

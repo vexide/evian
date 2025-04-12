@@ -6,8 +6,10 @@ use core::{
     time::Duration,
 };
 
+use alloc::vec::Vec;
 use vexide::{
     devices::smart::Motor,
+    float::Float,
     time::{sleep, Instant, Sleep},
 };
 
@@ -52,7 +54,7 @@ impl<
         MoveToPointFuture {
             sleep: sleep(Duration::from_millis(5)),
             drivetrain,
-            point: point.into(),
+            target_point: point.into(),
             start_time: Instant::now(),
             prev_time: Instant::now(),
             timeout: self.timeout,
@@ -67,14 +69,15 @@ impl<
         drivetrain: &'a mut Drivetrain<Differential, T>,
         point: impl Into<Vec2<f64>>,
         heading: Angle,
-        d_lead: f64,
+        lead: f64,
     ) -> BoomerangFuture<'a, L, A, T> {
         BoomerangFuture {
             sleep: sleep(Duration::from_millis(5)),
+            prev_position: drivetrain.tracking.position(),
             drivetrain,
             target_heading: heading,
-            d_lead,
-            point: point.into(),
+            lead,
+            target_point: point.into(),
             start_time: Instant::now(),
             prev_time: Instant::now(),
             timeout: self.timeout,
@@ -92,7 +95,7 @@ pub struct MoveToPointFuture<
     T: TracksPosition + TracksHeading + TracksVelocity,
 > {
     sleep: Sleep,
-    point: Vec2<f64>,
+    target_point: Vec2<f64>,
     start_time: Instant,
     prev_time: Instant,
     timeout: Option<Duration>,
@@ -241,7 +244,7 @@ impl<
         let position = this.drivetrain.tracking.position();
         let heading = this.drivetrain.tracking.heading();
 
-        let local_target = this.point - position;
+        let local_target = this.target_point - position;
 
         let mut distance_error = local_target.length();
         let mut angle_error = (heading - local_target.angle().rad()).wrapped();
@@ -259,7 +262,6 @@ impl<
                 .is_some_and(|timeout| this.start_time.elapsed() > timeout)
         {
             _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
-            cx.waker().wake_by_ref();
             return Poll::Ready(());
         }
 
@@ -288,11 +290,12 @@ pub struct BoomerangFuture<
     T: TracksPosition + TracksHeading + TracksVelocity,
 > {
     sleep: Sleep,
-    point: Vec2<f64>,
+    target_point: Vec2<f64>,
     target_heading: Angle,
     start_time: Instant,
     prev_time: Instant,
-    d_lead: f64,
+    prev_position: Vec2<f64>,
+    lead: f64,
     timeout: Option<Duration>,
     tolerances: Tolerances,
     linear_controller: L,
@@ -437,36 +440,40 @@ impl<
         let dt = this.prev_time.elapsed();
 
         let position = this.drivetrain.tracking.position();
+        let heading = this.drivetrain.tracking.heading();
 
-        let carrot = this.point
+        let carrot = this.target_point
             - Vec2::from_polar(
-                position.distance(this.point),
+                position.distance(this.target_point) * this.lead,
                 this.target_heading.as_radians(),
-            ) * this.d_lead;
+            );
 
         let local_target = carrot - position;
 
-        let distance_error = local_target.length();
-        let angle_error =
-            (this.drivetrain.tracking.heading() - local_target.angle().rad()).wrapped();
+        let mut angular_error = (heading - local_target.angle().rad()).wrapped();
+        let mut linear_error = local_target.length();
+
+        if angular_error.as_radians().abs() > FRAC_PI_2 {
+            linear_error *= -1.0;
+            angular_error = (PI.rad() - angular_error).wrapped();
+        }
 
         if this
             .tolerances
-            .check(distance_error, this.drivetrain.tracking.linear_velocity())
+            .check(linear_error, this.drivetrain.tracking.linear_velocity())
             || this
                 .timeout
                 .is_some_and(|timeout| this.start_time.elapsed() > timeout)
         {
             _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
-            cx.waker().wake_by_ref();
             return Poll::Ready(());
         }
 
         let angular_output = this
             .angular_controller
-            .update(-angle_error, Angle::ZERO, dt);
+            .update(-angular_error, Angle::ZERO, dt);
         let linear_output =
-            this.linear_controller.update(-distance_error, 0.0, dt) * angle_error.cos();
+            this.linear_controller.update(-linear_error, 0.0, dt) * angular_error.cos();
 
         _ = this.drivetrain.motors.set_voltages(
             Voltages::from_arcade(linear_output, angular_output).normalized(Motor::V5_MAX_VOLTAGE),
@@ -474,6 +481,7 @@ impl<
 
         this.sleep = sleep(Duration::from_millis(5));
         this.prev_time = Instant::now();
+        this.prev_position = position;
 
         cx.waker().wake_by_ref();
         Poll::Pending

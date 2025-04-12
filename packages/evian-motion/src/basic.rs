@@ -178,7 +178,6 @@ impl<
                 .is_some_and(|timeout| this.start_time.elapsed() > timeout)
         {
             _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
-            cx.waker().wake_by_ref();
             return Poll::Ready(());
         }
 
@@ -408,7 +407,6 @@ impl<
                 .is_some_and(|timeout| this.start_time.elapsed() > timeout)
         {
             _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
-            cx.waker().wake_by_ref();
             return Poll::Ready(());
         }
 
