@@ -2,13 +2,11 @@ use core::f64::consts::PI;
 
 use vexide::{devices::smart::Motor, float::Float, time::sleep};
 
-use crate::{
-    control::trajectory::Trajectory,
-    drivetrain::differential::{Differential, Voltages},
-    drivetrain::Drivetrain,
-    math::IntoAngle,
-    tracking::{TracksHeading, TracksPosition},
-};
+use evian_control::trajectory::Trajectory;
+use evian_drivetrain::differential::{Differential, Voltages};
+use evian_drivetrain::Drivetrain;
+use evian_math::IntoAngle;
+use evian_tracking::{TracksHeading, TracksPosition};
 
 /// RAMSETE Unicycle Controller
 #[derive(PartialEq)]
@@ -89,7 +87,7 @@ impl Ramsete {
             )
             .normalized(600.0);
 
-            // Spin motors with builtin PID for now.
+            // TODO: This is terrible, we need velocity controllers.
             for motor in drivetrain.motors.left.borrow_mut().as_mut() {
                 _ = motor.set_velocity(velocities.0 as i32);
             }

@@ -1,19 +1,21 @@
-//! Control Theory Primitives
+//! Control theory primitives.
 //!
 //! This module provides basic building-blocks and implementations for controlling
 //! systems. These "systems" could be drivetrains, an arm or lift, or any other
 //! mechanism that requires precise motion control.
 
+#![no_std]
+
+extern crate alloc;
+
 use core::time::Duration;
 
 mod pid;
 mod profile;
-mod tolerances;
 pub mod trajectory;
 
 pub use pid::{AngularPid, Pid};
 pub use profile::{TrapezoidalConstraints, TrapezoidalProfile};
-pub use tolerances::Tolerances;
 
 pub trait ControlLoop {
     type Input;

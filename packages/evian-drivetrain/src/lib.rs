@@ -1,3 +1,7 @@
+#![no_std]
+
+extern crate alloc;
+
 pub mod differential;
 
 /// A mobile robot drivetrain capable of measuring data about itself.
@@ -34,4 +38,3 @@ macro_rules! shared_motors {
         }
     };
 }
-pub use shared_motors;

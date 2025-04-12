@@ -1,6 +1,6 @@
 mod bezier;
 
-use crate::math::Vec2;
+use crate::Vec2;
 
 pub use bezier::CubicBezier;
 

@@ -1,7 +1,7 @@
 //! 2D Trajectory Generation for Differential Drivetrains
 
-use crate::math::{curve::Curve, Angle, Vec2};
 use alloc::{vec, vec::Vec};
+use evian_math::{curve::Curve, Angle, Vec2};
 use vexide::prelude::Float;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]

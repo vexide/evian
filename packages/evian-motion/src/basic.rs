@@ -10,16 +10,15 @@ use vexide::{
     time::{sleep, Instant, Sleep},
 };
 
-use crate::{
-    control::{AngularPid, ControlLoop, Pid, Tolerances},
-    drivetrain::{
-        differential::{Differential, Voltages},
-        Drivetrain,
-    },
-    math::{Angle, IntoAngle, Vec2},
-    prelude::TracksVelocity,
-    tracking::{TracksForwardTravel, TracksHeading, TracksPosition},
+use evian_control::{AngularPid, ControlLoop, Pid};
+use evian_drivetrain::{
+    differential::{Differential, Voltages},
+    Drivetrain,
 };
+use evian_math::{Angle, IntoAngle, Vec2};
+use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
+
+use crate::Tolerances;
 
 #[derive(PartialEq)]
 pub struct Basic<

@@ -74,7 +74,7 @@
 
 use core::time::Duration;
 
-use crate::math::Angle;
+use evian_math::Angle;
 
 use super::ControlLoop;
 

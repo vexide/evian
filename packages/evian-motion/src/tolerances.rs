@@ -1,4 +1,4 @@
-//! Conditional Settling Utility for Commands
+//! Conditional Settling Utility for Motion Algorithms
 //!
 //! This module provides utilities for determining when a control system (typically a [`Command`])
 //! has "settled" at its target state, signaling that the algorithm has successfully reached its goal.

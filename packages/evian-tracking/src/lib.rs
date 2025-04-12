@@ -1,9 +1,13 @@
 //! Robot localization and tracking.
 
+#![no_std]
+
+extern crate alloc;
+
 pub mod sensor;
 pub mod wheeled;
 
-use crate::math::{Angle, Vec2};
+use evian_math::{Angle, Vec2};
 
 pub trait TracksPosition {
     /// Return's the robot's position on a 2D cartesian coordinate plane measured

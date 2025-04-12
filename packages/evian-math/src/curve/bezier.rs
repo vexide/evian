@@ -1,5 +1,5 @@
 use super::Curve;
-use crate::math::Vec2;
+use crate::Vec2;
 
 pub struct CubicBezier {
     p0: Vec2<f64>,

@@ -1,4 +1,4 @@
-use crate::math::{Angle, IntoAngle, Vec2};
+use evian_math::{Angle, IntoAngle, Vec2};
 
 use alloc::rc::Rc;
 use core::{
@@ -11,8 +11,8 @@ use vexide::{
     time::Instant,
 };
 
-use crate::tracking::sensor::RotarySensor;
-use crate::tracking::{TracksForwardTravel, TracksHeading, TracksPosition};
+use crate::sensor::RotarySensor;
+use crate::{TracksForwardTravel, TracksHeading, TracksPosition};
 
 use super::TracksVelocity;
 

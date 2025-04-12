@@ -1,0 +1,36 @@
+[package]
+name = "evian"
+description = "Controls library for vexide."
+repository = "https://github.com/vexide/evian/"
+authors = ["Tropical"]
+license = "MIT"
+readme = "../../README.md"
+categories = ["science::robotics", "no-std", "mathematics", "embedded"]
+keywords = ["vex", "vexide", "vex-robotics", "robotics", "autonomous"]
+version = "0.3.0"
+edition = "2021"
+
+[dependencies]
+evian-control = { workspace = true, optional = true }
+evian-drivetrain = { workspace = true, optional = true }
+evian-math = { workspace = true, optional = true }
+evian-motion = { workspace = true, optional = true }
+evian-tracking = { workspace = true, optional = true }
+
+[features]
+default = [
+    "control",
+    "drivetrain",
+    "math",
+    "motion",
+    "tracking",
+]
+
+control = ["dep:evian-control"]
+drivetrain = ["dep:evian-drivetrain"]
+math = ["dep:evian-math"]
+motion = ["dep:evian-motion"]
+tracking = ["dep:evian-tracking"]
+
+[package.metadata.docs.rs]
+targets = ["armv7a-none-eabi"] # Not actually, but this is at least close.

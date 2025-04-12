@@ -32,8 +32,8 @@ use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 ///
 /// Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
 pub struct Differential {
-    pub(crate) left: Rc<RefCell<dyn AsMut<[Motor]>>>,
-    pub(crate) right: Rc<RefCell<dyn AsMut<[Motor]>>>,
+    pub left: Rc<RefCell<dyn AsMut<[Motor]>>>,
+    pub right: Rc<RefCell<dyn AsMut<[Motor]>>>,
 }
 
 impl Differential {
