@@ -474,6 +474,10 @@ impl WheeledTracking {
             prev_time = Instant::now();
 
             // Linear/angular drivetrain velocity estimation
+            //
+            // TODO: Any kind of "dx/dt"-style differentiations here are flawed and will return zero
+            //       sometimes due to the sample rate of our loop being higher than the sample rate
+            //       of our sensor. We should also maybe consider EMA filtering this or something.
             data.linear_velocity = (data.forward_travel - prev_forward_travel) / dt.as_secs_f64();
             prev_forward_travel = data.forward_travel;
 
