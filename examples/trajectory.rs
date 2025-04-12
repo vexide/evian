@@ -3,13 +3,13 @@
 
 extern crate alloc;
 
-use core::{cell::RefCell, time::Duration};
+use core::time::Duration;
 
-use alloc::rc::Rc;
 use evian::{
     control::trajectory::{Trajectory, TrajectoryConstraints},
     motion::Ramsete,
     prelude::*,
+    shared_motors,
 };
 use vexide::prelude::*;
 
@@ -29,18 +29,18 @@ async fn main(peripherals: Peripherals) {
     let mut imu = InertialSensor::new(peripherals.port_11);
     imu.calibrate().await.unwrap();
 
-    let left_motors = Rc::new(RefCell::new([
+    let left_motors = shared_motors![
         Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_10, Gearset::Blue, Direction::Reverse),
-    ]));
-    let right_motors = Rc::new(RefCell::new([
+    ];
+    let right_motors = shared_motors![
         Motor::new(peripherals.port_1, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_4, Gearset::Blue, Direction::Reverse),
-    ]));
+    ];
 
     let mut drivetrain = Drivetrain::new(
         Differential::from_shared(left_motors.clone(), right_motors.clone()),

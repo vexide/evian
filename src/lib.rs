@@ -14,6 +14,7 @@ pub mod prelude {
         drivetrain::{
             differential::{Differential, Voltages},
             Drivetrain,
+            shared_motors,
         },
         math::{curve::CubicBezier, Angle, IntoAngle, Vec2},
         tracking::{
