@@ -27,29 +27,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef657dfab802224e671f5818e9a4935f9b1957ed18e58292690cc39e7a4092a3"
 
 [[package]]
-name = "compile-time"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e55ede5279d4d7c528906853743abeb26353ae1e6c440fcd6d18316c2c2dd903"
-dependencies = [
- "once_cell",
- "proc-macro2",
- "quote",
- "rustc_version",
- "semver",
- "time",
-]
-
-[[package]]
-name = "deranged"
-version = "0.3.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
-dependencies = [
- "powerfmt",
-]
-
-[[package]]
 name = "evian"
 version = "0.3.0-beta.2"
 dependencies = [
@@ -67,12 +44,6 @@ name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
-
-[[package]]
-name = "itoa"
-version = "1.0.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
 
 [[package]]
 name = "libm"
@@ -112,18 +83,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-conv"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51d515d32fb182ee37cda2ccdcb92950d6a3c2893aa280e540671c2cd0f3b1d9"
-
-[[package]]
-name = "once_cell"
-version = "1.20.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
-
-[[package]]
 name = "pin-project"
 version = "1.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -142,12 +101,6 @@ dependencies = [
  "quote",
  "syn",
 ]
-
-[[package]]
-name = "powerfmt"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
 
 [[package]]
 name = "proc-macro2"
@@ -183,45 +136,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustc_version"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
-dependencies = [
- "semver",
-]
-
-[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
-
-[[package]]
-name = "semver"
-version = "1.0.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61697e0a1c7e512e84a621326239844a24d8207b4669b41bc18b32ea5cbf988b"
-
-[[package]]
-name = "serde"
-version = "1.0.213"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ea7893ff5e2466df8d720bb615088341b295f849602c6956047f8f80f0e9bc1"
-dependencies = [
- "serde_derive",
-]
-
-[[package]]
-name = "serde_derive"
-version = "1.0.213"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e85ad2009c50b58e87caa8cd6dac16bdf511bbfb7af6c33df902396aa480fa5"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "snafu"
@@ -256,64 +174,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "talc"
-version = "4.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04be12ec299aadd63a0bf781d893e4b6139d33cdca6dcd6f6be31f849cedcac8"
-dependencies = [
- "lock_api",
-]
-
-[[package]]
-name = "time"
-version = "0.3.36"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dfd88e563464686c916c7e46e623e520ddc6d79fa6641390f2e3fa86e83e885"
-dependencies = [
- "deranged",
- "itoa",
- "num-conv",
- "powerfmt",
- "serde",
- "time-core",
- "time-macros",
-]
-
-[[package]]
-name = "time-core"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef927ca75afb808a4d64dd374f00a2adf8d0fcff8e7b184af886c3c87ec4a3f3"
-
-[[package]]
-name = "time-macros"
-version = "0.2.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f252a68540fde3a3877aeea552b832b40ab9a69e318efd078774a01ddee1ccf"
-dependencies = [
- "num-conv",
- "time-core",
-]
-
-[[package]]
 name = "unicode-ident"
 version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e91b56cd4cadaeb79bbf1a5645f6b4f8dc5bde8834ad5894a8db35fda9efa1fe"
-
-[[package]]
-name = "vex-libunwind"
-version = "0.1.0"
-source = "git+https://github.com/vexide/vex-libunwind.git#ba3b4b6243fd0962b2d44b71efb30e3b891480c3"
-dependencies = [
- "snafu",
- "vex-libunwind-sys",
-]
-
-[[package]]
-name = "vex-libunwind-sys"
-version = "0.1.0"
-source = "git+https://github.com/vexide/vex-libunwind.git#ba3b4b6243fd0962b2d44b71efb30e3b891480c3"
 
 [[package]]
 name = "vex-sdk"
@@ -324,21 +188,20 @@ checksum = "be1b586dd8546706564cf20c94bae51c8f9e4891d70360d3fb63d563350df3d1"
 [[package]]
 name = "vexide"
 version = "0.7.0"
-source = "git+https://github.com/vexide/vexide.git#4bd382bb8690dc3687432b7e1d40c65cb7bd606d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "537cb5a5a3fc8ff54b611fcbdcb9fb66f0d5e7d96746c5c91d212a09d48bda97"
 dependencies = [
  "vex-sdk",
  "vexide-async",
  "vexide-core",
  "vexide-devices",
- "vexide-macro",
- "vexide-panic",
- "vexide-startup",
 ]
 
 [[package]]
 name = "vexide-async"
 version = "0.1.9"
-source = "git+https://github.com/vexide/vexide.git#4bd382bb8690dc3687432b7e1d40c65cb7bd606d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f18212c1cf2587633f8189e671875ee7cd4a6bff57aa15bfe43f722c6b78363"
 dependencies = [
  "async-task",
  "vex-sdk",
@@ -349,7 +212,8 @@ dependencies = [
 [[package]]
 name = "vexide-core"
 version = "0.7.0"
-source = "git+https://github.com/vexide/vexide.git#4bd382bb8690dc3687432b7e1d40c65cb7bd606d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b286389834deb4db81e0775a352465f2d2a84d15c5a3d1991bb5cd03c2e6a482"
 dependencies = [
  "bitflags",
  "futures-core",
@@ -359,53 +223,20 @@ dependencies = [
  "pin-project",
  "replace_with",
  "snafu",
- "talc",
- "vex-libunwind",
  "vex-sdk",
 ]
 
 [[package]]
 name = "vexide-devices"
 version = "0.7.0"
-source = "git+https://github.com/vexide/vexide.git#4bd382bb8690dc3687432b7e1d40c65cb7bd606d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1efe5b3781a08e3c598ba0072af1a780f3c1db8293e32793084c8ff8459506d9"
 dependencies = [
  "bitflags",
  "mint",
  "no_std_io",
  "rgb",
  "snafu",
- "vex-sdk",
- "vexide-core",
-]
-
-[[package]]
-name = "vexide-macro"
-version = "0.3.2"
-source = "git+https://github.com/vexide/vexide.git#4bd382bb8690dc3687432b7e1d40c65cb7bd606d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "vexide-panic"
-version = "0.1.9"
-source = "git+https://github.com/vexide/vexide.git#4bd382bb8690dc3687432b7e1d40c65cb7bd606d"
-dependencies = [
- "snafu",
- "vex-sdk",
- "vexide-core",
- "vexide-devices",
-]
-
-[[package]]
-name = "vexide-startup"
-version = "0.4.2"
-source = "git+https://github.com/vexide/vexide.git#4bd382bb8690dc3687432b7e1d40c65cb7bd606d"
-dependencies = [
- "bitflags",
- "compile-time",
  "vex-sdk",
  "vexide-core",
 ]
