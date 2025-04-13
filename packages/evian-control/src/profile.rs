@@ -15,9 +15,9 @@ pub struct TrapezoidalProfile {
     /// Profile Constraints
     constraints: TrapezoidalConstraints,
 
-    /// User-specified velocity at the start of the profile. (d=0)
+    /// Velocity at the start of the profile. (d=0)
     initial_velocity: f64,
-    /// User-specified velocity at the end of the profile.
+    /// Velocity at the end of the profile.
     final_velocity: f64,
     /// Velocity during the cruise-phase of the profile.
     cruise_velocity: f64,

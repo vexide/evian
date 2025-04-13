@@ -1,3 +1,5 @@
+//! Robot drivetrain configurations.
+
 #![no_std]
 
 extern crate alloc;
@@ -7,11 +9,15 @@ pub mod differential;
 /// A mobile robot drivetrain capable of measuring data about itself.
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Drivetrain<M, T> {
+    /// Motor collection
     pub motors: M,
+
+    /// Tracking system
     pub tracking: T,
 }
 
 impl<M, T> Drivetrain<M, T> {
+    /// Creates a new drivetrain from a collection of motors and a tracking system.
     pub const fn new(motors: M, tracking: T) -> Self {
         Self { motors, tracking }
     }

@@ -8,7 +8,7 @@ readme = "../../README.md"
 categories = ["science::robotics", "no-std", "mathematics", "embedded"]
 keywords = ["vex", "vexide", "vex-robotics", "robotics", "autonomous"]
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 evian-control = { workspace = true, optional = true }

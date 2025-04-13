@@ -7,6 +7,7 @@ use core::{
 };
 use vexide::{devices::position::Position, float::Float};
 
+/// Angular position.
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Angle(f64);
 

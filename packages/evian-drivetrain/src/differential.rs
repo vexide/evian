@@ -32,19 +32,15 @@ use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 ///
 /// Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
 pub struct Differential {
+    /// Left motors
     pub left: Rc<RefCell<dyn AsMut<[Motor]>>>,
+
+    /// Right motors
     pub right: Rc<RefCell<dyn AsMut<[Motor]>>>,
 }
 
 impl Differential {
     /// Creates a new drivetrain with the provided left/right motors.
-    ///
-    /// Motors created with the [`shared_motors`] macro may be safely cloned, as they are wrapped
-    /// in an [`Arc`] to allow sharing across tasks and between the drivetrain and its tracking
-    /// instance if needed.
-    ///
-    /// [`shared_motors`]: crate::drivetrain::SharedMotors
-    /// [`Arc`]: alloc::arc::Arc
     ///
     /// # Examples
     ///
@@ -70,6 +66,29 @@ impl Differential {
         }
     }
 
+    /// Creates a new drivetrain with shared ownership of the left/right motors.
+    /// 
+    /// This is similar to [`Differential::new`], except that it allows you to share
+    /// your motor collections with other subsystems. A common usecase would be a
+    /// drivetrain that uses its own motors as tracking source.
+    /// 
+    /// In order to create a drivetrain, the provided motor collections should be
+    /// wrapped in an `Rc<RefCell<T>>`.
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// let motors = Differential::new(
+    ///     Rc::new(RefCell::new([
+    ///         Motor::new(peripherals.port_1, Gearset::Green, Direction::Forward),
+    ///         Motor::new(peripherals.port_2, Gearset::Green, Direction::Forward),
+    ///     ])),
+    ///     Rc::new(RefCell::new([
+    ///         Motor::new(peripherals.port_3, Gearset::Green, Direction::Reverse),
+    ///         Motor::new(peripherals.port_4, Gearset::Green, Direction::Reverse),
+    ///     ])),
+    /// );
+    /// ```
     pub fn from_shared<L: AsMut<[Motor]> + 'static, R: AsMut<[Motor]> + 'static>(
         left: Rc<RefCell<L>>,
         right: Rc<RefCell<R>>,
@@ -81,9 +100,11 @@ impl Differential {
     ///
     /// # Errors
     ///
-    /// See [`Motor::set_voltage`].
+    /// This method will return an error if calling any individual motor's
+    /// [`set_voltage`] method fails. If multiple motors fail, then only the
+    /// error from the last failed motor will be returned.
     ///
-    /// [`Motor::set_voltage`]: vexide::devices::smart::motor::Motor::set_voltage
+    /// [`set_voltage`]: vexide::devices::smart::motor::Motor::set_voltage
     ///
     /// # Examples
     ///
@@ -131,7 +152,7 @@ impl Differential {
 pub struct Voltages(pub f64, pub f64);
 
 impl Voltages {
-    /// Creates a [`DifferentialVoltages`] instance from a provided linear and angular voltage.
+    /// Creates a [`Voltages`] instance from a provided linear and angular voltage.
     ///
     /// # Examples
     ///
@@ -144,11 +165,11 @@ impl Voltages {
         Self(linear + angular, linear - angular)
     }
 
-    /// Returns [`DifferentialVoltages`] that are less than a provided `max` value while
+    /// Returns [`Voltages`] that are less than a provided `max` value while
     /// preserving the ratio between the original left and right values.
     ///
-    /// If either motor is over a `max_voltage`, both values will be decresed by the amount
-    /// that is "oversaturated" to preserve the ratio between left and right power.
+    /// If either motor is over a `max_voltage`, both values will be decreased by the
+    /// amount that is "oversaturated" to preserve the ratio between left and right power.
     ///
     /// # Examples
     ///

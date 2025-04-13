@@ -112,24 +112,41 @@ impl Pid {
         (self.kp, self.ki, self.kd)
     }
 
+    /// Returns the controller's proportional gain (`kp`).
     #[must_use]
     pub const fn kp(&self) -> f64 {
         self.kp
     }
 
+    /// Returns the controller's integral gain (`kp`).
     #[must_use]
     pub const fn ki(&self) -> f64 {
         self.ki
     }
 
+    /// Returns the controller's derivative gain (`kp`).
     #[must_use]
     pub const fn kd(&self) -> f64 {
         self.kd
     }
 
+    /// Returns the controller's integration range.
+    /// 
+    /// Integration range is the minimum error range required to start
+    /// integrating error. This is optionally applied to the controller
+    /// as a mitigation for [integral windup].
+    /// 
+    /// [integral windup]: https://en.wikipedia.org/wiki/Integral_windup
     #[must_use]
     pub const fn integration_range(&self) -> Option<f64> {
         self.integration_range
+    }
+
+    /// Returns the controller's output limit, or `None` if there is no
+    /// limit applied.
+    #[must_use]
+    pub const fn output_limit(&self) -> Option<f64> {
+        self.output_limit
     }
 
     /// Sets the PID gains to provided values.
@@ -139,22 +156,38 @@ impl Pid {
         self.kd = kd;
     }
 
+    /// Sets the controller's proportional gain (`kp`).
     pub const fn set_kp(&mut self, kp: f64) {
         self.kp = kp;
     }
 
+    /// Sets the controller's integral gain (`ki`).
     pub const fn set_ki(&mut self, ki: f64) {
         self.ki = ki;
     }
 
+    /// Sets the controller's derivative gain (`kd`).
     pub const fn set_kd(&mut self, kd: f64) {
         self.kd = kd;
     }
 
+    /// Sets the controller's integration range.
+    /// 
+    /// Integration range is the minimum error range required to start
+    /// integrating error. This is optionally applied to the controller
+    /// as a mitigation for [integral windup].
+    /// 
+    /// [integral windup]: https://en.wikipedia.org/wiki/Integral_windup
     pub const fn set_integration_range(&mut self, range: Option<f64>) {
         self.integration_range = range;
     }
 
+    /// Sets the controller's output limit.
+    /// 
+    /// This sets a maximum range for the controller's output signal. It
+    /// will effectively limit how fast the controller is able to drive
+    /// the system, which may be desirable in some cases (e.g. limiting
+    /// the maximum speed of a robot's motion).
     pub const fn set_output_limit(&mut self, range: Option<f64>) {
         self.output_limit = range;
     }

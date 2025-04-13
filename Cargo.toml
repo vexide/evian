@@ -1,6 +1,6 @@
 [package]
 name = "examples"
-edition = "2021"
+edition = "2024"
 version = "0.0.1"
 
 [package.metadata.v5]
@@ -23,12 +23,12 @@ vexide = { version = "0.7.0", default-features = false, features = [
     "core",
     "devices",
 ] }
-evian = { path = "packages/evian", default-features = false }
-evian-control = { path = "packages/evian-control", default-features = false }
-evian-drivetrain = { path = "packages/evian-drivetrain", default-features = false }
-evian-math = { path = "packages/evian-math", default-features = false }
-evian-motion = { path = "packages/evian-motion", default-features = false }
-evian-tracking = { path = "packages/evian-tracking", default-features = false }
+evian = { version = "0.3.0", path = "packages/evian", default-features = false }
+evian-control = { version = "0.0.1", path = "packages/evian-control", default-features = false }
+evian-drivetrain = { version = "0.0.1", path = "packages/evian-drivetrain", default-features = false }
+evian-math = { version = "0.0.1", path = "packages/evian-math", default-features = false }
+evian-motion = { version = "0.0.1", path = "packages/evian-motion", default-features = false }
+evian-tracking = { version = "0.0.1", path = "packages/evian-tracking", default-features = false }
 
 [profile.release]
 strip = true
