@@ -1,6 +1,7 @@
 use super::Curve;
 use crate::Vec2;
 
+/// Cubic Bézier curve.
 pub struct CubicBezier {
     p0: Vec2<f64>,
     p1: Vec2<f64>,
@@ -9,6 +10,7 @@ pub struct CubicBezier {
 }
 
 impl CubicBezier {
+    /// Creates a new cubic Bézier curve.
     pub fn new<P: Into<Vec2<f64>>>(p0: P, p1: P, p2: P, p3: P) -> Self {
         Self {
             p0: p0.into(),

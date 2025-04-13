@@ -34,12 +34,12 @@ impl<T> Vec2<T> {
 }
 
 impl<T: Copy> Vec2<T> {
-    /// Get the x component of the vector.
+    /// Returns the x component of the vector.
     pub const fn x(&self) -> T {
         self.x
     }
 
-    /// Get the y component of the vector.
+    /// Returns the y component of the vector.
     pub const fn y(&self) -> T {
         self.y
     }
@@ -58,25 +58,28 @@ impl<T: Float + Copy + Mul<Output = T>> Vec2<T> {
 }
 
 impl<T: Float + Copy> Vec2<T> {
-    /// Determine this vector's angle in radians relative to the origin (0, 0).
+    /// Returns this vector's angle in radians relative to the origin (0, 0).
     pub fn angle(&self) -> T {
         self.y.atan2(self.x)
     }
 
-    /// Determine this vector's distance (magnitude) from the origin (0, 0).
+    /// Returns this vector's distance (magnitude) from the origin (0, 0).
     pub fn length(&self) -> T {
         self.x.hypot(self.y)
     }
 }
 
 impl<T: Float + Copy + Sub<Output = T>> Vec2<T> {
+    /// Returns the cartesian distance between one vector and another.
+    /// 
+    /// This operation is equivalent to `(self - other).length()`.
     pub fn distance(&self, other: Vec2<T>) -> T {
         (*self - other).length()
     }
 }
 
 impl<T: Float + Copy + Div<Output = T>> Vec2<T> {
-    /// Get the unit (normalized) vector.
+    /// Returns the unit (normalized) vector.
     ///
     /// This function creates a `Vec2` with a length of 1.0 while retaining the
     /// angle of its original input.
@@ -87,13 +90,13 @@ impl<T: Float + Copy + Div<Output = T>> Vec2<T> {
 }
 
 impl<T: Float + Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T>> Vec2<T> {
-    /// Linearly interpolate between two vectors.
+    /// Linearly interpolates between two vectors.
     #[must_use]
     pub fn lerp(self, other: Vec2<T>, t: T) -> Vec2<T> {
         self + ((other - self) * t)
     }
 
-    /// Create a new vector with its coordinates rotated by a given angle
+    /// Creates a new vector with its coordinates rotated by a given angle
     /// in radians.
     #[must_use]
     pub fn rotated(&self, angle: T) -> Self {
@@ -107,14 +110,14 @@ impl<T: Float + Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T>> Vec2
 }
 
 impl<T: Float + Copy + Mul<Output = T> + Sub<Output = T>> Vec2<T> {
-    /// Compute the cross product between this vector and another `Vec2`.
+    /// Computes the cross product between this vector and another `Vec2`.
     pub fn cross(&self, other: Vec2<T>) -> T {
         self.x * other.y - self.y * other.x
     }
 }
 
 impl<T: Float + Copy + Mul<Output = T> + Add<Output = T>> Vec2<T> {
-    /// Compute the dot product between this vector and another `Vec2`.
+    /// Computes the dot product between this vector and another `Vec2`.
     ///
     /// The dot product is the sum of the products of each vector's components,
     /// and represents a measurement of how closely two vectors align with respect
@@ -125,7 +128,7 @@ impl<T: Float + Copy + Mul<Output = T> + Add<Output = T>> Vec2<T> {
 }
 
 impl<T: Float + Copy + Mul<Output = T> + Add<Output = T> + Div<Output = T>> Vec2<T> {
-    /// Project one `Vec2` onto onto another.
+    /// Projects one `Vec2` onto onto another.
     #[must_use]
     pub fn projected(&self, onto: Vec2<T>) -> Self {
         onto * (self.dot(onto) / onto.length().powi(2))
@@ -151,7 +154,7 @@ impl<T> From<Point2<T>> for Vec2<T> {
 }
 
 impl<T: fmt::Display> fmt::Display for Vec2<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {})", self.x, self.y)
     }
 }
