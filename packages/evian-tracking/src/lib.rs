@@ -4,8 +4,10 @@
 
 extern crate alloc;
 
-pub mod sensor;
+mod sensor;
 pub mod wheeled;
+
+pub use sensor::RotarySensor;
 
 use evian_math::{Angle, Vec2};
 

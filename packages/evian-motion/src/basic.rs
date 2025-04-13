@@ -10,7 +10,7 @@ use vexide::{
     time::{sleep, Instant, Sleep},
 };
 
-use evian_control::{AngularPid, ControlLoop, Pid};
+use evian_control::{Tolerances, AngularPid, ControlLoop, Pid};
 use evian_drivetrain::{
     differential::{Differential, Voltages},
     Drivetrain,
@@ -18,8 +18,7 @@ use evian_drivetrain::{
 use evian_math::{Angle, IntoAngle, Vec2};
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
 
-use crate::Tolerances;
-
+/// Feedback-driven driving and turning motion.
 #[derive(PartialEq)]
 pub struct Basic<
     L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,

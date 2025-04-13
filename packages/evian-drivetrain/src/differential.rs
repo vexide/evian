@@ -1,18 +1,14 @@
-//! Differential Drivetrains
+//! Differential drivetrains.
 //!
-//! This module provides support for drivetrains configured in a differential (left/right) wheel
-//! configuration.
+//! This module provides support for drivetrains configured in a differential (left/right)
+//! wheel configuration.
 //!
 //! # Overview
 //!
-//! A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot whose
-//! movement is controlled by two independently driven sets of wheels on the left and right sides
-//! of its chassis. The system operates by adjusting the speed and direction of the left and right
-//! motors, enabling the robot to drive straight or execute turns.
-//!
-//! This module provides motor control through the [`Differential`] and [`DifferentialVoltages`],
-//! motion control and algorithms through the [`motion`] module, and 2D trajectory generation and
-//! motion profiling through the [`trajectory`] module.
+//! A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot
+//! whose movement is controlled by two independently driven sets of wheels on the left and
+//! right sides of its chassis. The system operates by adjusting the speed and direction of
+//! the left and right motors, enabling the robot to drive straight or execute turns.
 
 use core::cell::RefCell;
 
@@ -21,21 +17,22 @@ use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 
 /// A collection of motors mounted in a differential (left/right) configuration.
 ///
-/// A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot whose movement is
-/// controlled by two independently driven sets of wheels on the left and right sides of its
-/// chassis. The system operates by adjusting the speed and direction of the left and right
-/// motors, enabling the robot to drive straight or execute turns.
+/// A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot
+/// whose movement is controlled by two independently driven sets of wheels on the left and
+/// right sides of its chassis. The system operates by adjusting the speed and direction of
+/// the left and right motors, enabling the robot to drive straight or execute turns.
 ///
 /// - If both sets of motors move at the same speed, the robot moves straight.
 /// - If one set of motors moves faster than the other, the robot will turn.
-/// - If the motors on one side move forward while the other side moves backward, the robot will rotate in place.
+/// - If the motors on one side move forward while the other side moves backward, the
+///   robot will rotate in place.
 ///
 /// Differential drivetrains are *nonholonomic*, meaning they cannot strafe laterally.
 pub struct Differential {
-    /// Left motors
+    /// Left motors.
     pub left: Rc<RefCell<dyn AsMut<[Motor]>>>,
 
-    /// Right motors
+    /// Right motors.
     pub right: Rc<RefCell<dyn AsMut<[Motor]>>>,
 }
 
@@ -69,8 +66,9 @@ impl Differential {
     /// Creates a new drivetrain with shared ownership of the left/right motors.
     /// 
     /// This is similar to [`Differential::new`], except that it allows you to share
-    /// your motor collections with other subsystems. A common usecase would be a
-    /// drivetrain that uses its own motors as tracking source.
+    /// your motor collections with other subsystems. A common use-case for this is
+    /// in drivetrains that use their own motors as tracking source ("IME-only"
+    /// tracking).
     /// 
     /// In order to create a drivetrain, the provided motor collections should be
     /// wrapped in an `Rc<RefCell<T>>`.
@@ -87,6 +85,25 @@ impl Differential {
     ///         Motor::new(peripherals.port_3, Gearset::Green, Direction::Reverse),
     ///         Motor::new(peripherals.port_4, Gearset::Green, Direction::Reverse),
     ///     ])),
+    /// );
+    /// ```
+    /// 
+    /// Alternatively, evian's `drivetrain` module also provides a [`shared_motors`]
+    /// macro that simplifies the creation of shared motor arrays
+    /// (`Rc<RefCell<[Motor; N]>>`).
+    /// 
+    /// [`shared_motors`]: crate::shared_motors
+    ///
+    /// ```
+    /// let motors = Differential::new(
+    ///     shared_motors![
+    ///         Motor::new(peripherals.port_1, Gearset::Green, Direction::Forward),
+    ///         Motor::new(peripherals.port_2, Gearset::Green, Direction::Forward),
+    ///     ],
+    ///     shared_motors![
+    ///         Motor::new(peripherals.port_3, Gearset::Green, Direction::Reverse),
+    ///         Motor::new(peripherals.port_4, Gearset::Green, Direction::Reverse),
+    ///     ],
     /// );
     /// ```
     pub fn from_shared<L: AsMut<[Motor]> + 'static, R: AsMut<[Motor]> + 'static>(
@@ -118,7 +135,7 @@ impl Differential {
     ///     ],
     /// );
     ///
-    /// motors.set_voltages(DifferentialVoltages(12.0, 12.0))?;
+    /// motors.set_voltages(Voltages(12.0, 12.0))?;
     /// ```
     pub fn set_voltages(&mut self, voltages: impl Into<Voltages>) -> Result<(), MotorError> {
         let voltages = voltages.into();
@@ -157,8 +174,8 @@ impl Voltages {
     /// # Examples
     ///
     /// ```
-    /// let voltages = DifferentialVoltages::from_arcade(5.0, 2.0);
-    /// assert_eq!(voltages, DifferentialVoltages(7.0, 3.0));
+    /// let voltages = Voltages::from_arcade(5.0, 2.0);
+    /// assert_eq!(voltages, Voltages(7.0, 3.0));
     /// ```
     #[must_use]
     pub const fn from_arcade(linear: f64, angular: f64) -> Self {
@@ -174,7 +191,7 @@ impl Voltages {
     /// # Examples
     ///
     /// ```
-    /// let voltages = DifferentialVoltages::from_arcade(12.0, 13.0).normalized(12.0);
+    /// let voltages = Voltages::from_arcade(12.0, 13.0).normalized(12.0);
     ///
     /// assert_eq!(voltages, voltages.left() <= 12.0);
     /// assert_eq!(voltages, voltages.right() <= 12.0);
@@ -198,7 +215,7 @@ impl Voltages {
     /// # Examples
     ///
     /// ```
-    /// let voltages = DifferentialVoltages(5.0, 2.0);
+    /// let voltages = Voltages(5.0, 2.0);
     /// assert_eq!(voltages.left(), 5.0);
     /// ```
     #[must_use]
@@ -209,7 +226,7 @@ impl Voltages {
     /// Returns the right voltage.
     ///
     /// ```
-    /// let voltages = DifferentialVoltages(5.0, 2.0);
+    /// let voltages = Voltages(5.0, 2.0);
     /// assert_eq!(voltages.right(), 2.0);
     /// ```
     #[must_use]

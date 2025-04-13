@@ -1,3 +1,5 @@
+//! Wheeled odometry.
+
 use evian_math::{Angle, IntoAngle, Vec2};
 
 use alloc::rc::Rc;

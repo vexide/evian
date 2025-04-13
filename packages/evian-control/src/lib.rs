@@ -12,17 +12,19 @@ use core::time::Duration;
 
 mod pid;
 mod profile;
+mod tolerances;
 pub mod trajectory;
 
 pub use pid::{AngularPid, Pid};
 pub use profile::{TrapezoidalConstraints, TrapezoidalProfile};
+pub use tolerances::Tolerances;
 
 /// A trait representing a generic control loop.
 ///
 /// Control loops are fundamental to control systems, where a controller
 /// continually adjusts its output to drive a control system to its desired value.
 ///
-/// This trait defines the core behavior of such controllers, which takea `setpoint`
+/// This trait defines the core behavior of such controllers, which take a `setpoint`
 /// (the desired target value of the system) and optionally a `measurement` of the
 /// system (recorded through a sensor or similar). The controller then computes an
 /// output intended to minimize the system's *error*, which is the difference between

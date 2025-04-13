@@ -7,13 +7,11 @@ use vexide::{
     time::{sleep, Instant, Sleep},
 };
 
-use evian_control::{AngularPid, ControlLoop, Pid};
+use evian_control::{Tolerances, AngularPid, ControlLoop, Pid};
 use evian_drivetrain::differential::{Differential, Voltages};
 use evian_drivetrain::Drivetrain;
 use evian_math::{Angle, IntoAngle, Vec2};
 use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
-
-use crate::Tolerances;
 
 /// Point-to-Point Feedback Seeking
 ///

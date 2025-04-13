@@ -11,11 +11,13 @@ use vexide::devices::{
     PortError,
 };
 
-/// A sensor that can measure rotation, for example, a potentiometer or encoder.
+/// A sensor that can measure continuous angular rotation, such as an encoder.
 pub trait RotarySensor {
+    /// The type of error that the device returns when [`RotarySensor::position`]
+    /// fails to return a value.
     type Error;
 
-    /// Reads the angular position measurement of the sensor.
+    /// Reads the angular position of the sensor.
     ///
     /// # Errors
     ///
@@ -119,7 +121,6 @@ impl<const N: usize, T: RotarySensor> RotarySensor for [T; N] {
 }
 
 /// Blanket implementation for all `Rc<RefCell<T>>` wrappers of already implemented sensors.
-// TODO: Switch this over to implement onto SharedMotors once that's a concrete type.
 impl<T: RotarySensor> RotarySensor for Rc<RefCell<T>> {
     type Error = <T as RotarySensor>::Error;
 

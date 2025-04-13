@@ -34,8 +34,8 @@ pub mod prelude {
     };
     #[cfg(feature = "math")]
     pub use crate::math::{curve::CubicBezier, Angle, IntoAngle, Vec2};
-    #[cfg(feature = "motion")]
-    pub use crate::motion::Tolerances;
+    #[cfg(feature = "control")]
+    pub use crate::control::Tolerances;
     #[cfg(feature = "tracking")]
     pub use crate::tracking::{
         wheeled::{TrackingWheel, WheeledTracking},

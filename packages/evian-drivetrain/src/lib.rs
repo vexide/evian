@@ -9,10 +9,10 @@ pub mod differential;
 /// A mobile robot drivetrain capable of measuring data about itself.
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Drivetrain<M, T> {
-    /// Motor collection
+    /// Motor collection.
     pub motors: M,
 
-    /// Tracking system
+    /// Tracking system.
     pub tracking: T,
 }
 
