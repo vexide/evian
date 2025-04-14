@@ -21,9 +21,21 @@ use super::TracksVelocity;
 /// A wheel attached to a rotary sensor for position tracking.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TrackingWheel<T: RotarySensor> {
+    /// Rotary sensor for measuring the wheel's travel.
     pub sensor: T,
+
+    /// Diameter of the wheel.
     pub wheel_diameter: f64,
+
+    /// Signed offset from the drivetrain's center of rotation.
+    /// 
+    /// Negative `offset` implies that the wheel is left or behind
+    /// the center of rotation.
     pub offset: f64,
+
+    /// External gearing of the wheel.
+    /// 
+    /// Used as a multiplier when determining wheel travel.
     pub gearing: Option<f64>,
 }
 
@@ -86,6 +98,7 @@ pub(crate) struct TrackingData {
     angular_velocity: f64,
 }
 
+/// Tracking system that uses wheels to track position and orientation.
 #[derive(Debug)]
 pub struct WheeledTracking {
     data: Rc<RefCell<TrackingData>>,
@@ -93,6 +106,7 @@ pub struct WheeledTracking {
 }
 
 impl WheeledTracking {
+    /// Creates a new wheeled tracking system.
     pub fn new<
         T: RotarySensor + 'static,
         U: RotarySensor + 'static,
@@ -210,6 +224,7 @@ impl WheeledTracking {
         }
     }
 
+    /// Creates a new wheeled tracking system with no sideways tracking wheels.
     pub fn forward_only<T: RotarySensor + 'static, const NUM_FORWARD: usize>(
         origin: Vec2<f64>,
         heading: Angle,
@@ -499,11 +514,13 @@ impl WheeledTracking {
         }
     }
 
+    /// Offsets the currently tracked heading to a given [`Angle`].
     pub fn set_heading(&mut self, heading: Angle) {
         let mut data = self.data.borrow_mut();
         data.heading_offset = heading - data.raw_heading;
     }
 
+    /// Sets the currently tracked position to a new point.
     pub fn set_position(&mut self, position: Vec2<f64>) {
         self.data.borrow_mut().position = position;
     }
