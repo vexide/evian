@@ -11,7 +11,10 @@ use vexide::{
     time::{Instant, Sleep, sleep},
 };
 
-use evian_control::{AngularPid, ControlLoop, Pid, Tolerances};
+use evian_control::{
+    Tolerances,
+    loops::{AngularPid, ControlLoop, Pid},
+};
 use evian_drivetrain::Drivetrain;
 use evian_drivetrain::differential::{Differential, Voltages};
 use evian_math::{Angle, IntoAngle, Vec2};
@@ -38,7 +41,7 @@ pub struct Seeking<
     pub angular_controller: A,
 
     /// Linear settling conditions.
-    /// 
+    ///
     /// Error is denoted by the distance from the target, while velocity
     /// is the robot's linear forward velocity.
     pub tolerances: Tolerances,
@@ -53,7 +56,7 @@ impl<
 > Seeking<L, A>
 {
     /// Moves the robot to a 2D point.
-    /// 
+    ///
     /// The final heading of the robot after this motion executes is undefined.
     /// For full pose control, use [`Seeking::boomerang`].
     pub fn move_to_point<'a, T: TracksPosition + TracksHeading + TracksVelocity>(
@@ -75,7 +78,7 @@ impl<
     }
 
     /// Moves the robot to a desired pose (position and heading).
-    /// 
+    ///
     /// This motion uses a boomerang controller, which is a motion algorithm
     /// for moving differential drivetrains to a desired pose. Larger `lead`
     /// values will result in wider arcs, while smaller `lead` values will

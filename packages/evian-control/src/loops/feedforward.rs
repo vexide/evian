@@ -1,4 +1,4 @@
-use crate::ControlLoop;
+use crate::loops::ControlLoop;
 
 /// Simple DC motor feedforward controller.
 ///

@@ -7,13 +7,16 @@ use core::{
 
 use vexide::{
     devices::smart::Motor,
-    time::{sleep, Instant, Sleep},
+    time::{Instant, Sleep, sleep},
 };
 
-use evian_control::{Tolerances, AngularPid, ControlLoop, Pid};
+use evian_control::{
+    Tolerances,
+    loops::{AngularPid, ControlLoop, Pid},
+};
 use evian_drivetrain::{
-    differential::{Differential, Voltages},
     Drivetrain,
+    differential::{Differential, Voltages},
 };
 use evian_math::{Angle, IntoAngle, Vec2};
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
@@ -41,13 +44,13 @@ pub struct Basic<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
-    > Basic<L, A>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
+> Basic<L, A>
 {
     /// Moves the robot forwards by a given distance (measured in wheel units) while
     /// turning to face a heading.
-    /// 
+    ///
     /// Negative `target_distance` values will move the robot backwards.
     pub fn drive_distance_at_heading<
         'a,
@@ -77,7 +80,7 @@ impl<
     }
 
     /// Moves the robot forwards by a given distance (measured in wheel units).
-    /// 
+    ///
     /// Negative `distance` values will move the robot backwards.
     pub fn drive_distance<'a, T: TracksForwardTravel + TracksHeading + TracksVelocity>(
         &mut self,
@@ -146,10 +149,10 @@ pub struct DriveDistanceAtHeadingFuture<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksForwardTravel + TracksHeading + TracksVelocity,
-    > Future for DriveDistanceAtHeadingFuture<'_, L, A, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksForwardTravel + TracksHeading + TracksVelocity,
+> Future for DriveDistanceAtHeadingFuture<'_, L, A, T>
 {
     type Output = ();
 
@@ -216,10 +219,10 @@ impl<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksForwardTravel + TracksHeading + TracksVelocity,
-    > DriveDistanceAtHeadingFuture<'_, L, A, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksForwardTravel + TracksHeading + TracksVelocity,
+> DriveDistanceAtHeadingFuture<'_, L, A, T>
 {
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
         self.linear_controller = controller;
@@ -278,9 +281,9 @@ impl<
 }
 
 impl<
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksForwardTravel + TracksHeading + TracksVelocity,
-    > DriveDistanceAtHeadingFuture<'_, Pid, A, T>
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksForwardTravel + TracksHeading + TracksVelocity,
+> DriveDistanceAtHeadingFuture<'_, Pid, A, T>
 {
     pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.linear_controller.set_gains(kp, ki, kd);
@@ -315,9 +318,9 @@ impl<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        T: TracksForwardTravel + TracksHeading + TracksVelocity,
-    > DriveDistanceAtHeadingFuture<'_, L, AngularPid, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    T: TracksForwardTravel + TracksHeading + TracksVelocity,
+> DriveDistanceAtHeadingFuture<'_, L, AngularPid, T>
 {
     pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.angular_controller.set_gains(kp, ki, kd);
@@ -373,10 +376,10 @@ pub struct TurnToPointFuture<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
-    > Future for TurnToPointFuture<'_, L, A, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
+> Future for TurnToPointFuture<'_, L, A, T>
 {
     type Output = ();
 
@@ -443,10 +446,10 @@ impl<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
-    > TurnToPointFuture<'_, L, A, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
+> TurnToPointFuture<'_, L, A, T>
 {
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
         self.linear_controller = controller;
@@ -505,9 +508,9 @@ impl<
 }
 
 impl<
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
-    > TurnToPointFuture<'_, Pid, A, T>
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
+> TurnToPointFuture<'_, Pid, A, T>
 {
     pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.linear_controller.set_gains(kp, ki, kd);
@@ -542,9 +545,9 @@ impl<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
-    > TurnToPointFuture<'_, L, AngularPid, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
+> TurnToPointFuture<'_, L, AngularPid, T>
 {
     pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.angular_controller.set_gains(kp, ki, kd);

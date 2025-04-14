@@ -22,9 +22,7 @@ impl CubicBezier {
 }
 
 impl Curve for CubicBezier {
-    fn max_t(&self) -> f64 {
-        1.0
-    }
+    const MAX_T: f64 = 1.0;
 
     fn point(&self, t: f64) -> Vec2<f64> {
         // polynomial: t^3(p3 + 3(p1 - p2) * p0) + 3t^2(p0 - 2p1 + p2) + 3t(p1 - p0) + p0

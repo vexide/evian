@@ -425,7 +425,7 @@ impl WheeledTracking {
                     }
 
                     if count != 0 {
-                        local_displacement += local_y_sum / f64::from(count);
+                        local_displacement.y += local_y_sum / f64::from(count);
                     }
                 }
 

@@ -9,7 +9,7 @@ pub use bezier::CubicBezier;
 /// Trait describing a parametric curve.
 pub trait Curve {
     /// The maximum parameter value in the curve function's domain.
-    fn max_t(&self) -> f64;
+    const MAX_T: f64;
 
     /// Samples the curve function, returning a 2D point on the curve at the parameter `t`.
     fn point(&self, t: f64) -> Vec2<f64>;

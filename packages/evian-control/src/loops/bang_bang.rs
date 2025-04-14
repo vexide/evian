@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use crate::ControlLoop;
+use crate::loops::ControlLoop;
 
 /// Bang-bang controller.
 pub struct BangBang {

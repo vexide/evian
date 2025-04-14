@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use crate::ControlLoop;
+use crate::loops::ControlLoop;
 
 /// Take-back-half flywheel velocity controller.
 pub struct TakeBackHalf {

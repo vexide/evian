@@ -4,7 +4,7 @@ use core::{
 };
 use vexide::{devices::math::Point2, float::Float};
 
-/// A vector in 2D space.
+/// A vector in 2D cartesian space.
 ///
 /// The `Vec2` struct represents a two-dimensional vector with x and y components.
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
@@ -71,7 +71,7 @@ impl<T: Float + Copy> Vec2<T> {
 
 impl<T: Float + Copy + Sub<Output = T>> Vec2<T> {
     /// Returns the cartesian distance between one vector and another.
-    /// 
+    ///
     /// This operation is equivalent to `(self - other).length()`.
     pub fn distance(&self, other: Vec2<T>) -> T {
         (*self - other).length()
@@ -170,17 +170,6 @@ impl<T: Add<Output = T>> Add for Vec2<T> {
     }
 }
 
-impl<T: Add<Output = T> + Copy> Add<T> for Vec2<T> {
-    type Output = Self;
-
-    fn add(self, scalar: T) -> Self {
-        Self {
-            x: self.x + scalar,
-            y: self.y + scalar,
-        }
-    }
-}
-
 impl<T: Sub<Output = T>> Sub for Vec2<T> {
     type Output = Self;
 
@@ -188,17 +177,6 @@ impl<T: Sub<Output = T>> Sub for Vec2<T> {
         Self {
             x: self.x - other.x,
             y: self.y - other.y,
-        }
-    }
-}
-
-impl<T: Sub<Output = T> + Copy> Sub<T> for Vec2<T> {
-    type Output = Self;
-
-    fn sub(self, scalar: T) -> Self {
-        Self {
-            x: self.x - scalar,
-            y: self.y - scalar,
         }
     }
 }
@@ -243,24 +221,10 @@ impl<T: AddAssign> AddAssign for Vec2<T> {
     }
 }
 
-impl<T: AddAssign + Copy> AddAssign<T> for Vec2<T> {
-    fn add_assign(&mut self, scalar: T) {
-        self.x += scalar;
-        self.y += scalar;
-    }
-}
-
 impl<T: SubAssign> SubAssign for Vec2<T> {
     fn sub_assign(&mut self, other: Vec2<T>) {
         self.x -= other.x;
         self.y -= other.y;
-    }
-}
-
-impl<T: SubAssign + Copy> SubAssign<T> for Vec2<T> {
-    fn sub_assign(&mut self, scalar: T) {
-        self.x -= scalar;
-        self.y -= scalar;
     }
 }
 
