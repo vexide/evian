@@ -7,7 +7,6 @@
 #![no_std]
 
 pub mod loops;
-pub mod profile;
 
 mod tolerances;
 pub use tolerances::Tolerances;
