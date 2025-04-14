@@ -26,7 +26,7 @@ use vexide::time::Instant;
 /// # Settling Logic
 ///
 /// A system is considered settled if either:
-/// - The specified timeout has elapsed since the first call to [`Tolerances::is_settled`], OR
+/// - The specified timeout has elapsed since the first call to [`Tolerances::check`], OR
 /// - Both:
 ///   1. The error and velocity are within their respective tolerances.
 ///   2. The system has maintained these tolerances for the specified duration.
