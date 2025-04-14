@@ -20,7 +20,7 @@ const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
     .velocity(0.25)
     .duration(Duration::from_millis(15));
 const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
-    .error(f64::to_degrees(8.0))
+    .error(f64::to_radians(8.0))
     .velocity(0.09)
     .duration(Duration::from_millis(15));
 
@@ -56,6 +56,14 @@ impl Compete for Robot {
 
         // Move to point (24, 24) on the field.
         seeking.move_to_point(dt, (24.0, 24.0)).await;
+
+        // Having fun with modifiers.
+        basic.drive_distance_at_heading(dt, 8.0, 45.0.deg())
+            .with_linear_kd(1.2)
+            .with_angular_tolerance_duration(Duration::from_millis(5))
+            .with_angular_error_tolerance(f64::to_radians(10.0))
+            .with_linear_error_tolerance(12.0)
+            .await;
     }
 }
 

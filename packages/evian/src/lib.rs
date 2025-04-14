@@ -1,4 +1,6 @@
 //! # evian
+//! 
+//! Controls library for vexide.
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
