@@ -16,7 +16,7 @@
 use core::time::Duration;
 use vexide::time::Instant;
 
-/// A utility for determining when a control system has stabilized reasonably near its setpoint.
+/// Describes when a control system has stabilized reasonably near its setpoint.
 ///
 /// This struct monitors both position error and velocity to determine if a system has
 /// reached and stabilized at its target. It can be configured with tolerances for both

@@ -14,7 +14,6 @@ use evian::{
 
 const LINEAR_PID: Pid = Pid::new(1.0, 0.0, 0.125, None);
 const ANGULAR_PID: AngularPid = AngularPid::new(16.0, 0.0, 1.0, None);
-
 const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
     .error(4.0)
     .velocity(0.25)
