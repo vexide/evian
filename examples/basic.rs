@@ -25,7 +25,6 @@ const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
     .duration(Duration::from_millis(15));
 
 struct Robot {
-    controller: Controller,
     drivetrain: Drivetrain<Differential, WheeledTracking>,
 }
 
@@ -47,11 +46,16 @@ impl Compete for Robot {
             timeout: Some(Duration::from_secs(10)),
         };
 
-        // Using a different motion set
-        seeking.boomerang(dt, (24.0, 24.0), 80.0.deg(), 0.5).await;
-    }
-    async fn driver(&mut self) {
-        self.autonomous().await;
+        // Drive forwards at 60% speed.
+        basic.drive_distance(dt, 24.0)
+            .with_linear_output_limit(Motor::V5_MAX_VOLTAGE * 0.6)
+            .await;
+
+        // Turn to 0 degrees heading.
+        basic.turn_to_heading(dt, 0.0.deg()).await;
+
+        // Move to point (24, 24) on the field.
+        seeking.move_to_point(dt, (24.0, 24.0)).await;
     }
 }
 
@@ -61,17 +65,14 @@ async fn main(peripherals: Peripherals) {
         Motor::new(peripherals.port_11, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_12, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_13, Gearset::Blue, Direction::Forward),
-        Motor::new(peripherals.port_14, Gearset::Blue, Direction::Reverse),
     ];
     let right_motors = shared_motors![
         Motor::new(peripherals.port_17, Gearset::Blue, Direction::Forward),
         Motor::new(peripherals.port_18, Gearset::Blue, Direction::Reverse),
         Motor::new(peripherals.port_19, Gearset::Blue, Direction::Forward),
-        Motor::new(peripherals.port_20, Gearset::Blue, Direction::Reverse),
     ];
 
     Robot {
-        controller: peripherals.primary_controller,
         drivetrain: Drivetrain::new(
             Differential::from_shared(left_motors.clone(), right_motors.clone()),
             WheeledTracking::forward_only(
