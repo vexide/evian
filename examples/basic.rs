@@ -7,7 +7,7 @@ use vexide::prelude::*;
 
 use core::time::Duration;
 use evian::{
-    control::{AngularPid, Pid},
+    control::loops::{AngularPid, Pid},
     motion::{Basic, Seeking},
     prelude::*,
 };
@@ -46,7 +46,8 @@ impl Compete for Robot {
         };
 
         // Drive forwards at 60% speed.
-        basic.drive_distance(dt, 24.0)
+        basic
+            .drive_distance(dt, 24.0)
             .with_linear_output_limit(Motor::V5_MAX_VOLTAGE * 0.6)
             .await;
 
@@ -57,7 +58,8 @@ impl Compete for Robot {
         seeking.move_to_point(dt, (24.0, 24.0)).await;
 
         // Having fun with modifiers.
-        basic.drive_distance_at_heading(dt, 8.0, 45.0.deg())
+        basic
+            .drive_distance_at_heading(dt, 8.0, 45.0.deg())
             .with_linear_kd(1.2)
             .with_angular_tolerance_duration(Duration::from_millis(5))
             .with_angular_error_tolerance(f64::to_radians(10.0))
