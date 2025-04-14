@@ -1,15 +1,19 @@
 use core::{
-    f64::consts::{FRAC_PI_2, PI}, future::Future, pin::Pin, task::Poll, time::Duration
+    f64::consts::{FRAC_PI_2, PI},
+    future::Future,
+    pin::Pin,
+    task::Poll,
+    time::Duration,
 };
 
 use vexide::{
-    devices::{math::Point2, smart::Motor},
-    time::{sleep, Instant, Sleep},
+    devices::smart::Motor,
+    time::{Instant, Sleep, sleep},
 };
 
-use evian_control::{Tolerances, AngularPid, ControlLoop, Pid};
-use evian_drivetrain::differential::{Differential, Voltages};
+use evian_control::{AngularPid, ControlLoop, Pid, Tolerances};
 use evian_drivetrain::Drivetrain;
+use evian_drivetrain::differential::{Differential, Voltages};
 use evian_math::{Angle, IntoAngle, Vec2};
 use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
 
@@ -27,17 +31,31 @@ pub struct Seeking<
     L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
     A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
 > {
+    /// Linear (forward driving) feedback controller.
     pub linear_controller: L,
+
+    /// Angular (turning) feedback controller.
     pub angular_controller: A,
+
+    /// Linear settling conditions.
+    /// 
+    /// Error is denoted by the distance from the target, while velocity
+    /// is the robot's linear forward velocity.
     pub tolerances: Tolerances,
+
+    /// Maximum duration the motion can take before being cancelled.
     pub timeout: Option<Duration>,
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
-    > Seeking<L, A>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
+> Seeking<L, A>
 {
+    /// Moves the robot to a 2D point.
+    /// 
+    /// The final heading of the robot after this motion executes is undefined.
+    /// For full pose control, use [`Seeking::boomerang`].
     pub fn move_to_point<'a, T: TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &'a mut Drivetrain<Differential, T>,
@@ -56,6 +74,13 @@ impl<
         }
     }
 
+    /// Moves the robot to a desired pose (position and heading).
+    /// 
+    /// This motion uses a boomerang controller, which is a motion algorithm
+    /// for moving differential drivetrains to a desired pose. Larger `lead`
+    /// values will result in wider arcs, while smaller `lead` values will
+    /// result in smaller arcs. You may need to tune the `lead` value in order
+    /// to properly reach the desired heading by the end of the motion.
     pub fn boomerang<'a, T: TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &'a mut Drivetrain<Differential, T>,
@@ -98,10 +123,10 @@ pub struct MoveToPointFuture<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksPosition + TracksHeading + TracksVelocity,
-    > MoveToPointFuture<'_, L, A, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> MoveToPointFuture<'_, L, A, T>
 {
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
         self.linear_controller = controller;
@@ -140,9 +165,9 @@ impl<
 }
 
 impl<
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksPosition + TracksHeading + TracksVelocity,
-    > MoveToPointFuture<'_, Pid, A, T>
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> MoveToPointFuture<'_, Pid, A, T>
 {
     pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.linear_controller.set_gains(kp, ki, kd);
@@ -177,9 +202,9 @@ impl<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        T: TracksPosition + TracksHeading + TracksVelocity,
-    > MoveToPointFuture<'_, L, AngularPid, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> MoveToPointFuture<'_, L, AngularPid, T>
 {
     pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.angular_controller.set_gains(kp, ki, kd);
@@ -214,10 +239,10 @@ impl<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksPosition + TracksHeading + TracksVelocity,
-    > Future for MoveToPointFuture<'_, L, A, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> Future for MoveToPointFuture<'_, L, A, T>
 {
     type Output = ();
 
@@ -296,10 +321,10 @@ pub struct BoomerangFuture<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksPosition + TracksHeading + TracksVelocity,
-    > BoomerangFuture<'_, L, A, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> BoomerangFuture<'_, L, A, T>
 {
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
         self.linear_controller = controller;
@@ -338,9 +363,9 @@ impl<
 }
 
 impl<
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksPosition + TracksHeading + TracksVelocity,
-    > BoomerangFuture<'_, Pid, A, T>
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> BoomerangFuture<'_, Pid, A, T>
 {
     pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.linear_controller.set_gains(kp, ki, kd);
@@ -375,9 +400,9 @@ impl<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        T: TracksPosition + TracksHeading + TracksVelocity,
-    > BoomerangFuture<'_, L, AngularPid, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> BoomerangFuture<'_, L, AngularPid, T>
 {
     pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.angular_controller.set_gains(kp, ki, kd);
@@ -412,10 +437,10 @@ impl<
 }
 
 impl<
-        L: ControlLoop<Input = f64, Output = f64> + Unpin,
-        A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-        T: TracksPosition + TracksHeading + TracksVelocity,
-    > Future for BoomerangFuture<'_, L, A, T>
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
+> Future for BoomerangFuture<'_, L, A, T>
 {
     type Output = ();
 

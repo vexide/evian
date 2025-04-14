@@ -35,8 +35,14 @@ use vexide::time::Instant;
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Tolerances {
     tolerance_timestamp: Option<Instant>,
+
+    /// Duration for which `error_tolerance` and `velocity_tolerance` must be satisfied.
     pub duration: Option<Duration>,
+
+    /// Minimum error range.
     pub error_tolerance: Option<f64>,
+
+    /// Minimum velocity range.
     pub velocity_tolerance: Option<f64>,
 }
 

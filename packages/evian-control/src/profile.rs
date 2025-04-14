@@ -4,8 +4,13 @@ use vexide::prelude::Float;
 #[allow(clippy::struct_field_names)]
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct TrapezoidalConstraints {
+    /// Maximum velocity of the system.
     pub max_velocity: f64,
+
+    /// Maximum acceleration of the system.
     pub max_acceleration: f64,
+
+    /// Maximum deceleration of the system.
     pub max_deceleration: f64,
 }
 
@@ -31,6 +36,7 @@ pub struct TrapezoidalProfile {
 }
 
 impl TrapezoidalProfile {
+    /// Creates a new motion profile with a given spacing, initial velocity, and final velocity.
     #[must_use]
     pub fn new(
         distance: f64,

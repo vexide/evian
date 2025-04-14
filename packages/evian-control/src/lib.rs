@@ -6,14 +6,11 @@
 
 #![no_std]
 
-extern crate alloc;
-
 use core::time::Duration;
 
 mod pid;
 mod profile;
 mod tolerances;
-pub mod trajectory;
 
 pub use pid::{AngularPid, Pid};
 pub use profile::{TrapezoidalConstraints, TrapezoidalProfile};

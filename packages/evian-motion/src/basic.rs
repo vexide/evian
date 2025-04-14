@@ -24,18 +24,19 @@ pub struct Basic<
     L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
     A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
 > {
-    /// Linear (forward driving) feedback controller
+    /// Linear (forward driving) feedback controller.
     pub linear_controller: L,
 
-    /// Angular (turning) feedback controller
+    /// Angular (turning) feedback controller.
     pub angular_controller: A,
 
-    /// Linear settling conditions
+    /// Linear settling conditions.
     pub linear_tolerances: Tolerances,
 
-    /// Angular settling conditions
+    /// Angular settling conditions.
     pub angular_tolerances: Tolerances,
 
+    /// Maximum duration the motion can take before being cancelled.
     pub timeout: Option<Duration>,
 }
 
@@ -44,6 +45,10 @@ impl<
         A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
     > Basic<L, A>
 {
+    /// Moves the robot forwards by a given distance (measured in wheel units) while
+    /// turning to face a heading.
+    /// 
+    /// Negative `target_distance` values will move the robot backwards.
     pub fn drive_distance_at_heading<
         'a,
         T: TracksForwardTravel + TracksHeading + TracksVelocity,
@@ -71,6 +76,9 @@ impl<
         }
     }
 
+    /// Moves the robot forwards by a given distance (measured in wheel units).
+    /// 
+    /// Negative `distance` values will move the robot backwards.
     pub fn drive_distance<'a, T: TracksForwardTravel + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &'a mut Drivetrain<Differential, T>,
@@ -79,6 +87,7 @@ impl<
         self.drive_distance_at_heading(drivetrain, distance, drivetrain.tracking.heading())
     }
 
+    /// Turns the robot in place to face a heading.
     pub fn turn_to_heading<'a, T: TracksForwardTravel + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &'a mut Drivetrain<Differential, T>,
@@ -87,6 +96,7 @@ impl<
         self.drive_distance_at_heading(drivetrain, 0.0, heading)
     }
 
+    /// Turns the robot in place to face a 2D point.
     pub fn turn_to_point<
         'a,
         T: TracksForwardTravel + TracksPosition + TracksHeading + TracksVelocity,
