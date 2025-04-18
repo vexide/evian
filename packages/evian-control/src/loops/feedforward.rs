@@ -1,6 +1,6 @@
 use crate::loops::ControlLoop;
 
-/// Simple DC motor feedforward controller.
+/// Ideal DC motor feedforward controller.
 ///
 /// This is a open-loop velocity controller that computes the voltage to
 /// maintain an idealized DC motor in a certain state.
