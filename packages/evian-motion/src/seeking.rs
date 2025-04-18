@@ -146,6 +146,11 @@ impl<
         self
     }
 
+    pub const fn without_timeout(&mut self) -> &mut Self {
+        self.timeout = None;
+        self
+    }
+
     pub const fn with_tolerances(&mut self, tolerances: Tolerances) -> &mut Self {
         self.tolerances = tolerances;
         self
@@ -156,13 +161,28 @@ impl<
         self
     }
 
+    pub const fn without_error_tolerance(&mut self) -> &mut Self {
+        self.tolerances.error_tolerance = None;
+        self
+    }
+
     pub const fn with_velocity_tolerance(&mut self, tolerance: f64) -> &mut Self {
         self.tolerances.velocity_tolerance = Some(tolerance);
         self
     }
 
+    pub const fn without_velocity_tolerance(&mut self) -> &mut Self {
+        self.tolerances.velocity_tolerance = None;
+        self
+    }
+
     pub const fn with_tolerance_duration(&mut self, duration: Duration) -> &mut Self {
         self.tolerances.duration = Some(duration);
+        self
+    }
+
+    pub const fn without_tolerance_duration(&mut self) -> &mut Self {
+        self.tolerances.duration = None;
         self
     }
 }
@@ -202,6 +222,17 @@ impl<
         self.linear_controller.set_output_limit(Some(limit));
         self
     }
+
+    pub const fn without_linear_integration_range(&mut self) -> &mut Self {
+        self.linear_controller
+            .set_integration_range(None);
+        self
+    }
+
+    pub const fn without_linear_output_limit(&mut self) -> &mut Self {
+        self.linear_controller.set_output_limit(None);
+        self
+    }
 }
 
 impl<
@@ -237,6 +268,16 @@ impl<
 
     pub const fn with_angular_output_limit(&mut self, limit: f64) -> &mut Self {
         self.angular_controller.set_output_limit(Some(limit));
+        self
+    }
+
+    pub const fn without_angular_integration_range(&mut self) -> &mut Self {
+        self.angular_controller.set_integration_range(None);
+        self
+    }
+
+    pub const fn without_angular_output_limit(&mut self) -> &mut Self {
+        self.angular_controller.set_output_limit(None);
         self
     }
 }
@@ -344,6 +385,11 @@ impl<
         self
     }
 
+    pub const fn without_timeout(&mut self) -> &mut Self {
+        self.timeout = None;
+        self
+    }
+
     pub const fn with_tolerances(&mut self, tolerances: Tolerances) -> &mut Self {
         self.tolerances = tolerances;
         self
@@ -354,13 +400,28 @@ impl<
         self
     }
 
+    pub const fn without_error_tolerance(&mut self) -> &mut Self {
+        self.tolerances.error_tolerance = None;
+        self
+    }
+
     pub const fn with_velocity_tolerance(&mut self, tolerance: f64) -> &mut Self {
         self.tolerances.velocity_tolerance = Some(tolerance);
         self
     }
 
+    pub const fn without_velocity_tolerance(&mut self) -> &mut Self {
+        self.tolerances.velocity_tolerance = None;
+        self
+    }
+
     pub const fn with_tolerance_duration(&mut self, duration: Duration) -> &mut Self {
         self.tolerances.duration = Some(duration);
+        self
+    }
+
+    pub const fn without_tolerance_duration(&mut self) -> &mut Self {
+        self.tolerances.duration = None;
         self
     }
 }
@@ -400,6 +461,17 @@ impl<
         self.linear_controller.set_output_limit(Some(limit));
         self
     }
+
+    pub const fn without_linear_integration_range(&mut self) -> &mut Self {
+        self.linear_controller
+            .set_integration_range(None);
+        self
+    }
+
+    pub const fn without_linear_output_limit(&mut self) -> &mut Self {
+        self.linear_controller.set_output_limit(None);
+        self
+    }
 }
 
 impl<
@@ -435,6 +507,16 @@ impl<
 
     pub const fn with_angular_output_limit(&mut self, limit: f64) -> &mut Self {
         self.angular_controller.set_output_limit(Some(limit));
+        self
+    }
+
+    pub const fn without_angular_integration_range(&mut self) -> &mut Self {
+        self.angular_controller.set_integration_range(None);
+        self
+    }
+
+    pub const fn without_angular_output_limit(&mut self) -> &mut Self {
+        self.angular_controller.set_output_limit(None);
         self
     }
 }
