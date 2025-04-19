@@ -2,13 +2,13 @@ use core::cell::RefCell;
 
 use alloc::{rc::Rc, vec::Vec};
 use vexide::devices::{
+    PortError,
     adi::AdiEncoder,
     position::Position,
     smart::{
         motor::{Motor, MotorError},
         rotation::RotationSensor,
     },
-    PortError,
 };
 
 /// A sensor that can measure continuous angular rotation, such as an encoder.

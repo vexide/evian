@@ -64,15 +64,15 @@ impl Differential {
     }
 
     /// Creates a new drivetrain with shared ownership of the left/right motors.
-    /// 
+    ///
     /// This is similar to [`Differential::new`], except that it allows you to share
     /// your motor collections with other subsystems. A common use-case for this is
     /// in drivetrains that use their own motors as tracking source ("IME-only"
     /// tracking).
-    /// 
+    ///
     /// In order to create a drivetrain, the provided motor collections should be
     /// wrapped in an `Rc<RefCell<T>>`.
-    /// 
+    ///
     /// # Examples
     ///
     /// ```
@@ -87,11 +87,11 @@ impl Differential {
     ///     ])),
     /// );
     /// ```
-    /// 
+    ///
     /// Alternatively, evian's `drivetrain` module also provides a [`shared_motors`]
     /// macro that simplifies the creation of shared motor arrays
     /// (`Rc<RefCell<[Motor; N]>>`).
-    /// 
+    ///
     /// [`shared_motors`]: crate::shared_motors
     ///
     /// ```

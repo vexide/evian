@@ -1,16 +1,16 @@
 //! Control loops.
 
+mod bang_bang;
+mod feedforward;
 mod pid;
 mod tbh;
-mod feedforward;
-mod bang_bang;
 
 use core::time::Duration;
 
-pub use pid::{AngularPid, Pid};
-pub use tbh::TakeBackHalf;
 pub use bang_bang::BangBang;
 pub use feedforward::DcMotorFeedforward;
+pub use pid::{AngularPid, Pid};
+pub use tbh::TakeBackHalf;
 
 /// Functionality for a generic control loop.
 ///
@@ -22,22 +22,22 @@ pub use feedforward::DcMotorFeedforward;
 /// system (recorded through a sensor or similar). The controller then computes an
 /// output intended to minimize the system's *error*, which is the difference between
 /// the `measurement` and the `setpoint`.
-/// 
+///
 /// # Examples
-/// 
+///
 /// This example shows an implementation of a basic [proportional feedback controller],
 /// which scales its output based on the system's error. Measurements further from the
 /// setpoint will yield larger control signals.
-/// 
+///
 /// ```rs
 /// pub struct PController {
 ///     pub kp: f64,
 /// }
-/// 
+///
 /// impl ControlLoop for PController {
 ///     type Input = f64;
 ///     type Output = f64;
-/// 
+///
 ///     fn update(
 ///         &mut self,
 ///         measurement: f64,
@@ -48,7 +48,7 @@ pub use feedforward::DcMotorFeedforward;
 ///     }
 /// }
 /// ```
-/// 
+///
 /// [proportional controller]: https://en.wikipedia.org/wiki/Proportional_control
 pub trait ControlLoop {
     /// The type of input measurements and setpoints that this controller takes.

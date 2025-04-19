@@ -25,17 +25,17 @@ impl Angle {
     pub const FULL_TURN: Self = Self(TAU);
 
     /// Smallest value that can be represented by the `Angle` type.
-    /// 
+    ///
     /// Equivalent to [`f64::MIN`] radians.
     pub const MIN: Self = Self(f64::MIN);
 
     /// Largest value that can be represented by the `Angle` type.
-    /// 
+    ///
     /// Equivalent to [`f64::MAX`] radians.
     pub const MAX: Self = Self(f64::MAX);
 
     /// [Machine epsilon] value for `Angle`.
-    /// 
+    ///
     /// [Machine epsilon]: https://en.wikipedia.org/wiki/Machine_epsilon
     pub const EPSILON: Self = Self(f64::EPSILON);
 

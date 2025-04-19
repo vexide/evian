@@ -13,7 +13,12 @@ pub struct TakeBackHalf {
 impl TakeBackHalf {
     /// Creates a new TBH controller.
     pub fn new(kh: f64) -> Self {
-        Self { kh, tbh: 0.0, integral: 0.0, prev_error: 0.0, }
+        Self {
+            kh,
+            tbh: 0.0,
+            integral: 0.0,
+            prev_error: 0.0,
+        }
     }
 
     /// Returns the controller's integral gain (`kh`).
@@ -38,14 +43,14 @@ impl ControlLoop for TakeBackHalf {
         _dt: Duration,
     ) -> Self::Output {
         let error = setpoint - measurement;
-        
+
         self.integral += error * self.kh;
 
         if error * self.prev_error <= 0.0 {
             self.integral = 0.5 * (self.integral + self.tbh);
             self.tbh = self.integral;
         }
-     
+
         self.prev_error = error;
 
         self.tbh

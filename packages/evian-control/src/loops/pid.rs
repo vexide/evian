@@ -129,11 +129,11 @@ impl Pid {
     }
 
     /// Returns the controller's integration range.
-    /// 
+    ///
     /// Integration range is the minimum error range required to start
     /// integrating error. This is optionally applied to the controller
     /// as a mitigation for [integral windup].
-    /// 
+    ///
     /// [integral windup]: https://en.wikipedia.org/wiki/Integral_windup
     #[must_use]
     pub const fn integration_range(&self) -> Option<f64> {
@@ -170,18 +170,18 @@ impl Pid {
     }
 
     /// Sets the controller's integration range.
-    /// 
+    ///
     /// Integration range is the minimum error range required to start
     /// integrating error. This is optionally applied to the controller
     /// as a mitigation for [integral windup].
-    /// 
+    ///
     /// [integral windup]: https://en.wikipedia.org/wiki/Integral_windup
     pub const fn set_integration_range(&mut self, range: Option<f64>) {
         self.integration_range = range;
     }
 
     /// Sets the controller's output limit.
-    /// 
+    ///
     /// This sets a maximum range for the controller's output signal. It
     /// will effectively limit how fast the controller is able to drive
     /// the system, which may be desirable in some cases (e.g. limiting
@@ -226,12 +226,12 @@ impl ControlLoop for Pid {
 }
 
 /// PID controller for use in rotational systems.
-/// 
+///
 /// This struct operates on the same principles and implementation as [`Pid`],
 /// but takes exclusively [`Angle`]s as input. Unlike [`Pid`], [`AngularPid`]
 /// is able to recognize when angles *wrap*, meaning treats a 0° measurement
 /// as equivalent to a 360° measurement for instance.
-/// 
+///
 /// This is useful for cases where you want the controller to drive the system
 /// to its setpoint using the "shortest turn possible".
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -286,11 +286,11 @@ impl AngularPid {
     }
 
     /// Returns the controller's integration range.
-    /// 
+    ///
     /// Integration range is the minimum error range required to start
     /// integrating error. This is optionally applied to the controller
     /// as a mitigation for [integral windup].
-    /// 
+    ///
     /// [integral windup]: https://en.wikipedia.org/wiki/Integral_windup
     #[must_use]
     pub const fn integration_range(&self) -> Option<Angle> {
@@ -320,18 +320,18 @@ impl AngularPid {
     }
 
     /// Sets the controller's integration range.
-    /// 
+    ///
     /// Integration range is the minimum error range required to start
     /// integrating error. This is optionally applied to the controller
     /// as a mitigation for [integral windup].
-    /// 
+    ///
     /// [integral windup]: https://en.wikipedia.org/wiki/Integral_windup
     pub const fn set_integration_range(&mut self, range: Option<Angle>) {
         self.integration_range = range;
     }
 
     /// Sets the controller's output limit.
-    /// 
+    ///
     /// This sets a maximum range for the controller's output signal. It
     /// will effectively limit how fast the controller is able to drive
     /// the system, which may be desirable in some cases (e.g. limiting

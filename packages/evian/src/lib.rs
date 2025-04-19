@@ -1,5 +1,5 @@
 //! # evian
-//! 
+//!
 //! Controls library for vexide.
 
 #![no_std]
@@ -29,18 +29,19 @@ pub use evian_tracking as tracking;
 ///
 /// This module is meant to be glob imported.
 pub mod prelude {
-    #[cfg(feature = "drivetrain")]
-    pub use crate::drivetrain::{
-        differential::{Differential, Voltages},
-        shared_motors, Drivetrain,
-    };
-    #[cfg(feature = "math")]
-    pub use crate::math::{curve::CubicBezier, Angle, IntoAngle, Vec2};
     #[cfg(feature = "control")]
     pub use crate::control::Tolerances;
+    #[cfg(feature = "drivetrain")]
+    pub use crate::drivetrain::{
+        Drivetrain,
+        differential::{Differential, Voltages},
+        shared_motors,
+    };
+    #[cfg(feature = "math")]
+    pub use crate::math::{Angle, IntoAngle, Vec2, curve::CubicBezier};
     #[cfg(feature = "tracking")]
     pub use crate::tracking::{
-        wheeled::{TrackingWheel, WheeledTracking},
         TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity,
+        wheeled::{TrackingWheel, WheeledTracking},
     };
 }
