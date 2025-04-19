@@ -1,4 +1,4 @@
-//! Basic driving and turning motion.
+//! Feedback-driven driving and turning motion.
 
 use core::time::Duration;
 
