@@ -7,8 +7,7 @@ use core::{
 };
 
 use vexide::{
-    devices::smart::Motor,
-    time::{Instant, Sleep, sleep},
+    devices::smart::Motor, io::println, time::{sleep, Instant, Sleep}
 };
 
 use evian_control::{
@@ -64,10 +63,18 @@ impl<
         drivetrain: &'a mut Drivetrain<Differential, T>,
         point: impl Into<Vec2<f64>>,
     ) -> MoveToPointFuture<'a, L, A, T> {
+        let point = point.into();
+        let initial_angular_error = (drivetrain.tracking.heading()
+            - (point - drivetrain.tracking.position()).angle().rad())
+        .wrapped();
+
         MoveToPointFuture {
             sleep: sleep(Duration::from_millis(5)),
             drivetrain,
-            target_point: point.into(),
+            reverse: false,
+            point_was_crossed: false,
+            prev_facing_point: initial_angular_error.abs().as_radians() < FRAC_PI_2,
+            target_point: point,
             start_time: Instant::now(),
             prev_time: Instant::now(),
             timeout: self.timeout,
@@ -116,6 +123,9 @@ pub struct MoveToPointFuture<
 > {
     sleep: Sleep,
     target_point: Vec2<f64>,
+    reverse: bool,
+    point_was_crossed: bool,
+    prev_facing_point: bool,
     start_time: Instant,
     prev_time: Instant,
     timeout: Option<Duration>,
@@ -131,6 +141,12 @@ impl<
     T: TracksPosition + TracksHeading + TracksVelocity,
 > MoveToPointFuture<'_, L, A, T>
 {
+    pub fn reverse(&mut self) -> &mut Self {
+        self.reverse = true;
+        self.prev_facing_point = !self.prev_facing_point;
+        self
+    }
+
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
         self.linear_controller = controller;
         self
@@ -224,8 +240,7 @@ impl<
     }
 
     pub const fn without_linear_integration_range(&mut self) -> &mut Self {
-        self.linear_controller
-            .set_integration_range(None);
+        self.linear_controller.set_integration_range(None);
         self
     }
 
@@ -309,8 +324,18 @@ impl<
 
         let mut distance_error = local_target.length();
         let mut angle_error = (heading - local_target.angle().rad()).wrapped();
+        
+        if this.reverse {
+            distance_error *= -1.0;
+            angle_error = (PI.rad() - angle_error).wrapped();
+        }
+        
+        let facing_point = angle_error.as_radians().abs() < FRAC_PI_2;
 
-        if angle_error.as_radians().abs() > FRAC_PI_2 {
+        this.point_was_crossed = !this.point_was_crossed && this.prev_facing_point && !facing_point;
+        this.prev_facing_point = facing_point;
+
+        if this.point_was_crossed && !facing_point {
             distance_error *= -1.0;
             angle_error = (PI.rad() - angle_error).wrapped();
         }
@@ -463,8 +488,7 @@ impl<
     }
 
     pub const fn without_linear_integration_range(&mut self) -> &mut Self {
-        self.linear_controller
-            .set_integration_range(None);
+        self.linear_controller.set_integration_range(None);
         self
     }
 

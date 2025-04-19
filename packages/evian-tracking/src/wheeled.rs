@@ -9,7 +9,7 @@ use core::{
 };
 use vexide::{
     devices::smart::{InertialSensor, Motor},
-    prelude::{sleep, spawn, Task},
+    prelude::{Task, sleep, spawn},
     time::Instant,
 };
 
@@ -28,13 +28,13 @@ pub struct TrackingWheel<T: RotarySensor> {
     pub wheel_diameter: f64,
 
     /// Signed offset from the drivetrain's center of rotation.
-    /// 
+    ///
     /// Negative `offset` implies that the wheel is left or behind
     /// the center of rotation.
     pub offset: f64,
 
     /// External gearing of the wheel.
-    /// 
+    ///
     /// Used as a multiplier when determining wheel travel.
     pub gearing: Option<f64>,
 }
@@ -314,11 +314,7 @@ impl WheeledTracking {
         }
     }
 
-    #[allow(
-        clippy::cast_precision_loss,
-        clippy::too_many_arguments,
-        clippy::too_many_lines
-    )]
+    #[allow(clippy::too_many_arguments)]
     async fn task<
         T: RotarySensor,
         U: RotarySensor,
@@ -414,7 +410,6 @@ impl WheeledTracking {
                         if let Ok((prev_travel, offset)) = prev_data {
                             let delta_travel = travel - prev_travel;
                             count += 1;
-                            let unit_chord = 2.0 * (delta_heading / 2.0).sin();
 
                             local_y_sum += if delta_heading == Angle::ZERO {
                                 delta_travel
