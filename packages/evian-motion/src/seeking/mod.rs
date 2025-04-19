@@ -1,3 +1,5 @@
+//! Point-to-Point feedback seeking algorithms.
+
 use core::time::Duration;
 
 use evian_control::{Tolerances, loops::ControlLoop};

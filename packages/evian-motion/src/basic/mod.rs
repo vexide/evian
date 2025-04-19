@@ -1,3 +1,5 @@
+//! Basic driving and turning motion.
+
 use core::time::Duration;
 
 use evian_control::{Tolerances, loops::ControlLoop};

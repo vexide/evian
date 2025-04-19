@@ -2,9 +2,9 @@
 
 #![no_std]
 
-mod basic;
+pub mod basic;
 pub mod pursuit;
-mod seeking;
+pub mod seeking;
 
 pub use basic::Basic;
 pub use pursuit::PurePursuit;

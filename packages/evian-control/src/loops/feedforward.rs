@@ -17,7 +17,7 @@ pub struct DcMotorFeedforward {
 }
 
 impl DcMotorFeedforward {
-    /// Creates a new [`FeedforwardMotorController`] with the given constants and target.
+    /// Creates a new [`DcMotorFeedforward`] with the given constants and target.
     ///
     /// # Parameters
     ///
