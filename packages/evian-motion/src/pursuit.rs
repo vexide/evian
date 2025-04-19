@@ -87,8 +87,10 @@ impl PurePursuit {
     pub async fn follow(
         &self,
         drivetrain: &mut Drivetrain<Differential, impl TracksPosition + TracksHeading>,
-        mut waypoints: impl Iterator<Item = Waypoint>,
+        waypoints: impl IntoIterator<Item = Waypoint>,
     ) {
+        let mut waypoints = waypoints.into_iter();
+
         let Some(mut next) = waypoints.next() else {
             return; // path is empty
         };
@@ -104,6 +106,16 @@ impl PurePursuit {
             position,
             velocity: next.velocity,
         };
+
+        // Keep iterating line segments until we find one we haven't intersected.
+        while position.distance(next.position) < self.lookahead_distance {
+            current = next;
+            next = if let Some(next_waypoint) = waypoints.next() {
+                next_waypoint
+            } else {
+                return;
+            };
+        }
 
         // Compute initial lookahead point.
         let mut lookahead_point = match Self::line_segment_circle_intersections(
