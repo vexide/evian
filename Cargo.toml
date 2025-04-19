@@ -1,13 +1,39 @@
 [package]
-name = "evian"
-description = "Experimental command-based controls library for vexide."
-repository = "https://github.com/vexide/evian/"
-authors = ["Tropical"]
-license-file = "LICENSE.md"
-categories = ["science::robotics", "no-std", "mathematics", "embedded"]
-keywords = ["vex", "vexide", "vex-robotics", "robotics", "autonomous"]
-version = "0.3.0-beta.2"
-edition = "2021"
+name = "examples"
+edition = "2024"
+version = "0.0.1"
+
+[package.metadata.v5]
+upload-strategy = "differential"
+slot = 1
+icon = "cool-x"
+compress = true
+
+[dev-dependencies]
+vexide = "0.7.0"
+evian = { path = "packages/evian" }
+
+[workspace]
+members = ["packages/*"]
+resolver = "2"
+
+[workspace.dependencies]
+vexide = { version = "0.7.0", default-features = false, features = [
+    "async",
+    "core",
+    "devices",
+] }
+evian = { version = "0.3.0", path = "packages/evian", default-features = false }
+evian-control = { version = "0.0.1", path = "packages/evian-control", default-features = false }
+evian-drivetrain = { version = "0.0.1", path = "packages/evian-drivetrain", default-features = false }
+evian-math = { version = "0.0.1", path = "packages/evian-math", default-features = false }
+evian-motion = { version = "0.0.1", path = "packages/evian-motion", default-features = false }
+evian-tracking = { version = "0.0.1", path = "packages/evian-tracking", default-features = false }
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
 
 [lints.clippy]
 missing_const_for_fn = "warn"
@@ -20,18 +46,13 @@ missing_panics_doc = "allow"
 cast_possible_wrap = "allow"
 match_bool = "allow"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[package.metadata.v5]
-slot = 1
-
-[profile.release]
-strip = true
-opt-level = "z"
-lto = true
-
-[dependencies]
-vexide = { git = "https://github.com/vexide/vexide.git" }
-
-[package.metadata.docs.rs]
-targets = ["armv7a-none-eabi"]
+[workspace.lints.rust]
+rust_2018_idioms = { level = "warn", priority = -1 }
+rust_2024_compatibility = { level = "warn", priority = -1 }
+future_incompatible = { level = "warn", priority = -1 }
+let_underscore = { level = "warn", priority = -1 }
+missing_docs = "warn"
+unsafe_op_in_unsafe_fn = "deny"
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(target_vendor, values("vex"))',
+] }
