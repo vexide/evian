@@ -49,6 +49,84 @@ impl<
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
     A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
+> Future for BoomerangFuture<'_, L, A, T>
+{
+    type Output = ();
+
+    fn poll(
+        self: core::pin::Pin<&mut Self>,
+        cx: &mut core::task::Context<'_>,
+    ) -> Poll<Self::Output> {
+        let this = self.get_mut();
+        let state = this.state.get_or_insert_with(|| {
+            let now = Instant::now();
+            State {
+                sleep: sleep(Duration::from_millis(5)),
+                prev_position: this.drivetrain.tracking.position(),
+                start_time: now,
+                prev_time: now,
+            }
+        });
+
+        if Pin::new(&mut state.sleep).poll(cx).is_pending() {
+            return Poll::Pending;
+        }
+
+        let dt = state.prev_time.elapsed();
+
+        let position = this.drivetrain.tracking.position();
+        let heading = this.drivetrain.tracking.heading();
+
+        let carrot = this.target_point
+            - Vec2::from_polar(
+                position.distance(this.target_point) * this.lead,
+                this.target_heading.as_radians(),
+            );
+
+        let local_target = carrot - position;
+
+        let mut angular_error = (heading - local_target.angle().rad()).wrapped();
+        let mut linear_error = local_target.length();
+
+        if angular_error.as_radians().abs() > FRAC_PI_2 {
+            linear_error *= -1.0;
+            angular_error = (PI.rad() - angular_error).wrapped();
+        }
+
+        if this
+            .tolerances
+            .check(linear_error, this.drivetrain.tracking.linear_velocity())
+            || this
+                .timeout
+                .is_some_and(|timeout| state.start_time.elapsed() > timeout)
+        {
+            _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
+            return Poll::Ready(());
+        }
+
+        let angular_output = this
+            .angular_controller
+            .update(-angular_error, Angle::ZERO, dt);
+        let linear_output =
+            this.linear_controller.update(-linear_error, 0.0, dt) * angular_error.cos();
+
+        _ = this.drivetrain.motors.set_voltages(
+            Voltages::from_arcade(linear_output, angular_output).normalized(Motor::V5_MAX_VOLTAGE),
+        );
+
+        state.sleep = sleep(Duration::from_millis(5));
+        state.prev_time = Instant::now();
+        state.prev_position = position;
+
+        cx.waker().wake_by_ref();
+        Poll::Pending
+    }
+}
+
+impl<
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    T: TracksPosition + TracksHeading + TracksVelocity,
 > BoomerangFuture<'_, L, A, T>
 {
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
@@ -198,83 +276,5 @@ impl<
     pub const fn without_angular_output_limit(&mut self) -> &mut Self {
         self.angular_controller.set_output_limit(None);
         self
-    }
-}
-
-impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
-    T: TracksPosition + TracksHeading + TracksVelocity,
-> Future for BoomerangFuture<'_, L, A, T>
-{
-    type Output = ();
-
-    fn poll(
-        self: core::pin::Pin<&mut Self>,
-        cx: &mut core::task::Context<'_>,
-    ) -> Poll<Self::Output> {
-        let this = self.get_mut();
-        let state = this.state.get_or_insert_with(|| {
-            let now = Instant::now();
-            State {
-                sleep: sleep(Duration::from_millis(5)),
-                prev_position: this.drivetrain.tracking.position(),
-                start_time: now,
-                prev_time: now,
-            }
-        });
-
-        if Pin::new(&mut state.sleep).poll(cx).is_pending() {
-            return Poll::Pending;
-        }
-
-        let dt = state.prev_time.elapsed();
-
-        let position = this.drivetrain.tracking.position();
-        let heading = this.drivetrain.tracking.heading();
-
-        let carrot = this.target_point
-            - Vec2::from_polar(
-                position.distance(this.target_point) * this.lead,
-                this.target_heading.as_radians(),
-            );
-
-        let local_target = carrot - position;
-
-        let mut angular_error = (heading - local_target.angle().rad()).wrapped();
-        let mut linear_error = local_target.length();
-
-        if angular_error.as_radians().abs() > FRAC_PI_2 {
-            linear_error *= -1.0;
-            angular_error = (PI.rad() - angular_error).wrapped();
-        }
-
-        if this
-            .tolerances
-            .check(linear_error, this.drivetrain.tracking.linear_velocity())
-            || this
-                .timeout
-                .is_some_and(|timeout| state.start_time.elapsed() > timeout)
-        {
-            _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
-            return Poll::Ready(());
-        }
-
-        let angular_output = this
-            .angular_controller
-            .update(-angular_error, Angle::ZERO, dt);
-        let linear_output =
-            this.linear_controller.update(-linear_error, 0.0, dt) * angular_error.cos();
-
-        _ = this.drivetrain.motors.set_voltages(
-            Voltages::from_arcade(linear_output, angular_output).normalized(Motor::V5_MAX_VOLTAGE),
-        );
-
-        state.sleep = sleep(Duration::from_millis(5));
-        state.prev_time = Instant::now();
-        state.prev_position = position;
-
-        cx.waker().wake_by_ref();
-        Poll::Pending
     }
 }
