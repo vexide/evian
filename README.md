@@ -14,7 +14,7 @@ Many libraries have been written for competitive robotics in the past. evian isn
 
 A common issue that many robotics libraries run into is the complexity that comes with making a library *extensible*. As more and more different robot configurations and features are supported, the user friendliness of such libraries is lost, which makes them much harder to approach and easily learn. Furthermore, libraries that aim to solve *literally everyone's problems* often end up becoming monolithic and impossible to maintain as a result.
 
-On the opposite end, others have attempted to make libraries as easy to use as possible to the point that they intentionally limit the scope and correctness of their of their features to appeal to new users. While this does succeed in making things more approachable, people actually end up learning *less* in the process, because the highly simplified nature of these types of projects generally discourage any sort of further innovation beyond what "just works already". That's no fun.
+On the opposite end, others have attempted to make libraries as easy to use as possible to the point that they intentionally limit the scope and correctness of their of their features to appeal to new users. While this does succeed in making things more approachable, people actually end up learning *less* in the process, because the highly simplified nature of these types of projects generally discourages any sort of further innovation beyond what "just works already". That's no fun.
 
 evian is a *desperate attempt* at a third option—something that people can both extend for their own purposes *and* something that is actually nice to use.
 

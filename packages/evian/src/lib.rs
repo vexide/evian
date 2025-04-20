@@ -27,7 +27,7 @@
 //! possible to the point that they intentionally limit the scope and correctness of
 //! their of their features to appeal to new users. While this does succeed in making
 //! things more approachable, people actually end up learning *less* in the process,
-//! because the highly simplified nature of these types of projects generally discourage
+//! because the highly simplified nature of these types of projects generally discourages
 //! any sort of further innovation beyond what "just works already". That's no fun.
 //! 
 //! evian is a *desperate attempt* at a third option—something that people can both
