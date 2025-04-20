@@ -30,6 +30,7 @@ pub(crate) struct State {
     angular_settled: bool,
 }
 
+/// Drives the robot forward or backwards for a distance at a given heading.
 pub struct DriveDistanceAtHeadingFuture<
     'a,
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
@@ -48,6 +49,8 @@ pub struct DriveDistanceAtHeadingFuture<
     /// Internal future state ("local variables").
     pub(crate) state: Option<State>,
 }
+
+// MARK: Future Poll
 
 impl<
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
@@ -130,191 +133,231 @@ impl<
     }
 }
 
+// MARK: Generic Modifiers
+
 impl<
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
     A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 > DriveDistanceAtHeadingFuture<'_, L, A, T>
 {
+    /// Modifies this motion's linear feedback controller.
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
         self.linear_controller = controller;
         self
     }
 
+    /// Modifies this motion's angular feedback controller.
     pub fn with_angular_controller(&mut self, controller: A) -> &mut Self {
         self.angular_controller = controller;
         self
     }
 
+    /// Modifies this motion's timeout duration.
     pub const fn with_timeout(&mut self, timeout: Duration) -> &mut Self {
         self.timeout = Some(timeout);
         self
     }
 
+    /// Removes this motion's timeout duration.
     pub const fn without_timeout(&mut self) -> &mut Self {
         self.timeout = None;
         self
     }
 
+    /// Modifies this motion's linear tolerances.
     pub const fn with_linear_tolerances(&mut self, tolerances: Tolerances) -> &mut Self {
         self.linear_tolerances = tolerances;
         self
     }
 
+    /// Modifies this motion's linear error tolerance.
     pub const fn with_linear_error_tolerance(&mut self, tolerance: f64) -> &mut Self {
         self.linear_tolerances.error_tolerance = Some(tolerance);
         self
     }
 
+    /// Removes this motion's linear error tolerance.
     pub const fn without_linear_error_tolerance(&mut self) -> &mut Self {
         self.linear_tolerances.error_tolerance = None;
         self
     }
 
+    /// Modifies this motion's linear velocity tolerance.
     pub const fn with_linear_velocity_tolerance(&mut self, tolerance: f64) -> &mut Self {
         self.linear_tolerances.velocity_tolerance = Some(tolerance);
         self
     }
 
+    /// Removes this motion's linear velocity tolerance.
     pub const fn without_linear_velocity_tolerance(&mut self) -> &mut Self {
         self.linear_tolerances.velocity_tolerance = None;
         self
     }
 
+    /// Modifies this motion's linear tolerance duration.
     pub const fn with_linear_tolerance_duration(&mut self, duration: Duration) -> &mut Self {
         self.linear_tolerances.duration = Some(duration);
         self
     }
 
+    /// Removes this motion's linear tolerance duration.
     pub const fn without_linear_tolerance_duration(&mut self) -> &mut Self {
         self.linear_tolerances.duration = None;
         self
     }
 
+    /// Modifies this motion's angular tolerances.
     pub const fn with_angular_tolerances(&mut self, tolerances: Tolerances) -> &mut Self {
         self.angular_tolerances = tolerances;
         self
     }
 
+    /// Modifies this motion's angular error tolerance.
     pub const fn with_angular_error_tolerance(&mut self, tolerance: f64) -> &mut Self {
         self.angular_tolerances.error_tolerance = Some(tolerance);
         self
     }
 
+    /// Removes this motion's angular error tolerance.
     pub const fn without_angular_error_tolerance(&mut self) -> &mut Self {
         self.angular_tolerances.error_tolerance = None;
         self
     }
 
+    /// Modifies this motion's angular velocity tolerance.
     pub const fn with_angular_velocity_tolerance(&mut self, tolerance: f64) -> &mut Self {
         self.angular_tolerances.velocity_tolerance = Some(tolerance);
         self
     }
 
+    /// Removes this motion's angular velocity tolerance.
     pub const fn without_angular_velocity_tolerance(&mut self) -> &mut Self {
         self.angular_tolerances.velocity_tolerance = None;
         self
     }
 
+    /// Modifies this motion's angular tolerance duration.
     pub const fn with_angular_tolerance_duration(&mut self, duration: Duration) -> &mut Self {
         self.angular_tolerances.duration = Some(duration);
         self
     }
 
+    /// Removes this motion's angular tolerance duration.
     pub const fn without_angular_tolerance_duration(&mut self) -> &mut Self {
         self.angular_tolerances.duration = None;
         self
     }
 }
 
+// MARK: Linear PID Modifiers
+
 impl<
     A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 > DriveDistanceAtHeadingFuture<'_, Pid, A, T>
 {
+    /// Modifies this motion's linear PID gains.
     pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.linear_controller.set_gains(kp, ki, kd);
         self
     }
 
+    /// Modifies this motion's linear proportional gain (`kp`).
     pub const fn with_linear_kp(&mut self, kp: f64) -> &mut Self {
         self.linear_controller.set_kp(kp);
         self
     }
 
+    /// Modifies this motion's linear integral gain (`ki`).
     pub const fn with_linear_ki(&mut self, ki: f64) -> &mut Self {
         self.linear_controller.set_ki(ki);
         self
     }
 
+    /// Modifies this motion's linear derivative gain (`kd`).
     pub const fn with_linear_kd(&mut self, kd: f64) -> &mut Self {
         self.linear_controller.set_kd(kd);
         self
     }
 
+    /// Modifies this motion's linear integration range.
     pub const fn with_linear_integration_range(&mut self, integration_range: f64) -> &mut Self {
         self.linear_controller
             .set_integration_range(Some(integration_range));
         self
     }
 
+    /// Removes this motion's linear integration range.
     pub const fn without_linear_integration_range(&mut self) -> &mut Self {
         self.linear_controller.set_integration_range(None);
         self
     }
 
+    /// Modifies this motion's linear output limit.
     pub const fn with_linear_output_limit(&mut self, limit: f64) -> &mut Self {
         self.linear_controller.set_output_limit(Some(limit));
         self
     }
 
+    /// Removes this motion's linear output limit.
     pub const fn without_linear_output_limit(&mut self) -> &mut Self {
         self.linear_controller.set_output_limit(None);
         self
     }
 }
 
+// MARK: Angular PID Modifiers
+
 impl<
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 > DriveDistanceAtHeadingFuture<'_, L, AngularPid, T>
 {
+    /// Modifies this motion's angular PID gains.
     pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
         self.angular_controller.set_gains(kp, ki, kd);
         self
     }
 
+    /// Modifies this motion's angular proportional gain (`kp`).
     pub const fn with_angular_kp(&mut self, kp: f64) -> &mut Self {
         self.angular_controller.set_kp(kp);
         self
     }
 
+    /// Modifies this motion's angular integral gain (`ki`).
     pub const fn with_angular_ki(&mut self, ki: f64) -> &mut Self {
         self.angular_controller.set_ki(ki);
         self
     }
 
+    /// Modifies this motion's angular derivative gain (`kd`).
     pub const fn with_angular_kd(&mut self, kd: f64) -> &mut Self {
         self.angular_controller.set_kd(kd);
         self
     }
 
+    /// Modifies this motion's angular integration range.
     pub const fn with_angular_integration_range(&mut self, integration_range: Angle) -> &mut Self {
         self.angular_controller
             .set_integration_range(Some(integration_range));
         self
     }
 
+    /// Modifies this motion's angular output limit.
     pub const fn with_angular_output_limit(&mut self, limit: f64) -> &mut Self {
         self.angular_controller.set_output_limit(Some(limit));
         self
     }
 
+    /// Removes this motion's angular integration range.
     pub const fn without_angular_integration_range(&mut self) -> &mut Self {
         self.angular_controller.set_integration_range(None);
         self
     }
 
+    /// Removes this motion's angular output limit.
     pub const fn without_angular_output_limit(&mut self) -> &mut Self {
         self.angular_controller.set_output_limit(None);
         self

@@ -36,7 +36,6 @@ impl Compete for Robot {
             tolerances: LINEAR_TOLERANCES,
             timeout: Some(Duration::from_secs(10)),
         };
-
         let mut basic = Basic {
             linear_controller: LINEAR_PID,
             angular_controller: ANGULAR_PID,

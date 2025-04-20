@@ -18,6 +18,8 @@ use crate::{TracksForwardTravel, TracksHeading, TracksPosition};
 
 use super::TracksVelocity;
 
+// MARK: Tracking Wheel
+
 /// A wheel attached to a rotary sensor for position tracking.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TrackingWheel<T: RotarySensor> {
@@ -97,6 +99,8 @@ pub(crate) struct TrackingData {
     linear_velocity: f64,
     angular_velocity: f64,
 }
+
+// MARK: Tracking Implementation
 
 /// Tracking system that uses wheels to track position and orientation.
 #[derive(Debug)]
@@ -240,6 +244,8 @@ impl WheeledTracking {
         )
     }
 
+    // MARK: Heading Calculation
+
     /// Determines the orientation of the robot.
     ///
     /// "raw" in this case refers to the fact that the angle returned by this method has not been offset by any amount
@@ -313,6 +319,8 @@ impl WheeledTracking {
             _ => Ok(raw_heading),
         }
     }
+
+    // MARK: Task
 
     #[allow(clippy::too_many_arguments)]
     async fn task<
@@ -400,6 +408,8 @@ impl WheeledTracking {
             let mut local_displacement: Vec2<f64> = Vec2::default();
             let unit_chord = 2.0 * (delta_heading / 2.0).sin();
 
+            // MARK: Sideways Wheels
+
             // Doing all the stuff with sideways trackers in this block below.
             {
                 let mut local_y_sum = 0.0;
@@ -426,6 +436,8 @@ impl WheeledTracking {
 
                 prev_sideways_wheel_data = sideways_wheel_data;
             }
+
+            // MARK: Forward Wheels
 
             // Doing all the stuff with forward trackers in this block below.
             {
@@ -508,6 +520,8 @@ impl WheeledTracking {
             data.position += local_displacement.rotated(avg_heading.as_radians());
         }
     }
+
+    // MARK: Setters
 
     /// Offsets the currently tracked heading to a given [`Angle`].
     pub fn set_heading(&mut self, heading: Angle) {

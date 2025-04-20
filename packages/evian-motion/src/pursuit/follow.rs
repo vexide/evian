@@ -43,6 +43,8 @@ pub struct PurePursuitFuture<
     pub(crate) timeout: Option<Duration>,
 }
 
+// MARK: Future Poll
+
 impl<T: TracksPosition + TracksHeading, I: Iterator<Item = Waypoint> + Unpin> Future
     for PurePursuitFuture<'_, T, I>
 {
@@ -196,32 +198,36 @@ impl<T: TracksPosition + TracksHeading, I: Iterator<Item = Waypoint> + Unpin> Fu
     }
 }
 
+// MARK: Modifiers
+
 impl<T: TracksPosition + TracksHeading, I: Iterator<Item = Waypoint> + Unpin>
     PurePursuitFuture<'_, T, I>
 {
-    /// Modifies this motion to use the provided track width.
+    /// Modifies this motion's track width.
     pub const fn with_track_width(&mut self, track_width: f64) -> &mut Self {
         self.track_width = track_width;
         self
     }
-    /// Modifies this motion to use the provided timeout.
+    /// Modifies this motion's timeout duration.
     pub const fn with_timeout(&mut self, timeout: Duration) -> &mut Self {
         self.timeout = Some(timeout);
         self
     }
 
-    /// Modifies this motion to not use a timeout.
+    /// Removes this motion's timeout duration.
     pub const fn without_timeout(&mut self) -> &mut Self {
         self.timeout = None;
         self
     }
 
-    /// Modifies this motion to use the provided lookahead distance.
+    /// Modifies this motion's lookahead distance.
     pub const fn with_lookahead_distance(&mut self, lookahead_distance: f64) -> &mut Self {
         self.lookahead_distance = lookahead_distance;
         self
     }
 }
+
+// MARK: Math Functions
 
 fn signed_arc_curvature(start: Vec2<f64>, start_angle: Angle, end: Vec2<f64>) -> f64 {
     let delta = end - start;
