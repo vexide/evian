@@ -36,6 +36,7 @@ impl Compete for Robot {
             tolerances: LINEAR_TOLERANCES,
             timeout: Some(Duration::from_secs(10)),
         };
+
         let mut basic = Basic {
             linear_controller: LINEAR_PID,
             angular_controller: ANGULAR_PID,
@@ -44,8 +45,11 @@ impl Compete for Robot {
             timeout: Some(Duration::from_secs(10)),
         };
 
-        // Drive forwards.
-        basic.drive_distance(&mut drivetrain, 24.0).await;
+        // Drive forwards at 60% speed.
+        basic
+            .drive_distance(dt, 24.0)
+            .with_linear_output_limit(Motor::V5_MAX_VOLTAGE * 0.6)
+            .await;
 
         // Turn to 0 degrees heading.
         basic.turn_to_heading(dt, 0.0.deg()).await;
