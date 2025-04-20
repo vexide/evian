@@ -1,4 +1,4 @@
-//! Point-to-Point feedback seeking algorithms.
+//! Point-to-point feedback seeking.
 
 use core::time::Duration;
 
@@ -14,7 +14,7 @@ mod move_to_point;
 pub use boomerang::BoomerangFuture;
 pub use move_to_point::MoveToPointFuture;
 
-/// Point-to-Point Feedback Seeking
+/// Point-to-point feedback seeking.
 ///
 /// This struct provides implementations of adaptive feedback seeking algorithms, which
 /// utilize two feedback controllers (one for straight driving and one for turning) to

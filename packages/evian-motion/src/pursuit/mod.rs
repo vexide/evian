@@ -1,4 +1,4 @@
-//! Adaptive pure pursuit.
+//! Adaptive pure pursuit controller.
 
 extern crate alloc;
 

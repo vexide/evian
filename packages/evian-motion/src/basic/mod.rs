@@ -1,4 +1,4 @@
-//! Feedback-driven driving and turning motion.
+//! Feedback-driven driving and turning.
 
 use core::time::Duration;
 
@@ -13,7 +13,7 @@ mod turn_to_point;
 pub use distance_at_heading::DriveDistanceAtHeadingFuture;
 pub use turn_to_point::TurnToPointFuture;
 
-/// Feedback-driven driving and turning motion.
+/// Feedback-driven driving and turning.
 #[derive(PartialEq)]
 pub struct Basic<
     L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,

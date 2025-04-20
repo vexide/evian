@@ -1,21 +1,21 @@
 //! Robot localization and tracking.
 //! 
 //! This crate provides traits and systems for tracking and localizing the position, orientation,
-//! velocity, and forward travel of a mobile robot in a 2D environment. The goal is to collect and
-//! provide accurate data about the robot to motion algorithms.
+//! velocity, and forward travel of a mobile robot in a 2D environment. The goal is to measure
+//! accurate data about the robot and provide it to motion algorithms.
 //! 
-//! The traits provided in this crate allow for motion algorithms to operate generically over multiple
-//! different implementations of tracking systems, provided the necessary data is there.
+//! The traits provided in this crate allow for motion algorithms to operate generically over any
+//! tracking system implementation, provided that the implementation measures the necessary data.
 //! 
-//! These traits include:
+//! Tracking systems may choose to implement the following traits for motion algorithms to use:
 //! 
 //! - [`TracksPosition`], for tracking the robot's 2D position (odometry).
 //! - [`TracksHeading`], for tracking the robot's absolute orientation (heading).
 //! - [`TracksVelocity`], for tracking the robot's linear and angular velocity.
 //! - [`TracksForwardTravel`], for tracking the robot's signed forward wheel travel.
 //! 
-//! Below is an example of a motion algorithm function that is generic across all differential drivetrains
-//! with tracking systems that measure a robot's forward wheel travel:
+//! Below is an example of a motion algorithm function that is generic across all differential
+//! drivetrains with tracking systems that measure a robot's forward wheel travel:
 //! 
 //! ```
 //! async fn motion(drivetrain: &mut Drivetrain<Differential, impl TracksForwardTravel>) {
@@ -25,6 +25,21 @@
 //! 
 //! Additionally, a reference implementation of a tracking system that performs wheeled odometry is
 //! provided by the [`wheeled`] module.
+//! 
+//! # A quick note about units!
+//! 
+//! `evian` made the intentional choice to be primarily unitless, mainly because stable Rust
+//! currently lacks many of the features needed to provide a good developer experience using
+//! typed units. Although several widely-used libraries exist in stable Rust (such as
+//! [`uom`](http://crates.io/crates/uom)), there is no single obvious choice to be made here and
+//! this region of the Rust ecosystem seems to be in a fairly volatile state that would make it
+//! dangerous to fully commit to a single library this early on.
+//! 
+//! As such, evian made the decision to forego requiring specific units of measure where possible,
+//! particular in measures of *length*. Instead, length is typically provided in **wheel units**,
+//! which is defined as "whatever the user measured their wheels with". This gives users a choice
+//! of what units to use and keeps everything generally stable while the Rust ecosystem tries to
+//! figure out what typed units library to go with.
 
 #![no_std]
 
