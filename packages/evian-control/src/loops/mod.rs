@@ -29,7 +29,7 @@ pub use tbh::TakeBackHalf;
 /// which scales its output based on the system's error. Measurements further from the
 /// setpoint will yield larger control signals.
 ///
-/// ```rs
+/// ```
 /// pub struct PController {
 ///     pub kp: f64,
 /// }
@@ -49,7 +49,7 @@ pub use tbh::TakeBackHalf;
 /// }
 /// ```
 ///
-/// [proportional controller]: https://en.wikipedia.org/wiki/Proportional_control
+/// [proportional feedback controller]: https://en.wikipedia.org/wiki/Proportional_control
 pub trait ControlLoop {
     /// The type of input measurements and setpoints that this controller takes.
     type Input;

@@ -235,8 +235,8 @@ impl ControlLoop for Pid {
 ///
 /// This struct operates on the same principles and implementation as [`Pid`],
 /// but takes exclusively [`Angle`]s as input. Unlike [`Pid`], [`AngularPid`]
-/// is able to recognize when angles *wrap*, meaning treats a 0° measurement
-/// as equivalent to a 360° measurement for instance.
+/// is able to recognize when angles *wrap*. This means a 0° measurement is
+/// equivalent to a 360° measurement, for instance.
 ///
 /// This is useful for cases where you want the controller to drive the system
 /// to its setpoint using the "shortest turn possible".
