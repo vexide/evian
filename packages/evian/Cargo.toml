@@ -1,13 +1,13 @@
 [package]
 name = "evian"
-description = "Controls library for vexide."
+description = "A controls library for vexide."
 repository = "https://github.com/vexide/evian/"
 authors = ["Tropical"]
 license = "MIT"
 readme = "../../README.md"
 categories = ["science::robotics", "no-std", "mathematics", "embedded"]
 keywords = ["vex", "vexide", "vex-robotics", "robotics", "autonomous"]
-version = "0.3.0"
+version = "0.3.0-rc.1"
 edition = "2024"
 
 [dependencies]

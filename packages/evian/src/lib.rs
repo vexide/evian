@@ -42,6 +42,8 @@
 //! drivetrain configuration around evian's [`Drivetrain`] type. The codebase is highly
 //! generic with support for this in mind.
 //! 
+//! [`Drivetrain`]: crate::drivetrain::Drivetrain
+//! 
 //! ```
 //! pub struct MyLocalization {}
 //! 
@@ -82,6 +84,8 @@
 //! 
 //! In addition, a standard wheeled tracking (odometry) implementation is provided by the
 //! [`WheeledTracking`] type in our [`tracking`] module.
+//! 
+//! [`WheeledTracking`]: crate::tracking::wheeled::WheeledTracking
 //! 
 //! Motions in evian are a little "flipped" from what you might be used to in other
 //! libraries. Rather than calling motion-related methods on our drivetrain, we instead

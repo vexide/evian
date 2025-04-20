@@ -51,7 +51,7 @@ dependencies = [
 
 [[package]]
 name = "evian"
-version = "0.3.0"
+version = "0.3.0-rc.1"
 dependencies = [
  "evian-control",
  "evian-drivetrain",
@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "evian-control"
-version = "0.0.1"
+version = "0.0.1-rc.1"
 dependencies = [
  "evian-math",
  "vexide",
@@ -70,21 +70,21 @@ dependencies = [
 
 [[package]]
 name = "evian-drivetrain"
-version = "0.0.1"
+version = "0.0.1-rc.1"
 dependencies = [
  "vexide",
 ]
 
 [[package]]
 name = "evian-math"
-version = "0.0.1"
+version = "0.0.1-rc.1"
 dependencies = [
  "vexide",
 ]
 
 [[package]]
 name = "evian-motion"
-version = "0.0.1"
+version = "0.0.1-rc.1"
 dependencies = [
  "evian-control",
  "evian-drivetrain",
@@ -95,7 +95,7 @@ dependencies = [
 
 [[package]]
 name = "evian-tracking"
-version = "0.0.1"
+version = "0.0.1-rc.1"
 dependencies = [
  "evian-math",
  "vexide",

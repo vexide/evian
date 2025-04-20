@@ -54,13 +54,8 @@ impl Compete for Robot {
         // Turn to 0 degrees heading.
         basic.turn_to_heading(dt, 0.0.deg()).await;
 
-        
-        seeking.move_to_point(dt, (24.0, 24.0)) // Move to point (24, 24) on the field...
-            .reverse() // ...backwards
-            .with_angular_kp(0.4) // ...with different PID gains
-            .without_timeout() // ...with no timeout
-            .with_linear_output_limit(Motor::V5_MAX_VOLTAGE * 0.75) // ...at 75% of max speed.
-            .await;
+        // Move to point (24, 24) on the field.
+        seeking.move_to_point(dt, (24.0, 24.0)).await;
 
         // Having fun with modifiers.
         basic
