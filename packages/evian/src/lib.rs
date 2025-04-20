@@ -101,7 +101,7 @@
 //! ```
 //! 
 //! This is done to allow for an extremely easy way to create custom motions. In fact, "motions"
-//! in evian are nothing more than simple `async` functions that mutably borrow you drivetrain
+//! in evian are nothing more than simple `async` functions that mutably borrow your drivetrain
 //! for a period of time.
 //! 
 //! ```

@@ -73,7 +73,7 @@ let mut basic = Basic {
 basic.drive_distance(&mut drivetrain, 24.0).await;
 ```
 
-This is done to allow for an extremely easy way to create custom motions. In fact, "motions" in evian are nothing more than simple `async` functions that mutably borrow you drivetrain for a period of time.
+This is done to allow for an extremely easy way to create custom motions. In fact, "motions" in evian are nothing more than simple `async` functions that mutably borrow your drivetrain for a period of time.
 
 ```rs
 /// A motion algorithm for differential drivetrains.
