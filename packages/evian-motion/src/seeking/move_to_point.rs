@@ -144,6 +144,12 @@ impl<
     T: TracksPosition + TracksHeading + TracksVelocity,
 > MoveToPointFuture<'_, L, A, T>
 {
+    /// Reverses this motion, moving to the point backwards rather than forwards.
+    pub fn reverse(&mut self) -> &mut Self {
+        self.reverse = true;
+        self
+    }
+
     /// Modifies this motion's linear feedback controller.
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
         self.linear_controller = controller;

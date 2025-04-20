@@ -47,6 +47,15 @@ evian is of course useable as a general-purpose autonomous library. The [`motion
 
 [async rust]: https://vexide.dev/docs/async-introduction/
 
+```rs
+seeking.move_to_point(dt, (24.0, 24.0)) // Move to point (24, 24) on the field...
+    .reverse() // ...backwards
+    .with_angular_kp(0.4) // ...with different PID gains
+    .without_timeout() // ...with no timeout
+    .with_linear_output_limit(Motor::V5_MAX_VOLTAGE * 0.75) // ...at 75% of max speed.
+    .await; // do it!
+```
+
 In addition, a standard wheeled tracking (odometry) implementation is provided by the [`WheeledTracking`] type in our [`tracking`] module.
 
 Motions in evian are a little "flipped" from what you might be used to in other libraries. Rather than calling motion-related methods on our drivetrain, we instead pass the drivetrain *to the motion*.

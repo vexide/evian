@@ -69,6 +69,15 @@
 //! control of your robot. evian makes heavy use of [async rust], as well builder-style
 //! modifiers for cleanly composing autonomous routines.
 //! 
+//! ```
+//! seeking.move_to_point(dt, (24.0, 24.0)) // Move to point (24, 24) on the field...
+//!     .reverse() // ...backwards
+//!     .with_angular_kp(0.4) // ...with different PID gains
+//!     .without_timeout() // ...with no timeout
+//!     .with_linear_output_limit(Motor::V5_MAX_VOLTAGE * 0.75) // ...at 75% of max speed.
+//!     .await; // do it!
+//! ```
+//! 
 //! [async rust]: https://vexide.dev/docs/async-introduction/
 //! 
 //! In addition, a standard wheeled tracking (odometry) implementation is provided by the
