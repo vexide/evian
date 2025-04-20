@@ -15,6 +15,8 @@ use core::cell::RefCell;
 use alloc::rc::Rc;
 use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 
+// MARK: Motors
+
 /// A collection of motors mounted in a differential (left/right) configuration.
 ///
 /// A differential drivetrain (also called a **tank drive** or **skid-steer**) is a robot
@@ -160,6 +162,8 @@ impl Differential {
         rtn
     }
 }
+
+// MARK: Voltages
 
 /// Left/Right Motor Voltages
 ///

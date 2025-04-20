@@ -4,6 +4,8 @@ use evian_math::Angle;
 
 use super::ControlLoop;
 
+// MARK: Linear Controller
+
 /// PID controller.
 ///
 /// The PID controller is one of the most widely used feedback control algorithms in
@@ -191,6 +193,8 @@ impl Pid {
     }
 }
 
+// MARK: Loop
+
 impl ControlLoop for Pid {
     type Input = f64;
     type Output = f64;
@@ -224,6 +228,8 @@ impl ControlLoop for Pid {
         output
     }
 }
+
+// MARK: Angular Controller
 
 /// PID controller for use in rotational systems.
 ///
@@ -340,6 +346,8 @@ impl AngularPid {
         self.output_limit = range;
     }
 }
+
+// MARK: Loop
 
 impl ControlLoop for AngularPid {
     type Input = Angle;

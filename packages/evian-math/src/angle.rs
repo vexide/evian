@@ -12,6 +12,8 @@ use vexide::{devices::position::Position, float::Float};
 pub struct Angle(f64);
 
 impl Angle {
+    // MARK: Constants
+
     /// Angle representing zero rotation.
     pub const ZERO: Self = Self(0.0);
 
@@ -39,6 +41,8 @@ impl Angle {
     /// [Machine epsilon]: https://en.wikipedia.org/wiki/Machine_epsilon
     pub const EPSILON: Self = Self(f64::EPSILON);
 
+    // MARK: Creation
+
     /// Creates a new `Angle` from a value in radians.
     #[inline]
     #[must_use]
@@ -65,6 +69,8 @@ impl Angle {
     pub const fn from_turns(turns: f64) -> Self {
         Self(turns * TAU)
     }
+
+    // MARK: Math
 
     /// Computes the arcsine of a number. Return value is in the range
     /// [-pi/2, pi/2] or NaN if the angle is outside the range [-1, 1].
@@ -237,11 +243,15 @@ impl Angle {
     }
 }
 
+// MARK: Conversion
+
 impl From<Position> for Angle {
     fn from(value: Position) -> Self {
         Self::from_degrees(value.as_degrees())
     }
 }
+
+// MARK: Operators
 
 impl Add<Angle> for Angle {
     type Output = Self;
@@ -315,6 +325,8 @@ impl Neg for Angle {
         Self(-self.0)
     }
 }
+
+// MARK: Extension Trait
 
 /// Extension trait for easily creating [`Angle`]s from floating-point
 /// number literals.

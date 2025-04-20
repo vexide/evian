@@ -16,6 +16,8 @@ pub struct Vec2<T> {
     pub y: T,
 }
 
+// MARK: Basics
+
 impl<T> Vec2<T> {
     /// Construct a `Vec2` from cartesian coordinates.
     pub const fn new(x: T, y: T) -> Self {
@@ -56,6 +58,8 @@ impl<T: Float + Copy + Mul<Output = T>> Vec2<T> {
         }
     }
 }
+
+// MARK: Math
 
 impl<T: Float + Copy> Vec2<T> {
     /// Returns this vector's angle in radians relative to the origin (0, 0).
@@ -135,6 +139,8 @@ impl<T: Float + Copy + Mul<Output = T> + Add<Output = T> + Div<Output = T>> Vec2
     }
 }
 
+// MARK: Conversion
+
 impl<T> From<(T, T)> for Vec2<T> {
     fn from(tuple: (T, T)) -> Self {
         Self {
@@ -153,15 +159,20 @@ impl<T> From<Point2<T>> for Vec2<T> {
     }
 }
 
+// MARK: Formatting
+
 impl<T: fmt::Display> fmt::Display for Vec2<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {})", self.x, self.y)
     }
 }
 
+// MARK: Operators
+
 impl<T: Add<Output = T>> Add for Vec2<T> {
     type Output = Self;
 
+    /// Performs vector addition.
     fn add(self, other: Vec2<T>) -> Self {
         Self {
             x: self.x + other.x,
@@ -173,6 +184,7 @@ impl<T: Add<Output = T>> Add for Vec2<T> {
 impl<T: Sub<Output = T>> Sub for Vec2<T> {
     type Output = Self;
 
+    /// Performs vector subtraction.
     fn sub(self, other: Vec2<T>) -> Self {
         Self {
             x: self.x - other.x,
@@ -184,6 +196,7 @@ impl<T: Sub<Output = T>> Sub for Vec2<T> {
 impl<T: Mul<Output = T> + Copy> Mul<T> for Vec2<T> {
     type Output = Self;
 
+    /// Performs scalar multiplication.
     fn mul(self, scalar: T) -> Self {
         Self {
             x: self.x * scalar,
@@ -195,6 +208,7 @@ impl<T: Mul<Output = T> + Copy> Mul<T> for Vec2<T> {
 impl<T: Div<Output = T> + Copy> Div<T> for Vec2<T> {
     type Output = Self;
 
+    /// Performs scalar division.
     fn div(self, scalar: T) -> Self {
         Self {
             x: self.x / scalar,
@@ -206,6 +220,7 @@ impl<T: Div<Output = T> + Copy> Div<T> for Vec2<T> {
 impl<T: Neg<Output = T>> Neg for Vec2<T> {
     type Output = Self;
 
+    /// Negates each component of the vector.
     fn neg(self) -> Self {
         Self {
             x: -self.x,
@@ -215,6 +230,7 @@ impl<T: Neg<Output = T>> Neg for Vec2<T> {
 }
 
 impl<T: AddAssign> AddAssign for Vec2<T> {
+    /// Performs vector add-assignment.
     fn add_assign(&mut self, other: Vec2<T>) {
         self.x += other.x;
         self.y += other.y;
@@ -222,6 +238,7 @@ impl<T: AddAssign> AddAssign for Vec2<T> {
 }
 
 impl<T: SubAssign> SubAssign for Vec2<T> {
+    /// Performs vector sub-assignment.
     fn sub_assign(&mut self, other: Vec2<T>) {
         self.x -= other.x;
         self.y -= other.y;
@@ -229,6 +246,7 @@ impl<T: SubAssign> SubAssign for Vec2<T> {
 }
 
 impl<T: MulAssign + Copy> MulAssign<T> for Vec2<T> {
+    /// Performs scalar mul-assignment.
     fn mul_assign(&mut self, scalar: T) {
         self.x *= scalar;
         self.y *= scalar;
@@ -236,6 +254,7 @@ impl<T: MulAssign + Copy> MulAssign<T> for Vec2<T> {
 }
 
 impl<T: DivAssign + Copy> DivAssign<T> for Vec2<T> {
+    /// Performs scalar div-assignment.
     fn div_assign(&mut self, scalar: T) {
         self.x /= scalar;
         self.y /= scalar;
