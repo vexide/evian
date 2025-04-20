@@ -45,9 +45,11 @@ In short, you are free to use as much or as little of evian as possible, but in 
 
 evian is of course useable as a general-purpose autonomous library. The [`motion`] module implements many of the commonplace motion control algorithms for autonomous control of your robot. evian makes heavy use of [async rust], as well builder-style modifiers for cleanly composing autonomous routines.
 
+[async rust]: https://vexide.dev/docs/async-introduction/
+
 In addition, a standard wheeled tracking (odometry) implementation is provided by the [`WheeledTracking`] type in our [`tracking`] module.
 
-Motions in evian are a little bit "flipped" from what you might be used to in other libraries. Rather than calling motion-related methods on our drivetrain, we instead pass the drivetrain *to the motion*.
+Motions in evian are a little "flipped" from what you might be used to in other libraries. Rather than calling motion-related methods on our drivetrain, we instead pass the drivetrain *to the motion*.
 
 ```rs
 let mut basic = Basic {
@@ -78,5 +80,3 @@ pub async fn fly(
     }
 }
 ```
-
-[async rust]: https://vexide.dev/docs/async-introduction/

@@ -69,10 +69,12 @@
 //! control of your robot. evian makes heavy use of [async rust], as well builder-style
 //! modifiers for cleanly composing autonomous routines.
 //! 
+//! [async rust]: https://vexide.dev/docs/async-introduction/
+//! 
 //! In addition, a standard wheeled tracking (odometry) implementation is provided by the
 //! [`WheeledTracking`] type in our [`tracking`] module.
 //! 
-//! Motions in evian are a little bit "flipped" from what you might be used to in other
+//! Motions in evian are a little "flipped" from what you might be used to in other
 //! libraries. Rather than calling motion-related methods on our drivetrain, we instead
 //! pass the drivetrain *to the motion*.
 //! 
@@ -106,8 +108,6 @@
 //!     }
 //! }
 //! ```
-//! 
-//! [async rust]: https://vexide.dev/docs/async-introduction/
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
