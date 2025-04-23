@@ -1,6 +1,8 @@
 //! Control loops.
 
 mod bang_bang;
+mod cascade;
+mod combine;
 mod feedforward;
 mod pid;
 mod tbh;
@@ -8,9 +10,11 @@ mod tbh;
 use core::time::Duration;
 
 pub use bang_bang::BangBang;
-pub use feedforward::DcMotorFeedforward;
+pub use cascade::Cascade;
+pub use combine::Combine;
 pub use pid::{AngularPid, Pid};
 pub use tbh::TakeBackHalf;
+pub use feedforward::MotorFeedforward;
 
 /// Functionality for a generic control loop.
 ///

@@ -5,6 +5,7 @@ use crate::loops::ControlLoop;
 use super::Feedback;
 
 /// Bang-bang controller.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BangBang {
     magnitude: f64,
 }
