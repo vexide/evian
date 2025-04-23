@@ -28,11 +28,11 @@ pub struct State {
 }
 
 /// Moves a drivetrain along a set of discrete waypoints using pure pursuit.
-pub struct PurePursuitFuture<
-    'a,
+pub struct PurePursuitFuture<'a, T, I>
+where
     T: TracksPosition + TracksHeading,
     I: Iterator<Item = Waypoint> + Unpin,
-> {
+{
     pub(crate) drivetrain: &'a mut Drivetrain<Differential, T>,
 
     /// Internal future state ("local variables").
@@ -46,8 +46,10 @@ pub struct PurePursuitFuture<
 
 // MARK: Future Poll
 
-impl<T: TracksPosition + TracksHeading, I: Iterator<Item = Waypoint> + Unpin> Future
-    for PurePursuitFuture<'_, T, I>
+impl<T, I> Future for PurePursuitFuture<'_, T, I>
+where
+    T: TracksPosition + TracksHeading,
+    I: Iterator<Item = Waypoint> + Unpin,
 {
     type Output = ();
 
@@ -201,8 +203,10 @@ impl<T: TracksPosition + TracksHeading, I: Iterator<Item = Waypoint> + Unpin> Fu
 
 // MARK: Modifiers
 
-impl<T: TracksPosition + TracksHeading, I: Iterator<Item = Waypoint> + Unpin>
-    PurePursuitFuture<'_, T, I>
+impl<T, I> PurePursuitFuture<'_, T, I>
+where
+    T: TracksPosition + TracksHeading,
+    I: Iterator<Item = Waypoint> + Unpin,
 {
     /// Modifies this motion's track width.
     pub const fn with_track_width(&mut self, track_width: f64) -> &mut Self {

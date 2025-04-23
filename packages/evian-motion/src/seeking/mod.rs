@@ -2,10 +2,7 @@
 
 use core::time::Duration;
 
-use evian_control::{
-    Tolerances,
-    loops::Feedback,
-};
+use evian_control::{Tolerances, loops::Feedback};
 use evian_drivetrain::Drivetrain;
 use evian_drivetrain::differential::Differential;
 use evian_math::{Angle, Vec2};
@@ -27,10 +24,11 @@ pub use move_to_point::MoveToPointFuture;
 /// - [`move_to_point`](Seeking::move_to_point), which moves the drivetrain to a desired point.
 /// - [`boomerang`](Seeking::move_to_point), which moves the drivetrain to a desired pose (including heading).
 #[derive(PartialEq)]
-pub struct Seeking<
+pub struct Seeking<L, A>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
     A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
-> {
+{
     /// Linear (forward driving) feedback controller.
     pub linear_controller: L,
 
@@ -47,10 +45,10 @@ pub struct Seeking<
     pub timeout: Option<Duration>,
 }
 
-impl<
+impl<L, A> Seeking<L, A>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
     A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
-> Seeking<L, A>
 {
     /// Moves the robot to a 2D point.
     ///

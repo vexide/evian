@@ -31,12 +31,12 @@ pub(crate) struct State {
 }
 
 /// Turns the robot to face a point on the field.
-pub struct TurnToPointFuture<
-    'a,
+pub struct TurnToPointFuture<'a, L, A, T>
+where
     L: ControlLoop<State = f64, Signal = f64> + Unpin,
     A: ControlLoop<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
-> {
+{
     pub(crate) point: Vec2<f64>,
     pub(crate) timeout: Option<Duration>,
     pub(crate) linear_tolerances: Tolerances,
@@ -51,11 +51,11 @@ pub struct TurnToPointFuture<
 
 // MARK: Future Poll
 
-impl<
+impl<L, A, T> Future for TurnToPointFuture<'_, L, A, T>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin,
     A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
-> Future for TurnToPointFuture<'_, L, A, T>
 {
     type Output = ();
 
@@ -134,11 +134,11 @@ impl<
 
 // MARK: Generic Modifiers
 
-impl<
+impl<L, A, T> TurnToPointFuture<'_, L, A, T>
+where
     L: ControlLoop<State = f64, Signal = f64> + Unpin,
     A: ControlLoop<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
-> TurnToPointFuture<'_, L, A, T>
 {
     /// Modifies this motion's linear feedback controller.
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
@@ -251,10 +251,10 @@ impl<
 
 // MARK: Linear PID Modifiers
 
-impl<
+impl<A, T> TurnToPointFuture<'_, Pid, A, T>
+where
     A: ControlLoop<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
-> TurnToPointFuture<'_, Pid, A, T>
 {
     /// Modifies this motion's linear PID gains.
     pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
@@ -308,10 +308,10 @@ impl<
 
 // MARK: Angular PID Modifiers
 
-impl<
+impl<L, T> TurnToPointFuture<'_, L, AngularPid, T>
+where
     L: ControlLoop<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
-> TurnToPointFuture<'_, L, AngularPid, T>
 {
     /// Modifies this motion's angular PID gains.
     pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {

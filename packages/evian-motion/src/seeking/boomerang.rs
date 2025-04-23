@@ -28,12 +28,12 @@ pub struct State {
 }
 
 /// Boomerang move-to-pose algorithm.
-pub struct BoomerangFuture<
-    'a,
+pub struct BoomerangFuture<'a, L, A, T>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin,
     A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
-> {
+{
     pub(crate) target_point: Vec2<f64>,
     pub(crate) target_heading: Angle,
     pub(crate) lead: f64,
@@ -48,11 +48,11 @@ pub struct BoomerangFuture<
 
 // MARK: Future Poll
 
-impl<
+impl<L, A, T> Future for BoomerangFuture<'_, L, A, T>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin,
     A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
-> Future for BoomerangFuture<'_, L, A, T>
 {
     type Output = ();
 
@@ -128,11 +128,11 @@ impl<
 
 // MARK: Generic Modifiers
 
-impl<
+impl<L, A, T> BoomerangFuture<'_, L, A, T>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin,
     A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
-> BoomerangFuture<'_, L, A, T>
 {
     /// Modifies this motion's linear feedback controller.
     pub fn with_linear_controller(&mut self, controller: L) -> &mut Self {
@@ -203,10 +203,10 @@ impl<
 
 // MARK: Linear PID Modifiers
 
-impl<
+impl<A, T> BoomerangFuture<'_, Pid, A, T>
+where
     A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
-> BoomerangFuture<'_, Pid, A, T>
 {
     /// Modifies this motion's linear PID gains.
     pub const fn with_linear_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
@@ -260,10 +260,10 @@ impl<
 
 // MARK: Angular PID Modifiers
 
-impl<
+impl<L, T> BoomerangFuture<'_, L, AngularPid, T>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
-> BoomerangFuture<'_, L, AngularPid, T>
 {
     /// Modifies this motion's angular PID gains.
     pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {

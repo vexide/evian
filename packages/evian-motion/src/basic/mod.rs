@@ -15,10 +15,11 @@ pub use turn_to_point::TurnToPointFuture;
 
 /// Feedback-driven driving and turning.
 #[derive(PartialEq)]
-pub struct Basic<
+pub struct Basic<L, A>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
     A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
-> {
+{
     /// Linear (forward driving) feedback controller.
     pub linear_controller: L,
 
@@ -35,10 +36,10 @@ pub struct Basic<
     pub timeout: Option<Duration>,
 }
 
-impl<
+impl<L, A> Basic<L, A>
+where
     L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
     A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
-> Basic<L, A>
 {
     /// Moves the robot forwards by a given distance (measured in wheel units) while
     /// turning to face a heading.
