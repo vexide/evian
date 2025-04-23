@@ -31,8 +31,8 @@ pub(crate) struct State {
 /// Moves the robot to a point using two seeking feedback controllers.
 pub struct MoveToPointFuture<'a, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     pub(crate) target_point: Vec2<f64>,
@@ -49,8 +49,8 @@ where
 
 impl<L, A, T> Future for MoveToPointFuture<'_, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     type Output = ();
@@ -139,8 +139,8 @@ where
 
 impl<L, A, T> MoveToPointFuture<'_, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Reverses this motion, moving to the point backwards rather than forwards.
@@ -220,7 +220,7 @@ where
 
 impl<A, T> MoveToPointFuture<'_, Pid, A, T>
 where
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -277,7 +277,7 @@ where
 
 impl<L, T> MoveToPointFuture<'_, L, AngularPid, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's angular PID gains.

@@ -23,10 +23,10 @@ pub use feedforward::MotorFeedforward;
 /// reach its desired value (the "setpoint").
 pub trait ControlLoop {
     /// Representation of the system's state.
-    type State;
+    type Input;
 
     /// Control signal produced by the loop.
-    type Signal;
+    type Output;
 }
 
 /// Feedback ("closed-loop") controller.
@@ -34,14 +34,14 @@ pub trait Feedback: ControlLoop {
     /// Updates the feedforward controller's setpoint, producing a new control signal.
     fn update(
         &mut self,
-        measurement: Self::State,
-        setpoint: Self::State,
+        measurement: Self::Input,
+        setpoint: Self::Input,
         dt: Duration,
-    ) -> Self::Signal;
+    ) -> Self::Output;
 }
 
 /// Feedforward ("open-loop") controller.
 pub trait Feedforward: ControlLoop {
     /// Updates the feedforward controller's setpoint, producing a new control signal.
-    fn update(&mut self, setpoint: Self::State, dt: Duration) -> Self::Signal;
+    fn update(&mut self, setpoint: Self::Input, dt: Duration) -> Self::Output;
 }

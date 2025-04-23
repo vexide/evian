@@ -28,8 +28,8 @@ impl BangBang {
 }
 
 impl ControlLoop for BangBang {
-    type State = f64;
-    type Signal = f64;
+    type Input = f64;
+    type Output = f64;
 }
 
 impl Feedback for BangBang {

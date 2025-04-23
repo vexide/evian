@@ -33,8 +33,8 @@ pub(crate) struct State {
 /// Turns the robot to face a point on the field.
 pub struct TurnToPointFuture<'a, L, A, T>
 where
-    L: ControlLoop<State = f64, Signal = f64> + Unpin,
-    A: ControlLoop<State = Angle, Signal = f64> + Unpin,
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     pub(crate) point: Vec2<f64>,
@@ -53,8 +53,8 @@ where
 
 impl<L, A, T> Future for TurnToPointFuture<'_, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
 {
     type Output = ();
@@ -136,8 +136,8 @@ where
 
 impl<L, A, T> TurnToPointFuture<'_, L, A, T>
 where
-    L: ControlLoop<State = f64, Signal = f64> + Unpin,
-    A: ControlLoop<State = Angle, Signal = f64> + Unpin,
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear feedback controller.
@@ -253,7 +253,7 @@ where
 
 impl<A, T> TurnToPointFuture<'_, Pid, A, T>
 where
-    A: ControlLoop<State = Angle, Signal = f64> + Unpin,
+    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -310,7 +310,7 @@ where
 
 impl<L, T> TurnToPointFuture<'_, L, AngularPid, T>
 where
-    L: ControlLoop<State = f64, Signal = f64> + Unpin,
+    L: ControlLoop<Input = f64, Output = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's angular PID gains.

@@ -86,8 +86,8 @@ impl MotorFeedforward {
 }
 
 impl ControlLoop for MotorFeedforward {
-    type State = MotorFeedforwardState;
-    type Signal = f64;
+    type Input = MotorFeedforwardState;
+    type Output = f64;
 }
 
 impl Feedforward for MotorFeedforward {
@@ -175,8 +175,8 @@ impl ArmFeedforward {
 }
 
 impl ControlLoop for ArmFeedforward {
-    type State = ArmFeedforwardState;
-    type Signal = f64;
+    type Input = ArmFeedforwardState;
+    type Output = f64;
 }
 
 impl Feedforward for ArmFeedforward {
@@ -265,8 +265,8 @@ impl ElevatorFeedforward {
 }
 
 impl ControlLoop for ElevatorFeedforward {
-    type State = ElevatorFeedforwardState;
-    type Signal = f64;
+    type Input = ElevatorFeedforwardState;
+    type Output = f64;
 }
 
 impl Feedforward for ElevatorFeedforward {

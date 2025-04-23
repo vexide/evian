@@ -33,8 +33,8 @@ pub(crate) struct State {
 /// Drives the robot forward or backwards for a distance at a given heading.
 pub struct DriveDistanceAtHeadingFuture<'a, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     pub(crate) target_distance: f64,
@@ -54,8 +54,8 @@ where
 
 impl<L, A, T> Future for DriveDistanceAtHeadingFuture<'_, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     type Output = ();
@@ -137,8 +137,8 @@ where
 
 impl<L, A, T> DriveDistanceAtHeadingFuture<'_, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear feedback controller.
@@ -254,7 +254,7 @@ where
 
 impl<A, T> DriveDistanceAtHeadingFuture<'_, Pid, A, T>
 where
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -311,7 +311,7 @@ where
 
 impl<L, T> DriveDistanceAtHeadingFuture<'_, L, AngularPid, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's angular PID gains.

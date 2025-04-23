@@ -30,8 +30,8 @@ pub struct State {
 /// Boomerang move-to-pose algorithm.
 pub struct BoomerangFuture<'a, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     pub(crate) target_point: Vec2<f64>,
@@ -50,8 +50,8 @@ where
 
 impl<L, A, T> Future for BoomerangFuture<'_, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     type Output = ();
@@ -130,8 +130,8 @@ where
 
 impl<L, A, T> BoomerangFuture<'_, L, A, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear feedback controller.
@@ -205,7 +205,7 @@ where
 
 impl<A, T> BoomerangFuture<'_, Pid, A, T>
 where
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -262,7 +262,7 @@ where
 
 impl<L, T> BoomerangFuture<'_, L, AngularPid, T>
 where
-    L: Feedback<State = f64, Signal = f64> + Unpin,
+    L: Feedback<Input = f64, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's angular PID gains.

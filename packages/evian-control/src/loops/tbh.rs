@@ -34,8 +34,8 @@ impl TakeBackHalf {
 }
 
 impl ControlLoop for TakeBackHalf {
-    type State = f64;
-    type Signal = f64;
+    type Input = f64;
+    type Output = f64;
 }
 
 impl Feedback for TakeBackHalf {

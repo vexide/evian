@@ -196,8 +196,8 @@ impl Pid {
 // MARK: Loop
 
 impl ControlLoop for Pid {
-    type State = f64;
-    type Signal = f64;
+    type Input = f64;
+    type Output = f64;
 }
 
 impl Feedback for Pid {
@@ -352,8 +352,8 @@ impl AngularPid {
 // MARK: Loop
 
 impl ControlLoop for AngularPid {
-    type State = Angle;
-    type Signal = f64;
+    type Input = Angle;
+    type Output = f64;
 }
 
 impl Feedback for AngularPid {
