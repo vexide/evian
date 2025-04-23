@@ -2,6 +2,8 @@ use core::time::Duration;
 
 use crate::loops::ControlLoop;
 
+use super::Feedback;
+
 /// Bang-bang controller.
 pub struct BangBang {
     magnitude: f64,
@@ -25,15 +27,12 @@ impl BangBang {
 }
 
 impl ControlLoop for BangBang {
-    type Input = f64;
-    type Output = f64;
+    type State = f64;
+    type Signal = f64;
+}
 
-    fn update(
-        &mut self,
-        measurement: Self::Input,
-        setpoint: Self::Input,
-        _dt: Duration,
-    ) -> Self::Output {
+impl Feedback for BangBang {
+    fn update(&mut self, measurement: f64, setpoint: f64, _dt: Duration) -> f64 {
         if measurement < setpoint {
             self.magnitude
         } else {

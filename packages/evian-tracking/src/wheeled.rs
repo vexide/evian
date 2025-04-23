@@ -117,7 +117,7 @@ impl WheeledTracking {
         const NUM_FORWARD: usize,
         const NUM_SIDEWAYS: usize,
     >(
-        origin: Vec2<f64>,
+        origin: impl Into<Vec2<f64>>,
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         sideways_wheels: [TrackingWheel<U>; NUM_SIDEWAYS],
@@ -206,7 +206,7 @@ impl WheeledTracking {
         };
 
         let data = Rc::new(RefCell::new(TrackingData {
-            position: origin,
+            position: origin.into(),
             heading_offset: heading,
             raw_heading: initial_raw_heading,
             ..Default::default()
@@ -230,7 +230,7 @@ impl WheeledTracking {
 
     /// Creates a new wheeled tracking system with no sideways tracking wheels.
     pub fn forward_only<T: RotarySensor + 'static, const NUM_FORWARD: usize>(
-        origin: Vec2<f64>,
+        origin: impl Into<Vec2<f64>>,
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         imu: Option<InertialSensor>,

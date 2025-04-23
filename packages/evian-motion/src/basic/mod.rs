@@ -2,7 +2,7 @@
 
 use core::time::Duration;
 
-use evian_control::{Tolerances, loops::ControlLoop};
+use evian_control::{Tolerances, loops::Feedback};
 use evian_drivetrain::{Drivetrain, differential::Differential};
 use evian_math::{Angle, Vec2};
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
@@ -16,8 +16,8 @@ pub use turn_to_point::TurnToPointFuture;
 /// Feedback-driven driving and turning.
 #[derive(PartialEq)]
 pub struct Basic<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
+    L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
+    A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
 > {
     /// Linear (forward driving) feedback controller.
     pub linear_controller: L,
@@ -36,8 +36,8 @@ pub struct Basic<
 }
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin + Clone,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin + Clone,
+    L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
+    A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
 > Basic<L, A>
 {
     /// Moves the robot forwards by a given distance (measured in wheel units) while

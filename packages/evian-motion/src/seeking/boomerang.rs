@@ -13,7 +13,7 @@ use vexide::{
 
 use evian_control::{
     Tolerances,
-    loops::{AngularPid, ControlLoop, Pid},
+    loops::{AngularPid, Feedback, Pid},
 };
 use evian_drivetrain::Drivetrain;
 use evian_drivetrain::differential::{Differential, Voltages};
@@ -30,8 +30,8 @@ pub struct State {
 /// Boomerang move-to-pose algorithm.
 pub struct BoomerangFuture<
     'a,
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 > {
     pub(crate) target_point: Vec2<f64>,
@@ -49,8 +49,8 @@ pub struct BoomerangFuture<
 // MARK: Future Poll
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 > Future for BoomerangFuture<'_, L, A, T>
 {
@@ -129,8 +129,8 @@ impl<
 // MARK: Generic Modifiers
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 > BoomerangFuture<'_, L, A, T>
 {
@@ -204,7 +204,7 @@ impl<
 // MARK: Linear PID Modifiers
 
 impl<
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 > BoomerangFuture<'_, Pid, A, T>
 {
@@ -261,7 +261,7 @@ impl<
 // MARK: Angular PID Modifiers
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 > BoomerangFuture<'_, L, AngularPid, T>
 {

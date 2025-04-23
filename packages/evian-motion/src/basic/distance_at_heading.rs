@@ -12,7 +12,7 @@ use vexide::{
 
 use evian_control::{
     Tolerances,
-    loops::{AngularPid, ControlLoop, Pid},
+    loops::{AngularPid, Feedback, Pid},
 };
 use evian_drivetrain::{
     Drivetrain,
@@ -33,8 +33,8 @@ pub(crate) struct State {
 /// Drives the robot forward or backwards for a distance at a given heading.
 pub struct DriveDistanceAtHeadingFuture<
     'a,
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 > {
     pub(crate) target_distance: f64,
@@ -53,8 +53,8 @@ pub struct DriveDistanceAtHeadingFuture<
 // MARK: Future Poll
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 > Future for DriveDistanceAtHeadingFuture<'_, L, A, T>
 {
@@ -136,8 +136,8 @@ impl<
 // MARK: Generic Modifiers
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 > DriveDistanceAtHeadingFuture<'_, L, A, T>
 {
@@ -253,7 +253,7 @@ impl<
 // MARK: Linear PID Modifiers
 
 impl<
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 > DriveDistanceAtHeadingFuture<'_, Pid, A, T>
 {
@@ -310,7 +310,7 @@ impl<
 // MARK: Angular PID Modifiers
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 > DriveDistanceAtHeadingFuture<'_, L, AngularPid, T>
 {

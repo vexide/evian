@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use crate::loops::ControlLoop;
+use crate::loops::{ControlLoop, Feedback};
 
 /// Take-back-half flywheel velocity controller.
 pub struct TakeBackHalf {
@@ -33,15 +33,12 @@ impl TakeBackHalf {
 }
 
 impl ControlLoop for TakeBackHalf {
-    type Input = f64;
-    type Output = f64;
+    type State = f64;
+    type Signal = f64;
+}
 
-    fn update(
-        &mut self,
-        measurement: Self::Input,
-        setpoint: Self::Input,
-        _dt: Duration,
-    ) -> Self::Output {
+impl Feedback for TakeBackHalf {
+    fn update(&mut self, measurement: f64, setpoint: f64, _dt: Duration) -> f64 {
         let error = setpoint - measurement;
 
         self.integral += error * self.kh;

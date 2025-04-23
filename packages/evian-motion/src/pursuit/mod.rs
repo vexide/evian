@@ -5,10 +5,7 @@ extern crate alloc;
 use core::time::Duration;
 
 use alloc::vec::Vec;
-use evian_drivetrain::{
-    Drivetrain,
-    differential::Differential,
-};
+use evian_drivetrain::{Drivetrain, differential::Differential};
 use evian_math::Vec2;
 use evian_tracking::{TracksHeading, TracksPosition};
 

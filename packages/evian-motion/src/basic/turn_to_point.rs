@@ -12,7 +12,7 @@ use vexide::{
 
 use evian_control::{
     Tolerances,
-    loops::{AngularPid, ControlLoop, Pid},
+    loops::{AngularPid, ControlLoop, Feedback, Pid},
 };
 use evian_drivetrain::{
     Drivetrain,
@@ -33,8 +33,8 @@ pub(crate) struct State {
 /// Turns the robot to face a point on the field.
 pub struct TurnToPointFuture<
     'a,
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: ControlLoop<State = f64, Signal = f64> + Unpin,
+    A: ControlLoop<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 > {
     pub(crate) point: Vec2<f64>,
@@ -52,8 +52,8 @@ pub struct TurnToPointFuture<
 // MARK: Future Poll
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
 > Future for TurnToPointFuture<'_, L, A, T>
 {
@@ -135,8 +135,8 @@ impl<
 // MARK: Generic Modifiers
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: ControlLoop<State = f64, Signal = f64> + Unpin,
+    A: ControlLoop<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 > TurnToPointFuture<'_, L, A, T>
 {
@@ -252,7 +252,7 @@ impl<
 // MARK: Linear PID Modifiers
 
 impl<
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    A: ControlLoop<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 > TurnToPointFuture<'_, Pid, A, T>
 {
@@ -293,13 +293,13 @@ impl<
         self
     }
 
-    /// Modifies this motion's linear output limit.
+    /// Modifies this motion's linear Signal limit.
     pub const fn with_linear_output_limit(&mut self, limit: f64) -> &mut Self {
         self.linear_controller.set_output_limit(Some(limit));
         self
     }
 
-    /// Removes this motion's linear output limit.
+    /// Removes this motion's linear Signal limit.
     pub const fn without_linear_output_limit(&mut self) -> &mut Self {
         self.linear_controller.set_output_limit(None);
         self
@@ -309,7 +309,7 @@ impl<
 // MARK: Angular PID Modifiers
 
 impl<
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    L: ControlLoop<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 > TurnToPointFuture<'_, L, AngularPid, T>
 {
@@ -344,7 +344,7 @@ impl<
         self
     }
 
-    /// Modifies this motion's angular output limit.
+    /// Modifies this motion's angular Signal limit.
     pub const fn with_angular_output_limit(&mut self, limit: f64) -> &mut Self {
         self.angular_controller.set_output_limit(Some(limit));
         self
@@ -356,7 +356,7 @@ impl<
         self
     }
 
-    /// Removes this motion's angular output limit.
+    /// Removes this motion's angular Signal limit.
     pub const fn without_angular_output_limit(&mut self) -> &mut Self {
         self.angular_controller.set_output_limit(None);
         self

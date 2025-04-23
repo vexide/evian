@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use evian_math::Angle;
 
-use super::ControlLoop;
+use super::{ControlLoop, Feedback};
 
 // MARK: Linear Controller
 
@@ -196,9 +196,11 @@ impl Pid {
 // MARK: Loop
 
 impl ControlLoop for Pid {
-    type Input = f64;
-    type Output = f64;
+    type State = f64;
+    type Signal = f64;
+}
 
+impl Feedback for Pid {
     fn update(&mut self, measurement: f64, setpoint: f64, dt: Duration) -> f64 {
         let error = setpoint - measurement;
 
@@ -350,9 +352,11 @@ impl AngularPid {
 // MARK: Loop
 
 impl ControlLoop for AngularPid {
-    type Input = Angle;
-    type Output = f64;
+    type State = Angle;
+    type Signal = f64;
+}
 
+impl Feedback for AngularPid {
     fn update(&mut self, measurement: Angle, setpoint: Angle, dt: Duration) -> f64 {
         let error = (setpoint - measurement).wrapped();
 

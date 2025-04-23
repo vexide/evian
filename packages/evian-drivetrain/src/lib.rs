@@ -1,21 +1,21 @@
 //! Robot drivetrain configurations.
-//! 
+//!
 //! This crate provides types for describing and modeling different mobile robot drivetrain
 //! configurations. A *drivetrain* in evian is the combination of hardware components (e.g. motors,
 //! wheels, and sensors) that enables a robot to both *move* and *track its motion*. This importantly
-//! means that drivetrains are a collection of **both** motors and sensors. 
-//! 
+//! means that drivetrains are a collection of **both** motors and sensors.
+//!
 //! At the heart of this crate is the [`Drivetrain`] struct, which bundles together some motors and a
 //! *tracking system* — a system that measures something about the drivetrain as it moves around.
 //! The [`Drivetrain`] type could represent many different types of robot drivetrains depending on how
 //! the motor and tracking logic is implemented.
-//! 
+//!
 //! # Supported Configurations
-//! 
+//!
 //! At the moment, this crate currently provides built-in support for [differential drivetrains],
 //! however the [`Drivetrain`] struct could in theory be configured to accept any arrangement of motors
 //! with your own custom type if you require something else.
-//! 
+//!
 //! [differential drivetrains]: crate::differential
 
 #![no_std]

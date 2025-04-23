@@ -81,20 +81,28 @@ async fn main(peripherals: Peripherals) {
         Motor::new(peripherals.port_19, Gearset::Blue, Direction::Forward),
     ];
 
-    Robot {
-        drivetrain: Drivetrain::new(
-            Differential::from_shared(left_motors.clone(), right_motors.clone()),
-            WheeledTracking::forward_only(
-                Vec2::default(),
-                90.0.deg(),
-                [
-                    TrackingWheel::new(left_motors, 2.75, -5.75, None),
-                    TrackingWheel::new(right_motors, 2.75, 5.25, None),
-                ],
-                None,
-            ),
+    let mut basic = Basic {
+        linear_controller: LINEAR_PID,
+        angular_controller: ANGULAR_PID,
+        linear_tolerances: LINEAR_TOLERANCES,
+        angular_tolerances: ANGULAR_TOLERANCES,
+        timeout: Some(Duration::from_secs(10)),
+    };
+
+    let mut drivetrain = Drivetrain::new(
+        Differential::from_shared(left_motors.clone(), right_motors.clone()),
+        WheeledTracking::forward_only(
+            Vec2::default(),
+            90.0.deg(),
+            [
+                TrackingWheel::new(left_motors, 2.75, -5.75, None),
+                TrackingWheel::new(right_motors, 2.75, 5.25, None),
+            ],
+            None,
         ),
-    }
-    .compete()
-    .await;
+    );
+
+    basic.turn_to_heading(&mut drivetrain, 0.0.deg()).await;
+
+    Robot { drivetrain }.compete().await;
 }

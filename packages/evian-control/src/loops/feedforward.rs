@@ -1,5 +1,12 @@
 use crate::loops::ControlLoop;
 
+use super::Feedforward;
+
+pub struct DcMotorState {
+    pub velocity: f64,
+    pub acceleration: f64,
+}
+
 /// Ideal DC motor feedforward controller.
 ///
 /// This is a open-loop velocity controller that computes the voltage to
@@ -7,13 +14,11 @@ use crate::loops::ControlLoop;
 ///
 /// The controller is implemented according to the following model:
 ///
-/// `V = Kₛ sign(ω) + Kᵥ ω + Kₐ α``
+/// `V = Kₛ sign(ω) + Kᵥ ω + Kₐ α`
 pub struct DcMotorFeedforward {
     ks: f64,
     kv: f64,
     ka: f64,
-
-    target_acceleration: f64,
 }
 
 impl DcMotorFeedforward {
@@ -25,13 +30,8 @@ impl DcMotorFeedforward {
     /// - `kv` - Feedforward constant for velocity compensation.
     /// - `ka` - Feedforward constant for acceleration compensation.
     /// - `target_acceleration` - Feedforward constant for the target acceleration.
-    pub fn new(ks: f64, kv: f64, ka: f64, target_acceleration: f64) -> Self {
-        Self {
-            ks,
-            kv,
-            ka,
-            target_acceleration,
-        }
+    pub fn new(ks: f64, kv: f64, ka: f64) -> Self {
+        Self { ks, kv, ka }
     }
 
     /// Get the current PID gains as a tuple (`ks`, `kv`, `ka`).
@@ -82,15 +82,14 @@ impl DcMotorFeedforward {
 }
 
 impl ControlLoop for DcMotorFeedforward {
-    type Input = f64;
-    type Output = f64;
+    type State = DcMotorState;
+    type Signal = f64;
+}
 
-    fn update(
-        &mut self,
-        _measurement: Self::Input,
-        setpoint: Self::Input,
-        _dt: core::time::Duration,
-    ) -> Self::Output {
-        self.ks * setpoint.signum() + self.kv * setpoint + self.ka * self.target_acceleration
+impl Feedforward for DcMotorFeedforward {
+    fn update(&mut self, setpoint: DcMotorState, _dt: core::time::Duration) -> f64 {
+        self.ks * setpoint.velocity.signum()
+            + self.kv * setpoint.velocity
+            + self.ka * setpoint.acceleration
     }
 }
