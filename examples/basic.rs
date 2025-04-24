@@ -31,11 +31,6 @@ struct Robot {
 
 impl Compete for Robot {
     async fn autonomous(&mut self) {
-        // let cascade = Cascade::<Pid, MotorFeedforward>::new(
-        //     Pid::new(0.0, 0.0, 0.0, None),
-        //     MotorFeedforward::new(0.0, 0.0, 0.0),
-        // );
-
         let dt = &mut self.drivetrain;
         let mut seeking = Seeking {
             linear_controller: LINEAR_PID,
@@ -54,7 +49,7 @@ impl Compete for Robot {
 
         // Drive forwards at 60% speed.
         basic.drive_distance(dt, 24.0)
-            .with_angular_kp(0.5)
+            .with_linear_output_limit(6.0)
             .await;
 
         // Turn to 0 degrees heading.
