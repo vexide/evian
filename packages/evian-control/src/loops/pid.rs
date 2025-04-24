@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use evian_math::Angle;
 
-use super::{ControlLoop, Feedback};
+use super::{ControlLoop, FeedbackMarker, Feedback};
 
 // MARK: Linear Controller
 
@@ -196,6 +196,7 @@ impl Pid {
 // MARK: Loop
 
 impl ControlLoop for Pid {
+    type Marker = FeedbackMarker;
     type Input = f64;
     type Output = f64;
 }
@@ -352,6 +353,7 @@ impl AngularPid {
 // MARK: Loop
 
 impl ControlLoop for AngularPid {
+    type Marker = FeedbackMarker;
     type Input = Angle;
     type Output = f64;
 }

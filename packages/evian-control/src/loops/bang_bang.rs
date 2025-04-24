@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use crate::loops::ControlLoop;
 
-use super::Feedback;
+use super::{FeedbackMarker, Feedback};
 
 /// Bang-bang controller.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -28,6 +28,7 @@ impl BangBang {
 }
 
 impl ControlLoop for BangBang {
+    type Marker = FeedbackMarker;
     type Input = f64;
     type Output = f64;
 }

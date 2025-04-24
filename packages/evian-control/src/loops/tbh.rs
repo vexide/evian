@@ -2,6 +2,8 @@ use core::time::Duration;
 
 use crate::loops::{ControlLoop, Feedback};
 
+use super::FeedbackMarker;
+
 /// Take-back-half flywheel velocity controller.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TakeBackHalf {
@@ -34,6 +36,7 @@ impl TakeBackHalf {
 }
 
 impl ControlLoop for TakeBackHalf {
+    type Marker = FeedbackMarker;
     type Input = f64;
     type Output = f64;
 }

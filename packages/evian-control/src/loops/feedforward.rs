@@ -2,10 +2,10 @@ use evian_math::Angle;
 
 use crate::loops::ControlLoop;
 
-use super::Feedforward;
+use super::{Feedforward, FeedforwardMarker};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct MotorFeedforwardState {
+pub struct MotorFeedforwardSetpoint {
     pub velocity: f64,
     pub acceleration: f64,
 }
@@ -86,19 +86,20 @@ impl MotorFeedforward {
 }
 
 impl ControlLoop for MotorFeedforward {
-    type Input = MotorFeedforwardState;
+    type Marker = FeedforwardMarker;
+    type Input = MotorFeedforwardSetpoint;
     type Output = f64;
 }
 
 impl Feedforward for MotorFeedforward {
-    fn update(&mut self, setpoint: MotorFeedforwardState, _dt: core::time::Duration) -> f64 {
+    fn update(&mut self, setpoint: MotorFeedforwardSetpoint, _dt: core::time::Duration) -> f64 {
         self.ks * setpoint.velocity.signum()
             + self.kv * setpoint.velocity
             + self.ka * setpoint.acceleration
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct ArmFeedforwardState {
+pub struct ArmFeedforwardSetpoint {
     pub position: Angle,
     pub velocity: f64,
     pub acceleration: f64,
@@ -175,12 +176,13 @@ impl ArmFeedforward {
 }
 
 impl ControlLoop for ArmFeedforward {
-    type Input = ArmFeedforwardState;
+    type Marker = FeedforwardMarker;
+    type Input = ArmFeedforwardSetpoint;
     type Output = f64;
 }
 
 impl Feedforward for ArmFeedforward {
-    fn update(&mut self, setpoint: ArmFeedforwardState, _dt: core::time::Duration) -> f64 {
+    fn update(&mut self, setpoint: ArmFeedforwardSetpoint, _dt: core::time::Duration) -> f64 {
         self.kg * setpoint.position.cos()
             + self.ks * setpoint.velocity.signum()
             + self.kv * setpoint.velocity
@@ -189,7 +191,7 @@ impl Feedforward for ArmFeedforward {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct ElevatorFeedforwardState {
+pub struct ElevatorFeedforwardSetpoint {
     pub velocity: f64,
     pub acceleration: f64,
 }
@@ -265,12 +267,13 @@ impl ElevatorFeedforward {
 }
 
 impl ControlLoop for ElevatorFeedforward {
-    type Input = ElevatorFeedforwardState;
+    type Marker = FeedforwardMarker;
+    type Input = ElevatorFeedforwardSetpoint;
     type Output = f64;
 }
 
 impl Feedforward for ElevatorFeedforward {
-    fn update(&mut self, setpoint: ElevatorFeedforwardState, _dt: core::time::Duration) -> f64 {
+    fn update(&mut self, setpoint: ElevatorFeedforwardSetpoint, _dt: core::time::Duration) -> f64 {
         self.kg
             + self.ks * setpoint.velocity.signum()
             + self.kv * setpoint.velocity
