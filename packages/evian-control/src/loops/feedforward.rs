@@ -1,12 +1,20 @@
+//! Common feedforward (open-loop) controllers.
+
 use evian_math::Angle;
 
 use crate::loops::ControlLoop;
 
 use super::{Feedforward, FeedforwardMarker};
 
+/// Desired setpoint of a DC motor.
+/// 
+/// Describes the setpoint required to control a motor.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MotorFeedforwardSetpoint {
+    /// Desired motor velocity.
     pub velocity: f64,
+
+    /// Desired instantaneous motor acceleration.
     pub acceleration: f64,
 }
 
@@ -98,10 +106,19 @@ impl Feedforward for MotorFeedforward {
             + self.ka * setpoint.acceleration
     }
 }
+
+/// Desired setpoint of a rotating arm.
+/// 
+/// Describes the setpoint required to control a rotating arm.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ArmFeedforwardSetpoint {
+    /// Desired position/angle of the arm.
     pub position: Angle,
+
+    /// Desired velocity of the arm.
     pub velocity: f64,
+
+    /// Desired acceleration of the arm.
     pub acceleration: f64,
 }
 
@@ -114,6 +131,7 @@ pub struct ArmFeedforward {
 }
 
 impl ArmFeedforward {
+    /// Creates a new arm feedforward controller.
     pub const fn new(ks: f64, kg: f64, kv: f64, ka: f64) -> Self {
         Self { ks, kg, kv, ka }
     }
@@ -130,6 +148,7 @@ impl ArmFeedforward {
         self.ks
     }
 
+    /// Returns the controller's gravity compensation constant (`kg`).
     #[must_use]
     pub const fn kg(&self) -> f64 {
         self.kg
@@ -160,6 +179,7 @@ impl ArmFeedforward {
         self.ks = ks;
     }
 
+    /// Sets the controller's gravity compensation constant (`kg`).
     pub const fn set_kg(&mut self, ks: f64) {
         self.ks = ks;
     }
@@ -205,6 +225,7 @@ pub struct ElevatorFeedforward {
 }
 
 impl ElevatorFeedforward {
+    /// Creates a new elevator feedforward controller.
     pub const fn new(ks: f64, kg: f64, kv: f64, ka: f64) -> Self {
         Self { ks, kg, kv, ka }
     }
@@ -221,6 +242,7 @@ impl ElevatorFeedforward {
         self.ks
     }
 
+    /// Returns the controller's gravity compensation constant (`kg`).
     #[must_use]
     pub const fn kg(&self) -> f64 {
         self.kg
@@ -251,6 +273,7 @@ impl ElevatorFeedforward {
         self.ks = ks;
     }
 
+    /// Sets the controller's gravity compensation constant (`kg`).
     pub const fn set_kg(&mut self, ks: f64) {
         self.ks = ks;
     }
