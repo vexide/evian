@@ -7,7 +7,8 @@ use core::{
 };
 
 use vexide::{
-    devices::smart::Motor,
+    devices::smart::{Motor, distance},
+    io::println,
     time::{Instant, Sleep, sleep},
 };
 
@@ -22,8 +23,9 @@ use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
 
 pub(crate) struct State {
     sleep: Sleep,
-    crossed: bool,
+    close: bool,
     prev_facing_point: bool,
+    initial_angle_error: Angle,
     prev_time: Instant,
     start_time: Instant,
 }
@@ -72,7 +74,8 @@ where
                 sleep: sleep(Duration::from_millis(5)),
                 start_time: now,
                 prev_time: now,
-                crossed: false,
+                close: false,
+                initial_angle_error: angle_error,
                 prev_facing_point: (angle_error.as_radians().abs() < FRAC_PI_2) ^ this.reverse,
             }
         });
@@ -89,23 +92,18 @@ where
         let local_target = this.target_point - position;
 
         let mut distance_error = local_target.length();
-        let mut angle_error = (heading - local_target.angle().rad()).wrapped();
 
+        if distance_error.abs() < 7.5 && !state.close {
+            state.close = true;
+        }
+        
+        let mut angle_error = (heading - local_target.angle().rad()).wrapped();
+        
         if this.reverse {
             distance_error *= -1.0;
             angle_error = (PI.rad() - angle_error).wrapped();
         }
-
-        let facing_point = angle_error.as_radians().abs() < FRAC_PI_2;
-
-        state.crossed = !state.crossed && state.prev_facing_point && !facing_point;
-        state.prev_facing_point = facing_point;
-
-        if state.crossed && !facing_point {
-            distance_error *= -1.0;
-            angle_error = (PI.rad() - angle_error).wrapped();
-        }
-
+        
         if this
             .tolerances
             .check(distance_error, this.drivetrain.tracking.linear_velocity())
@@ -117,15 +115,18 @@ where
             return Poll::Ready(());
         }
 
-        let angular_output = this
-            .angular_controller
-            .update(-angle_error, Angle::ZERO, dt);
+        let angular_output = if state.close {
+            0.0
+        } else {
+            this.angular_controller
+                .update(-angle_error, Angle::ZERO, dt)
+        };
         let linear_output =
             this.linear_controller.update(-distance_error, 0.0, dt) * angle_error.cos();
 
         _ = this.drivetrain.motors.set_voltages(
             Voltages::from_arcade(linear_output, angular_output).normalized(Motor::V5_MAX_VOLTAGE),
-        );
+        ); 
 
         state.sleep = sleep(Duration::from_millis(5));
         state.prev_time = Instant::now();
@@ -210,7 +211,7 @@ where
     }
 
     /// Removes this motion's tolerance duration.
-    pub const fn withear_tolerance_duration(&mut self) -> &mut Self {
+    pub const fn without_tolerance_duration(&mut self) -> &mut Self {
         self.tolerances.duration = None;
         self
     }

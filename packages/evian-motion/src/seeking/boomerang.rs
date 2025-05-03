@@ -88,13 +88,10 @@ where
 
         let local_target = carrot - position;
 
-        let mut angular_error = (heading - local_target.angle().rad()).wrapped();
-        let mut linear_error = local_target.length();
+        let angular_error = (heading - local_target.angle().rad()).wrapped();
+        let linear_error = local_target.length();
 
-        if angular_error.as_radians().abs() > FRAC_PI_2 {
-            linear_error *= -1.0;
-            angular_error = (PI.rad() - angular_error).wrapped();
-        }
+        let close = linear_error < 7.5;
 
         if this
             .tolerances
@@ -107,9 +104,13 @@ where
             return Poll::Ready(());
         }
 
-        let angular_output = this
-            .angular_controller
-            .update(-angular_error, Angle::ZERO, dt);
+        let angular_output = if close {
+            0.0
+        } else {
+            this
+                .angular_controller
+                .update(-angular_error, Angle::ZERO, dt)
+        };
         let linear_output =
             this.linear_controller.update(-linear_error, 0.0, dt) * angular_error.cos();
 
