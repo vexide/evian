@@ -2,13 +2,16 @@
 
 use evian_math::{Angle, IntoAngle, Vec2};
 
-use alloc::rc::Rc;
+use alloc::{rc::Rc, vec::Vec};
 use core::{
     cell::RefCell,
     f64::consts::{PI, TAU},
 };
 use vexide::{
-    devices::smart::{InertialSensor, Motor},
+    devices::{
+        math::Vector3,
+        smart::{InertialSensor, Motor, imu::InertialError},
+    },
     prelude::{Task, sleep, spawn},
     time::Instant,
 };
@@ -109,6 +112,131 @@ pub struct WheeledTracking {
     _task: Task<()>,
 }
 
+/// Enum that allows you to either have a single inertial or average between several inertials
+pub enum TrackingInertial {
+    /// Singular inertial, will only take one inertial's angle and assume its correct
+    SingleInertial(InertialSensor),
+    /// More accurate multiple inertial, reduces noise by averaging several inertials
+    MultipleInertial(Vec<InertialSensor>),
+}
+
+impl TrackingInertial {
+    /// Returns the Inertial Sensor’s raw gyroscope readings in dps (degrees per second).
+    ///
+    /// # Errors
+    ///
+    /// - An [`InertialError::Port`] error is returned if there is not an inertial sensor connected to the port.
+    /// - An [`InertialError::BadStatus`] error is returned if the inertial sensor failed to report its status.
+    /// - An [`InertialError::StillCalibrating`] error is returned if the sensor is currently calibrating and cannot yet be used.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vexide::prelude::*;
+    /// use core::time::Duration;
+    ///
+    /// #[vexide::main]
+    /// async fn main(peripherals: Peripherals) {
+    ///     let mut sensor = InertialSensor::new(peripherals.port_1);
+    ///
+    ///     // Calibrate sensor, panic if calibration fails.
+    ///     sensor.calibrate().await.unwrap();
+    ///
+    ///     // Read out angular velocity values every 10mS
+    ///     loop {
+    ///         if let Ok(rates) = sensor.gyro_rate() {
+    ///             println!(
+    ///                 "x: {}°/s, y: {}°/s, z: {}°/s",
+    ///                 rates.x,
+    ///                 rates.y,
+    ///                 rates.z,
+    ///             );
+    ///         }
+    ///
+    ///         sleep(Duration::from_millis(10)).await;
+    ///     }
+    /// }
+    /// ```
+    pub fn gyro_rate(&self) -> Result<Vector3<f64>, InertialError> {
+        match self {
+            Self::SingleInertial(imu) => imu.gyro_rate(),
+            Self::MultipleInertial(imus) => {
+                let mut avg_gyro_rate: Vector3<f64> = Vector3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                };
+                for imu in imus {
+                    let rate: Result<Vector3<f64>, InertialError> = imu.gyro_rate();
+                    if rate.as_ref().is_ok() {
+                        let vector = rate.unwrap();
+                        avg_gyro_rate.x += vector.x;
+                        avg_gyro_rate.y += vector.y;
+                        avg_gyro_rate.z += vector.z;
+                    } else {
+                        return Err(rate.err().unwrap());
+                    }
+                }
+                avg_gyro_rate.x /= imus.len() as f64;
+                avg_gyro_rate.y /= imus.len() as f64;
+                avg_gyro_rate.z /= imus.len() as f64;
+                Ok(avg_gyro_rate)
+            }
+        }
+    }
+    /// Returns the Inertial Sensor’s yaw angle bounded from [0.0, 360.0) degrees.
+    ///
+    /// Clockwise rotations are represented with positive degree values, while counterclockwise rotations are
+    /// represented with negative ones.
+    ///
+    /// # Errors
+    ///
+    /// - An [`InertialError::Port`] error is returned if there is not an inertial sensor connected to the port.
+    /// - An [`InertialError::BadStatus`] error is returned if the inertial sensor failed to report its status.
+    /// - An [`InertialError::StillCalibrating`] error is returned if the sensor is currently calibrating and cannot yet be used.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vexide::prelude::*;
+    /// use core::time::Duration;
+    ///
+    /// #[vexide::main]
+    /// async fn main(peripherals: Peripherals) {
+    ///     let mut sensor = InertialSensor::new(peripherals.port_1);
+    ///
+    ///     // Calibrate sensor, panic if calibration fails.
+    ///     sensor.calibrate().await.unwrap();
+    ///
+    ///     // Sleep for two seconds to allow the robot to be moved.
+    ///     sleep(Duration::from_secs(2)).await;
+    ///
+    ///     if let Ok(heading) = sensor.heading() {
+    ///         println!("Heading is {} degrees.", rotation);
+    ///     }
+    /// }
+    /// ```
+    pub fn heading(&self) -> Result<f64, InertialError> {
+        match self {
+            Self::SingleInertial(imu) => imu.heading(),
+            Self::MultipleInertial(imus) => {
+                let mut avg_heading: f64 = 0.0;
+
+                for imu in imus {
+                    let heading: Result<f64, InertialError> = imu.heading();
+                    if heading.as_ref().is_ok() {
+                        avg_heading += heading.unwrap();
+                    } else {
+                        return Err(heading.err().unwrap());
+                    }
+                }
+                avg_heading /= imus.len() as f64;
+                Ok(avg_heading)
+            }
+        }
+    }
+}
+
 impl WheeledTracking {
     /// Creates a new wheeled tracking system.
     pub fn new<
@@ -121,7 +249,7 @@ impl WheeledTracking {
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         sideways_wheels: [TrackingWheel<U>; NUM_SIDEWAYS],
-        mut imu: Option<InertialSensor>,
+        mut imu: Option<TrackingInertial>,
     ) -> Self {
         const FORWARD_TRACKER_OFFSET_TOLERANCE: f64 = 0.5;
 
@@ -233,7 +361,7 @@ impl WheeledTracking {
         origin: impl Into<Vec2<f64>>,
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
-        imu: Option<InertialSensor>,
+        imu: Option<TrackingInertial>,
     ) -> Self {
         Self::new(
             origin,
@@ -270,7 +398,7 @@ impl WheeledTracking {
     ///
     /// An assertion will panic if both `imu` and `parallel_wheels` is `None`. This should never happen.
     fn compute_raw_heading<T: RotarySensor>(
-        imu: Option<&InertialSensor>,
+        imu: Option<&TrackingInertial>,
         parallel_wheels: Option<(&TrackingWheel<T>, &TrackingWheel<T>)>,
     ) -> Result<Angle, HeadingError<T>> {
         assert!(
@@ -331,7 +459,7 @@ impl WheeledTracking {
     >(
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         sideways_wheels: [TrackingWheel<U>; NUM_SIDEWAYS],
-        mut imu: Option<InertialSensor>,
+        mut imu: Option<TrackingInertial>,
         data: Rc<RefCell<TrackingData>>,
         parallel_forward_indicies: Option<(usize, usize)>,
         mut prev_forward_wheel_data: [Result<(f64, f64), <T as RotarySensor>::Error>; NUM_FORWARD],
