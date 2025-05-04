@@ -11,14 +11,14 @@ pub trait Gyro {
     type Error;
 
     /// Method of retreiving heading
-    fn gyro_heading(&mut self) -> Result<Angle, Self::Error>;
+    fn heading(&mut self) -> Result<Angle, Self::Error>;
     /// get raw angular velocity readings
-    fn gyro_angular_velocity(&mut self) -> Result<f64, Self::Error>;
+    fn angular_velocity(&mut self) -> Result<f64, Self::Error>;
 }
 
 impl Gyro for InertialSensor {
     type Error = InertialError;
-    fn gyro_angular_velocity(&mut self) -> Result<f64, Self::Error> {
+    fn angular_velocity(&mut self) -> Result<f64, Self::Error> {
         let gyro_rate = self.gyro_rate();
         match gyro_rate {
             Ok(s) => Ok(s.z),
@@ -26,8 +26,8 @@ impl Gyro for InertialSensor {
         }
     }
 
-    fn gyro_heading(&mut self) -> Result<Angle, Self::Error> {
-        let heading = self.heading();
+    fn heading(&mut self) -> Result<Angle, Self::Error> {
+        let heading: Result<f64, InertialError> = InertialSensor::heading(&self);
 
         match heading {
             Ok(s) => Ok(Angle::from_radians(s)),
@@ -40,7 +40,7 @@ const MAX_TOLERANCE_RADIANS: f64 = 7.5;
 const MAX_TOLERANCE_G: f64 = 1.5;
 impl<const N: usize> Gyro for [InertialSensor; N] {
     type Error = [Option<InertialError>; N];
-    fn gyro_angular_velocity(&mut self) -> Result<f64, Self::Error> {
+    fn angular_velocity(&mut self) -> Result<f64, Self::Error> {
         let mut success_value: [f64; N] = [const { 0.0 }; N];
         let mut errors: Self::Error = [const { None }; N];
         let mut succeeded: bool = false;
@@ -83,7 +83,7 @@ impl<const N: usize> Gyro for [InertialSensor; N] {
         }
         Ok(avg)
     }
-    fn gyro_heading(&mut self) -> Result<Angle, Self::Error> {
+    fn heading(&mut self) -> Result<Angle, Self::Error> {
         let mut success_value: [Angle; N] = [const { Angle::from_radians(0.0) }; N];
         let mut errors: Self::Error = [const { None }; N];
         let mut succeeded: bool = false;
@@ -91,7 +91,7 @@ impl<const N: usize> Gyro for [InertialSensor; N] {
             let angle = imu.heading();
             match angle {
                 Ok(s) => {
-                    success_value[index] = Angle::from_radians(s);
+                    success_value[index] = s;
                     succeeded = true;
                 }
                 Err(e) => {

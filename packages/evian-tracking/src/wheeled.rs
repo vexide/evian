@@ -281,7 +281,7 @@ impl WheeledTracking {
         // has, the IMU has no chance of recovery and we should fallback to wheeled heading calculation.
         let mut imu_rotation: Option<Result<Angle, G::Error>> = None;
         if imu.is_some() {
-            imu_rotation = Some(imu.unwrap().gyro_heading());
+            imu_rotation = Some(imu.unwrap().heading());
         }
 
         // Compute the unbounded robot orientation in radians. In the case of the IMU, this actually is bounded to [0, TAU]
@@ -507,7 +507,7 @@ impl WheeledTracking {
             data.linear_velocity = (data.forward_travel - prev_forward_travel) / dt.as_secs_f64();
             prev_forward_travel = data.forward_travel;
             if imu.is_some() {
-                let av = imu.as_mut().unwrap().gyro_angular_velocity();
+                let av = imu.as_mut().unwrap().angular_velocity();
                 match av {
                     Ok(s) => data.angular_velocity = s,
                     Err(_) => data.angular_velocity = delta_heading.as_radians(),
