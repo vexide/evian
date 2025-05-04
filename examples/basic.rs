@@ -3,6 +3,7 @@
 
 extern crate alloc;
 
+use alloc::vec;
 use vexide::prelude::*;
 
 use core::time::Duration;
@@ -10,6 +11,7 @@ use evian::{
     control::loops::{AngularPid, Pid},
     motion::{Basic, Seeking},
     prelude::*,
+    tracking::inertial::TrackingInertial,
 };
 
 const LINEAR_PID: Pid = Pid::new(1.0, 0.0, 0.125, None);
@@ -88,7 +90,9 @@ async fn main(peripherals: Peripherals) {
         angular_tolerances: ANGULAR_TOLERANCES,
         timeout: Some(Duration::from_secs(10)),
     };
-
+    let inertial_1 = InertialSensor::new(peripherals.port_1);
+    let inertial_2 = InertialSensor::new(peripherals.port_2);
+    let inertial_3 = InertialSensor::new(peripherals.port_3);
     let mut drivetrain = Drivetrain::new(
         Differential::from_shared(left_motors.clone(), right_motors.clone()),
         WheeledTracking::forward_only(
@@ -98,7 +102,9 @@ async fn main(peripherals: Peripherals) {
                 TrackingWheel::new(left_motors, 2.75, -5.75, None),
                 TrackingWheel::new(right_motors, 2.75, 5.25, None),
             ],
-            None,
+            Some(TrackingInertial::MultipleInertial(vec![
+                inertial_1, inertial_2, inertial_3,
+            ])),
         ),
     );
 

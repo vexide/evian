@@ -1,6 +1,5 @@
 //! Wheeled odometry.
 
-use crate::inertial::TrackingInertial;
 use alloc::rc::Rc;
 use core::{
     cell::RefCell,
@@ -8,12 +7,13 @@ use core::{
 };
 use evian_math::{Angle, IntoAngle, Vec2};
 use vexide::{
+    devices::smart::imu::InertialError,
     prelude::{Motor, Task, sleep, spawn},
     time::Instant,
 };
 
-use crate::sensor::RotarySensor;
 use crate::{TracksForwardTravel, TracksHeading, TracksPosition};
+use crate::{inertial::Gyro, sensor::RotarySensor};
 
 use super::TracksVelocity;
 
@@ -113,6 +113,7 @@ impl WheeledTracking {
     pub fn new<
         T: RotarySensor + 'static,
         U: RotarySensor + 'static,
+        G: Gyro + 'static,
         const NUM_FORWARD: usize,
         const NUM_SIDEWAYS: usize,
     >(
@@ -120,7 +121,7 @@ impl WheeledTracking {
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         sideways_wheels: [TrackingWheel<U>; NUM_SIDEWAYS],
-        mut imu: Option<TrackingInertial>,
+        mut imu: Option<G>,
     ) -> Self {
         const FORWARD_TRACKER_OFFSET_TOLERANCE: f64 = 0.5;
 
@@ -161,7 +162,6 @@ impl WheeledTracking {
             imu.is_some() || parallel_forward_indicies.is_some(),
             "No IMU provided or viable tracking wheels available to determine robot orientation."
         );
-
         let initial_forward_wheel_data = forward_wheels
             .each_ref()
             .map(|wheel| wheel.travel().map(|travel| (travel, wheel.offset)));
@@ -169,7 +169,7 @@ impl WheeledTracking {
             .each_ref()
             .map(|wheel| wheel.travel().map(|travel| (travel, wheel.offset)));
         let initial_raw_heading = match Self::compute_raw_heading(
-            imu.as_ref(),
+            imu.as_mut(),
             parallel_forward_indicies.map(|(left_index, right_index)| {
                 (&forward_wheels[left_index], &forward_wheels[right_index])
             }),
@@ -228,11 +228,11 @@ impl WheeledTracking {
     }
 
     /// Creates a new wheeled tracking system with no sideways tracking wheels.
-    pub fn forward_only<T: RotarySensor + 'static, const NUM_FORWARD: usize>(
+    pub fn forward_only<T: RotarySensor + 'static, G: Gyro + 'static, const NUM_FORWARD: usize>(
         origin: impl Into<Vec2<f64>>,
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
-        imu: Option<TrackingInertial>,
+        imu: Option<G>,
     ) -> Self {
         Self::new(
             origin,
@@ -268,8 +268,8 @@ impl WheeledTracking {
     /// # Panics
     ///
     /// An assertion will panic if both `imu` and `parallel_wheels` is `None`. This should never happen.
-    fn compute_raw_heading<T: RotarySensor>(
-        imu: Option<&TrackingInertial>,
+    fn compute_raw_heading<T: RotarySensor, G: Gyro>(
+        imu: Option<&mut G>,
         parallel_wheels: Option<(&TrackingWheel<T>, &TrackingWheel<T>)>,
     ) -> Result<Angle, HeadingError<T>> {
         assert!(
@@ -280,7 +280,10 @@ impl WheeledTracking {
         // Try to get a reading of the robot's heading from the IMU. We should only do this if the IMU
         // hasn't returned a port-related error before (flagged by the `imu_invalid` variable). If it
         // has, the IMU has no chance of recovery and we should fallback to wheeled heading calculation.
-        let imu_rotation = imu.as_ref().map(|imu| imu.heading());
+        let mut imu_rotation: Option<Result<Angle, InertialError>> = None;
+        if imu.is_some() {
+            imu_rotation = Some(imu.unwrap().g_heading());
+        }
 
         // Compute the unbounded robot orientation in radians. In the case of the IMU, this actually is bounded to [0, TAU]
         // already due to how IMU heading works, but this will be wrapped to [0, TAU] regardless later either way.
@@ -289,7 +292,7 @@ impl WheeledTracking {
             // clockwise. We don't want this, since it doesn't match up with how the unit circle works
             // with cartesian coordinates (what we localize in), so we need to convert to a CCW+ angle
             // system.
-            TAU - imu_heading.to_radians()
+            TAU - imu_heading.as_radians()
         } else if let Some((left_wheel, right_wheel)) = parallel_wheels {
             // Distance between the left and right wheels.
             let track_width = left_wheel.offset.abs() + right_wheel.offset;
@@ -325,12 +328,13 @@ impl WheeledTracking {
     async fn task<
         T: RotarySensor,
         U: RotarySensor,
+        G: Gyro,
         const NUM_FORWARD: usize,
         const NUM_SIDEWAYS: usize,
     >(
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         sideways_wheels: [TrackingWheel<U>; NUM_SIDEWAYS],
-        mut imu: Option<TrackingInertial>,
+        mut imu: Option<G>,
         data: Rc<RefCell<TrackingData>>,
         parallel_forward_indicies: Option<(usize, usize)>,
         mut prev_forward_wheel_data: [Result<(f64, f64), <T as RotarySensor>::Error>; NUM_FORWARD],
@@ -359,7 +363,7 @@ impl WheeledTracking {
             // working) or through the use of two parallel forward trackers. The former is generally far more
             // reliable and isn't prone to wheel slip.
             data.raw_heading = match Self::compute_raw_heading(
-                imu.as_ref(),
+                imu.as_mut(),
                 parallel_forward_indicies.map(|(left_index, right_index)| {
                     (&forward_wheels[left_index], &forward_wheels[right_index])
                 }),
@@ -503,13 +507,13 @@ impl WheeledTracking {
             //       of our sensor. We should also maybe consider EMA filtering this or something.
             data.linear_velocity = (data.forward_travel - prev_forward_travel) / dt.as_secs_f64();
             prev_forward_travel = data.forward_travel;
-
-            data.angular_velocity = imu
-                .as_ref()
-                .and_then(|imu| imu.gyro_rate().ok())
-                .map_or(delta_heading.as_radians() / dt.as_secs_f64(), |gyro_rate| {
-                    gyro_rate.z.to_radians()
-                });
+            if imu.is_some() {
+                let av = imu.as_mut().unwrap().g_angular_velocity();
+                match av {
+                    Ok(s) => data.angular_velocity = s.as_radians(),
+                    Err(_) => data.angular_velocity = delta_heading.as_radians(),
+                }
+            }
 
             // Update global position by converting our local displacement vector into a global offset (by
             // rotating our local offset by our heading). Each iteration, we apply this estimate of our change
