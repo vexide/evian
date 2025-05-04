@@ -135,7 +135,7 @@ impl<T: Float + Copy + Mul<Output = T> + Add<Output = T> + Div<Output = T>> Vec2
     /// Projects one `Vec2` onto onto another.
     #[must_use]
     pub fn projected(&self, onto: Vec2<T>) -> Self {
-        onto * (self.dot(onto) / onto.length().powi(2))
+        onto * (self.dot(onto) / (onto.length() * onto.length()))
     }
 }
 
