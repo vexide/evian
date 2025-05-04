@@ -7,7 +7,6 @@ use core::{
 };
 use evian_math::{Angle, IntoAngle, Vec2};
 use vexide::{
-    devices::smart::imu::InertialError,
     prelude::{Motor, Task, sleep, spawn},
     time::Instant,
 };
@@ -280,9 +279,9 @@ impl WheeledTracking {
         // Try to get a reading of the robot's heading from the IMU. We should only do this if the IMU
         // hasn't returned a port-related error before (flagged by the `imu_invalid` variable). If it
         // has, the IMU has no chance of recovery and we should fallback to wheeled heading calculation.
-        let mut imu_rotation: Option<Result<Angle, InertialError>> = None;
+        let mut imu_rotation: Option<Result<Angle, G::Error>> = None;
         if imu.is_some() {
-            imu_rotation = Some(imu.unwrap().g_heading());
+            imu_rotation = Some(imu.unwrap().gyro_heading());
         }
 
         // Compute the unbounded robot orientation in radians. In the case of the IMU, this actually is bounded to [0, TAU]
@@ -508,9 +507,9 @@ impl WheeledTracking {
             data.linear_velocity = (data.forward_travel - prev_forward_travel) / dt.as_secs_f64();
             prev_forward_travel = data.forward_travel;
             if imu.is_some() {
-                let av = imu.as_mut().unwrap().g_angular_velocity();
+                let av = imu.as_mut().unwrap().gyro_angular_velocity();
                 match av {
-                    Ok(s) => data.angular_velocity = s.as_radians(),
+                    Ok(s) => data.angular_velocity = s,
                     Err(_) => data.angular_velocity = delta_heading.as_radians(),
                 }
             }
