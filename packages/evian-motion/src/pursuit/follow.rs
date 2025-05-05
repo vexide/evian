@@ -28,6 +28,7 @@ pub struct State {
 }
 
 /// Moves a drivetrain along a set of discrete waypoints using pure pursuit.
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct PurePursuitFuture<'a, T, I>
 where
     T: TracksPosition + TracksHeading,

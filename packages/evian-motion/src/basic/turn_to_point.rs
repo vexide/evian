@@ -31,6 +31,7 @@ pub(crate) struct State {
 }
 
 /// Turns the robot to face a point on the field.
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct TurnToPointFuture<'a, L, A, T>
 where
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
@@ -244,6 +245,13 @@ where
 
     /// Removes this motion's angular tolerance duration.
     pub const fn without_angular_tolerance_duration(&mut self) -> &mut Self {
+        self.angular_tolerances.duration = None;
+        self
+    }
+
+    /// Removes this motion's linear and angular tolerance durations.
+    pub const fn without_tolerance_duration(&mut self) -> &mut Self {
+        self.linear_tolerances.duration = None;
         self.angular_tolerances.duration = None;
         self
     }

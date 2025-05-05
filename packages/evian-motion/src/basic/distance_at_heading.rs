@@ -31,6 +31,7 @@ pub(crate) struct State {
 }
 
 /// Drives the robot forward or backwards for a distance at a given heading.
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct DriveDistanceAtHeadingFuture<'a, L, A, T>
 where
     L: Feedback<Input = f64, Output = f64> + Unpin,
@@ -204,6 +205,13 @@ where
     /// Removes this motion's linear tolerance duration.
     pub const fn without_linear_tolerance_duration(&mut self) -> &mut Self {
         self.linear_tolerances.duration = None;
+        self
+    }
+
+    /// Removes this motion's linear and angular tolerance durations.
+    pub const fn without_tolerance_duration(&mut self) -> &mut Self {
+        self.linear_tolerances.duration = None;
+        self.angular_tolerances.duration = None;
         self
     }
 

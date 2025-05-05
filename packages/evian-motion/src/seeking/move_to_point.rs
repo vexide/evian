@@ -31,6 +31,7 @@ pub(crate) struct State {
 }
 
 /// Moves the robot to a point using two seeking feedback controllers.
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct MoveToPointFuture<'a, L, A, T>
 where
     L: Feedback<Input = f64, Output = f64> + Unpin,
