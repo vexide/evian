@@ -27,7 +27,7 @@ impl Gyro for InertialSensor {
     }
 
     fn heading(&mut self) -> Result<Angle, Self::Error> {
-        let heading: Result<f64, InertialError> = InertialSensor::heading(&self);
+        let heading: Result<f64, InertialError> = InertialSensor::heading(self);
 
         match heading {
             Ok(s) => Ok(Angle::from_radians(s)),
