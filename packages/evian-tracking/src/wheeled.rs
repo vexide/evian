@@ -428,10 +428,10 @@ impl WheeledTracking {
                             };
                         }
                     }
+                }
 
-                    if count != 0 {
-                        local_displacement.y += local_y_sum / f64::from(count);
-                    }
+                if count != 0 {
+                    local_displacement.y = local_y_sum / f64::from(count);
                 }
 
                 prev_sideways_wheel_data = sideways_wheel_data;
