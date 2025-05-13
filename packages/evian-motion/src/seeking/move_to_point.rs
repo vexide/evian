@@ -1,14 +1,7 @@
-use core::{
-    f64::consts::{FRAC_PI_2, PI},
-    future::Future,
-    pin::Pin,
-    task::Poll,
-    time::Duration,
-};
+use core::{f64::consts::PI, future::Future, pin::Pin, task::Poll, time::Duration};
 
 use vexide::{
-    devices::smart::{Motor, distance},
-    io::println,
+    devices::smart::Motor,
     time::{Instant, Sleep, sleep},
 };
 
@@ -24,8 +17,6 @@ use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
 pub(crate) struct State {
     sleep: Sleep,
     close: bool,
-    prev_facing_point: bool,
-    initial_angle_error: Angle,
     prev_time: Instant,
     start_time: Instant,
 }
@@ -65,19 +56,12 @@ where
         let this = self.get_mut();
         let state = this.state.get_or_insert_with(|| {
             let now = Instant::now();
-            let angle_error = (this.drivetrain.tracking.heading()
-                - (this.target_point - this.drivetrain.tracking.position())
-                    .angle()
-                    .rad())
-            .wrapped();
 
             State {
                 sleep: sleep(Duration::from_millis(5)),
                 start_time: now,
                 prev_time: now,
                 close: false,
-                initial_angle_error: angle_error,
-                prev_facing_point: (angle_error.as_radians().abs() < FRAC_PI_2) ^ this.reverse,
             }
         });
 
@@ -97,14 +81,14 @@ where
         if distance_error.abs() < 7.5 && !state.close {
             state.close = true;
         }
-        
+
         let mut angle_error = (heading - local_target.angle().rad()).wrapped();
-        
+
         if this.reverse {
             distance_error *= -1.0;
             angle_error = (PI.rad() - angle_error).wrapped();
         }
-        
+
         if this
             .tolerances
             .check(distance_error, this.drivetrain.tracking.linear_velocity())
@@ -127,7 +111,7 @@ where
 
         _ = this.drivetrain.motors.set_voltages(
             Voltages::from_arcade(linear_output, angular_output).normalized(Motor::V5_MAX_VOLTAGE),
-        ); 
+        );
 
         state.sleep = sleep(Duration::from_millis(5));
         state.prev_time = Instant::now();

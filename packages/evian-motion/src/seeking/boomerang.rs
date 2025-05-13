@@ -1,5 +1,4 @@
 use core::{
-    f64::consts::{FRAC_PI_2, PI},
     future::Future,
     pin::Pin,
     task::Poll,
