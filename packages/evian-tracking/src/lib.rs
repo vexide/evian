@@ -45,6 +45,7 @@
 
 extern crate alloc;
 
+pub mod inertial;
 mod sensor;
 pub mod wheeled;
 
