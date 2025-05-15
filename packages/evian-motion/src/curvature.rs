@@ -16,7 +16,7 @@ use vexide::{devices::smart::motor::MotorError, float::Float};
 
 use evian_drivetrain::differential::{Differential, Voltages};
 
-/// CurvatureDrive drive controller. This maintains internal state, so you need a mutable reference
+/// Curvature Drive controller. This maintains internal state, so you need a mutable reference
 /// to use it with the [`CurvatureDrive::update`] method.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CurvatureDrive {
