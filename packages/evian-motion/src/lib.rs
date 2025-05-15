@@ -2,6 +2,8 @@
 
 #![no_std]
 
+pub mod curvature;
+
 pub mod basic;
 pub mod pursuit;
 pub mod seeking;

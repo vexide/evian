@@ -12,9 +12,9 @@
 //! is ran using [`CurvatureDrive::update`].
 
 use core::f64::consts::FRAC_PI_2;
-use vexide::float::Float;
+use vexide::{devices::smart::motor::MotorError, float::Float};
 
-use super::Voltages;
+use evian_drivetrain::differential::{Differential, Voltages};
 
 /// CurvatureDrive drive controller. This maintains internal state, so you need a mutable reference
 /// to use it with the [`CurvatureDrive::update`] method.
@@ -85,8 +85,7 @@ impl CurvatureDrive {
         }
     }
 
-    /// Runs the Curvature Drive algorithm, updates the internal state, and returns [`Voltages`] to be
-    /// used to power a [`super::Differential`] drivetrain.
+    /// Runs the Curvature Drive algorithm, updates the internal state, and powers the drivetrain.
     ///
     /// # Examples
     /// ```
@@ -96,11 +95,19 @@ impl CurvatureDrive {
     ///     curvature_drive: CurvatureDrive,
     /// }
     ///
-    /// let state = self.controller.state.expect("couldn't read controller");
-    /// let voltages = self.curvature_drive.update(state.left_stick.y(), state.right_stick.x());
-    /// self.drivetrain.set_voltages(voltages).expect("couldn't set drivetrain voltages");
+    /// let state = self.controller.state().unwrap();
+    /// self.curvature.update(
+    ///     &mut self.drivetrain,
+    ///     state.left_stick.y(),
+    ///     state.right_stick.x(),
+    /// ).expect("couldn't set drivetrain voltages");
     /// ```
-    pub fn update(&mut self, throttle: f64, turn: f64) -> Voltages {
+    pub fn update(
+        &mut self,
+        drivetrain: &mut Differential,
+        throttle: f64,
+        turn: f64,
+    ) -> Result<(), MotorError> {
         let mut turn_in_place = false;
         let mut linear_power = throttle;
 
@@ -142,6 +149,6 @@ impl CurvatureDrive {
         self.prev_turn = turn;
         self.prev_throttle = throttle;
 
-        Voltages(left, right)
+        drivetrain.set_voltages(Voltages(left, right))
     }
 }
