@@ -10,7 +10,7 @@
 //! right sides of its chassis. The system operates by adjusting the speed and direction of
 //! the left and right motors, enabling the robot to drive straight or execute turns.
 
-pub mod cheesy;
+pub mod curvature;
 
 use core::cell::RefCell;
 

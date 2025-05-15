@@ -1,25 +1,25 @@
-//! Cheesy Drive (aka Curvature drive)
+//! Curvature Drive (aka Cheesy Drive)
 //!
-//! This module provides the Cheesy drivetrain controller through [`Cheesy`].
+//! This module provides the Curvature Drive drivetrain controller through [`CurvatureDrive`].
 //! Its implemenation is based on <https://wiki.purduesigbots.com/software/robotics-basics/curvature-cheesy-drive>.
 //!
 //! # Algorithm
 //!
-//! Cheesy Drive is a nonlinear and curvature-based drivetrain control algorithm. Optimized for
+//! Curvature Drive is a nonlinear and curvature-based drivetrain control algorithm. Optimized for
 //! driver intuition and precise handling, it smooths inputs and adapts to the situation. Unlike
 //! other algorithms such as Arcade Drive and Tank Drive, it performs some mathematical computations
 //! and accepts some constants and maintains an internal state that changes every time the algorithm
-//! is ran using [`Cheesy::update`].
+//! is ran using [`CurvatureDrive::update`].
 
 use core::f64::consts::FRAC_PI_2;
 use vexide::float::Float;
 
 use super::Voltages;
 
-/// Cheesy drive controller. This maintains internal state, so you need a mutable reference to
-/// use it with the [`Cheesy::update`] method.
+/// CurvatureDrive drive controller. This maintains internal state, so you need a mutable reference
+/// to use it with the [`CurvatureDrive::update`] method.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Cheesy {
+pub struct CurvatureDrive {
     turn_nonlinearity: f64,
     deadzone: f64,
     slew: f64,
@@ -44,14 +44,14 @@ fn update_accumulator(accumulator: &mut f64) {
     }
 }
 
-impl Cheesy {
+impl CurvatureDrive {
     fn remap_turn(&self, turn: f64) -> f64 {
         let denominator = (FRAC_PI_2 * self.turn_nonlinearity).sin();
         let first_remap = (FRAC_PI_2 * self.turn_nonlinearity * turn).sin() / denominator;
         (FRAC_PI_2 * self.turn_nonlinearity * first_remap) / denominator
     }
 
-    /// Constructs a fresh instance of [`Cheesy`] with the provided constants.
+    /// Constructs a fresh instance of [`CurvatureDrive`] with the provided constants.
     ///
     /// # Constants
     ///
@@ -85,7 +85,7 @@ impl Cheesy {
         }
     }
 
-    /// Runs the Cheesy Drive algorithm, updates the internal state, and returns [`Voltages`] to be
+    /// Runs the Curvature Drive algorithm, updates the internal state, and returns [`Voltages`] to be
     /// used to power a [`super::Differential`] drivetrain.
     ///
     /// # Examples
@@ -93,11 +93,11 @@ impl Cheesy {
     /// struct Robot {
     ///     controller: Controller,
     ///     drivetrain: Differential,
-    ///     cheesy: Cheesy,
+    ///     curvature_drive: CurvatureDrive,
     /// }
     ///
     /// let state = self.controller.state.expect("couldn't read controller");
-    /// let voltages = self.cheesy.update(state.left_stick.y(), state.right_stick.x());
+    /// let voltages = self.curvature_drive.update(state.left_stick.y(), state.right_stick.x());
     /// self.drivetrain.set_voltages(voltages).expect("couldn't set drivetrain voltages");
     /// ```
     pub fn update(&mut self, throttle: f64, turn: f64) -> Voltages {
