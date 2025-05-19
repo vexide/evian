@@ -41,25 +41,8 @@ pub struct CurvatureDrive {
     quick_stop_accumulator: f64,
 }
 
-// On each iteration of the drive loop where we aren't point turning, the accumulators are
-// constrained to [-1, 1]
-fn update_accumulator(accumulator: &mut f64) {
-    if *accumulator > 1.0 {
-        *accumulator -= 1.0;
-    } else if *accumulator < -1.0 {
-        *accumulator += 1.0;
-    } else {
-        *accumulator = 0.0;
-    }
-}
 
 impl CurvatureDrive {
-    fn remap_turn(&self, turn: f64) -> f64 {
-        let denominator = (FRAC_PI_2 * self.turn_nonlinearity).sin();
-        let first_remap = (FRAC_PI_2 * self.turn_nonlinearity * turn).sin() / denominator;
-        (FRAC_PI_2 * self.turn_nonlinearity * first_remap) / denominator
-    }
-
     /// Constructs a fresh instance of [`CurvatureDrive`] with the provided constants.
     ///
     /// # Constants
@@ -151,13 +134,31 @@ impl CurvatureDrive {
             left = linear_power + angular_power;
             right = linear_power - angular_power;
 
-            update_accumulator(&mut self.quick_stop_accumulator);
-            update_accumulator(&mut self.negative_inertia_accumulator);
+            Self::update_accumulator(&mut self.quick_stop_accumulator);
+            Self::update_accumulator(&mut self.negative_inertia_accumulator);
         }
 
         self.prev_turn = turn;
         self.prev_throttle = throttle;
 
         drivetrain.motors.set_voltages(Voltages(left, right))
+    }
+
+    fn remap_turn(&self, turn: f64) -> f64 {
+        let denominator = (FRAC_PI_2 * self.turn_nonlinearity).sin();
+        let first_remap = (FRAC_PI_2 * self.turn_nonlinearity * turn).sin() / denominator;
+        (FRAC_PI_2 * self.turn_nonlinearity * first_remap) / denominator
+    }
+
+    // On each iteration of the drive loop where we aren't point turning, the accumulators are
+    // constrained to [-1, 1]
+    fn update_accumulator(accumulator: &mut f64) {
+        if *accumulator > 1.0 {
+            *accumulator -= 1.0;
+        } else if *accumulator < -1.0 {
+            *accumulator += 1.0;
+        } else {
+            *accumulator = 0.0;
+        }
     }
 }
