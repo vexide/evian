@@ -1,16 +1,3 @@
-//! Curvature Drive (aka Cheesy Drive)
-//!
-//! This module provides the Curvature Drive drivetrain controller through [`CurvatureDrive`].
-//! Its implemenation is based on <https://wiki.purduesigbots.com/software/robotics-basics/curvature-cheesy-drive>.
-//!
-//! # Algorithm
-//!
-//! Curvature Drive is a nonlinear and curvature-based drivetrain control algorithm. Optimized for
-//! driver intuition and precise handling, it smooths inputs and adapts to the situation. Unlike
-//! other algorithms such as Arcade Drive and Tank Drive, it performs some mathematical computations
-//! and accepts some constants and maintains an internal state that changes every time the algorithm
-//! is ran using [`CurvatureDrive::update`].
-
 use core::f64::consts::FRAC_PI_2;
 use vexide::{devices::smart::motor::MotorError, float::Float};
 
@@ -19,14 +6,33 @@ use evian_drivetrain::{
     differential::{Differential, Voltages},
 };
 
-/// Curvature Drive controller. This maintains internal state, so you need a mutable reference
-/// to use it with the [`CurvatureDrive::update`] method.
+/// Curvature Drive (aka Cheesy Drive) Controller
+///
+/// Curvature Drive is a nonlinear and curvature-based drivetrain control algorithm. Optimized for
+/// driver intuition and precise handling, it smooths inputs and adapts to the situation. Unlike
+/// other algorithms such as Arcade Drive and Tank Drive, it performs some mathematical computations
+/// and accepts some constants and maintains an internal state that changes every time the algorithm
+/// is ran using [`CurvatureDrive::update`].
+///
+/// This implemenation is based on <https://wiki.purduesigbots.com/software/robotics-basics/curvature-cheesy-drive>.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CurvatureDrive {
+    /// Determines how fast the robot's turn traverses a sine curve, and affects
+    /// its nonlinearity.
     pub turn_nonlinearity: f64,
+
+    /// Minimum value for `turn` and `throttle` to not ignore and round down to
+    /// zero, creates a deadzone at the center of the joystick
     pub deadzone: f64,
+
+    /// Tunes throttle
     pub slew: f64,
+
+    /// Used to counteract robot inertia while turning to prevent overshooting.
     pub negative_inertia_scalar: f64,
+
+    /// Affects sensitivity of turning power, can be used to slow down or speed
+    /// up turning.
     pub turn_sensitivity: f64,
 
     prev_turn: f64,
