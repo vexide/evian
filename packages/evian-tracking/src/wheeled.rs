@@ -135,7 +135,7 @@ impl WheeledTracking {
 
         assert!(
             NUM_FORWARD >= 2 || gyro.is_some(),
-            "Wheeled tracking requires either an gyro or two parallel forward tracking wheels to determine robot orientation."
+            "Wheeled tracking requires either a Gyro or two parallel forward tracking wheels to determine robot orientation."
         );
 
         // Locate two parallel tracking wheels with roughly the same absolute offset from the
@@ -358,7 +358,7 @@ impl WheeledTracking {
 
             // Calculate absolute robot orientation (heading).
             //
-            // This can be done in two possible ways - Either using an gyro (if it is available and actually
+            // This can be done in two possible ways - Either using a gyro (if it is available and actually
             // working) or through the use of two parallel forward trackers. The former is generally far more
             // reliable and isn't prone to wheel slip.
             data.raw_heading = match Self::compute_raw_heading(
@@ -370,7 +370,7 @@ impl WheeledTracking {
                 // Cool
                 Ok(raw_heading) => raw_heading,
 
-                // We got an error from the gyro, which means it likely disconnected. Once an gyro disconnects it
+                // We got an error from the gyro, which means it likely disconnected. Once a gyro disconnects it
                 // will reclibrate upon regaining power, which will mess tracking up badly, so we need to stop using
                 // it in this case and switched to a wheeled method of determining heading.
                 Err(HeadingError::Imu(raw_wheel_heading)) => {
