@@ -41,7 +41,6 @@ pub struct CurvatureDrive {
     quick_stop_accumulator: f64,
 }
 
-
 impl CurvatureDrive {
     /// Constructs a fresh instance of [`CurvatureDrive`] with the provided constants.
     ///
@@ -83,7 +82,7 @@ impl CurvatureDrive {
     /// ```
     /// struct Robot {
     ///     controller: Controller,
-    ///     drivetrain: Differential,
+    ///     drivetrain: Drivetrain<Differential, ()>,
     ///     curvature_drive: CurvatureDrive,
     /// }
     ///
