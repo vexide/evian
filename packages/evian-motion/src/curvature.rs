@@ -23,11 +23,11 @@ use evian_drivetrain::{
 /// to use it with the [`CurvatureDrive::update`] method.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CurvatureDrive {
-    turn_nonlinearity: f64,
-    deadzone: f64,
-    slew: f64,
-    negative_inertia_scalar: f64,
-    turn_sensitivity: f64,
+    pub turn_nonlinearity: f64,
+    pub deadzone: f64,
+    pub slew: f64,
+    pub negative_inertia_scalar: f64,
+    pub turn_sensitivity: f64,
 
     prev_turn: f64,
     prev_throttle: f64,
