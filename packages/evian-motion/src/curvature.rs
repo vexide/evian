@@ -14,7 +14,10 @@
 use core::f64::consts::FRAC_PI_2;
 use vexide::{devices::smart::motor::MotorError, float::Float};
 
-use evian_drivetrain::differential::{Differential, Voltages};
+use evian_drivetrain::{
+    Drivetrain,
+    differential::{Differential, Voltages},
+};
 
 /// Curvature Drive controller. This maintains internal state, so you need a mutable reference
 /// to use it with the [`CurvatureDrive::update`] method.
@@ -102,9 +105,9 @@ impl CurvatureDrive {
     ///     state.right_stick.x(),
     /// ).expect("couldn't set drivetrain voltages");
     /// ```
-    pub fn update(
+    pub fn update<T>(
         &mut self,
-        drivetrain: &mut Differential,
+        drivetrain: &mut Drivetrain<Differential, T>,
         throttle: f64,
         turn: f64,
     ) -> Result<(), MotorError> {
@@ -149,6 +152,6 @@ impl CurvatureDrive {
         self.prev_turn = turn;
         self.prev_throttle = throttle;
 
-        drivetrain.set_voltages(Voltages(left, right))
+        drivetrain.motors.set_voltages(Voltages(left, right))
     }
 }
