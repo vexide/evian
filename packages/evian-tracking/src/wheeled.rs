@@ -8,12 +8,12 @@ use core::{
     f64::consts::{PI, TAU},
 };
 use vexide::{
-    devices::smart::{InertialSensor, Motor},
+    devices::smart::Motor,
     prelude::{Task, sleep, spawn},
     time::Instant,
 };
 
-use crate::sensor::RotarySensor;
+use crate::{Gyro, sensor::RotarySensor};
 use crate::{TracksForwardTravel, TracksHeading, TracksPosition};
 
 use super::TracksVelocity;
@@ -77,8 +77,8 @@ impl<T: RotarySensor> TrackingWheel<T> {
 }
 
 enum HeadingError<T: RotarySensor> {
-    /// IMU failed for whatever reason (we don't care exactly what happened,
-    /// since all IMU failures are potentially fatal to tracking).
+    /// Gyro failed for whatever reason (we don't care exactly what happened,
+    /// since all gyro failures are potentially fatal to tracking).
     ///
     /// A backup angle computed from two parallel forward tracking is provided,
     /// if such wheels are available.
@@ -114,6 +114,7 @@ impl WheeledTracking {
     pub fn new<
         T: RotarySensor + 'static,
         U: RotarySensor + 'static,
+        G: Gyro + 'static,
         const NUM_FORWARD: usize,
         const NUM_SIDEWAYS: usize,
     >(
@@ -121,7 +122,7 @@ impl WheeledTracking {
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         sideways_wheels: [TrackingWheel<U>; NUM_SIDEWAYS],
-        mut imu: Option<InertialSensor>,
+        mut gyro: Option<G>,
     ) -> Self {
         const FORWARD_TRACKER_OFFSET_TOLERANCE: f64 = 0.5;
 
@@ -133,8 +134,8 @@ impl WheeledTracking {
         }
 
         assert!(
-            NUM_FORWARD >= 2 || imu.is_some(),
-            "Wheeled tracking requires either an IMU or two parallel forward tracking wheels to determine robot orientation."
+            NUM_FORWARD >= 2 || gyro.is_some(),
+            "Wheeled tracking requires either a Gyro or two parallel forward tracking wheels to determine robot orientation."
         );
 
         // Locate two parallel tracking wheels with roughly the same absolute offset from the
@@ -159,8 +160,8 @@ impl WheeledTracking {
         }
 
         assert!(
-            imu.is_some() || parallel_forward_indicies.is_some(),
-            "No IMU provided or viable tracking wheels available to determine robot orientation."
+            gyro.is_some() || parallel_forward_indicies.is_some(),
+            "No gyro provided or viable tracking wheels available to determine robot orientation."
         );
 
         let initial_forward_wheel_data = forward_wheels
@@ -170,16 +171,16 @@ impl WheeledTracking {
             .each_ref()
             .map(|wheel| wheel.travel().map(|travel| (travel, wheel.offset)));
         let initial_raw_heading = match Self::compute_raw_heading(
-            imu.as_ref(),
+            gyro.as_ref(),
             parallel_forward_indicies.map(|(left_index, right_index)| {
                 (&forward_wheels[left_index], &forward_wheels[right_index])
             }),
         ) {
             Ok(heading) => heading,
             Err(HeadingError::Imu(wheel_heading)) => {
-                imu = None;
+                gyro = None;
                 // NOTE: This returning `None` means that there's no real point in spawning the task since
-                // the IMU disconnected, but we'll leave that to the task to figure out, since there's an
+                // the gyro disconnected, but we'll leave that to the task to figure out, since there's an
                 // early return condition in the loop if this occurs and we don't want to have to handle
                 // errors in this specific function.
                 wheel_heading.unwrap_or_default()
@@ -217,7 +218,7 @@ impl WheeledTracking {
             _task: spawn(Self::task(
                 forward_wheels,
                 sideways_wheels,
-                imu,
+                gyro,
                 data,
                 parallel_forward_indicies,
                 initial_forward_wheel_data,
@@ -229,18 +230,18 @@ impl WheeledTracking {
     }
 
     /// Creates a new wheeled tracking system with no sideways tracking wheels.
-    pub fn forward_only<T: RotarySensor + 'static, const NUM_FORWARD: usize>(
+    pub fn forward_only<T: RotarySensor + 'static, G: Gyro + 'static, const NUM_FORWARD: usize>(
         origin: impl Into<Vec2<f64>>,
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
-        imu: Option<InertialSensor>,
+        gyro: Option<G>,
     ) -> Self {
         Self::new(
             origin,
             heading,
             forward_wheels,
             [] as [TrackingWheel<T>; 0],
-            imu,
+            gyro,
         )
     }
 
@@ -251,46 +252,46 @@ impl WheeledTracking {
     /// "raw" in this case refers to the fact that the angle returned by this method has not been offset by any amount
     /// (meaning the user's "initial heading" configuration isn't considered), and has unspecified bounds (it may be
     /// out of the range of [0, 2π]). The angle is guaranteed to be counterclockwise-positive, but is otherwise a raw
-    /// reading from whatever sensor is being used to determine orientation (either tracking wheels or an IMU).
+    /// reading from whatever sensor is being used to determine orientation (either tracking wheels or a [`Gyro`]).
     ///
     /// To determine the final heading value returned by [`Self::heading`], you must add the heading offset value and
     /// wrap the angle from [0, 2π] using [`Angle::wrapped_positive`].
     ///
     /// # Errors
     ///
-    /// There are two ways to determine robot orientation with wheeled tracking. You can either use an IMU, or you can
+    /// There are two ways to determine robot orientation with wheeled tracking. You can either use a [`Gyro`], or you can
     /// use two parallel tracking wheels with roughly the same offset (spacing) from the center of rotation on the robot.
     ///
-    /// - If the IMU fails to return a value, then [`HeadingError::Imu`] will be returned, and a fallback wheeled heading
+    /// - If the gyro fails to return a value, then [`HeadingError::Imu`] will be returned, and a fallback wheeled heading
     ///   may be available to use in this error type if the tracking setup has parallel tracking wheels that support it.
     /// - If a tracking wheel fails then [`HeadingError::RotarySensor`] will be returned containing the underlying error
     ///   that occurred.
     ///
     /// # Panics
     ///
-    /// An assertion will panic if both `imu` and `parallel_wheels` is `None`. This should never happen.
-    fn compute_raw_heading<T: RotarySensor>(
-        imu: Option<&InertialSensor>,
+    /// An assertion will panic if both `gyro` and `parallel_wheels` is `None`. This should never happen.
+    fn compute_raw_heading<G: Gyro, T: RotarySensor>(
+        gyro: Option<&G>,
         parallel_wheels: Option<(&TrackingWheel<T>, &TrackingWheel<T>)>,
     ) -> Result<Angle, HeadingError<T>> {
         assert!(
-            imu.is_some() || parallel_wheels.is_some(),
-            "No IMU or wheeled tracking sensors provided to compute_heading."
+            gyro.is_some() || parallel_wheels.is_some(),
+            "No gyro or wheeled tracking sensors provided to compute_heading."
         );
 
-        // Try to get a reading of the robot's heading from the IMU. We should only do this if the IMU
-        // hasn't returned a port-related error before (flagged by the `imu_invalid` variable). If it
-        // has, the IMU has no chance of recovery and we should fallback to wheeled heading calculation.
-        let imu_rotation = imu.as_ref().map(|imu| imu.heading());
+        // Try to get a reading of the robot's heading from the gyro. We should only do this if the gyro
+        // hasn't returned a port-related error before (flagged by the `gyro_invalid` variable). If it
+        // has, the gyro has no chance of recovery and we should fallback to wheeled heading calculation.
+        let gyro_rotation = gyro.as_ref().map(|gyro| gyro.heading());
 
-        // Compute the unbounded robot orientation in radians. In the case of the IMU, this actually is bounded to [0, TAU]
-        // already due to how IMU heading works, but this will be wrapped to [0, TAU] regardless later either way.
-        let raw_heading = if let Some(Ok(imu_heading)) = imu_rotation {
-            // IMU's frame of reference is NED (Z-Down), meaning heading increases as the robot turns
+        // Compute the unbounded robot orientation in radians. In the case of the gyro, this actually is bounded to [0, TAU]
+        // already due to how gyro heading works, but this will be wrapped to [0, TAU] regardless later either way.
+        let raw_heading = if let Some(Ok(gyro_heading)) = gyro_rotation {
+            // gyros' frame of reference is NED (Z-Down), meaning heading increases as the robot turns
             // clockwise. We don't want this, since it doesn't match up with how the unit circle works
             // with cartesian coordinates (what we localize in), so we need to convert to a CCW+ angle
             // system.
-            TAU - imu_heading.to_radians()
+            TAU - gyro_heading.as_radians()
         } else if let Some((left_wheel, right_wheel)) = parallel_wheels {
             // Distance between the left and right wheels.
             let track_width = left_wheel.offset.abs() + right_wheel.offset;
@@ -305,16 +306,16 @@ impl WheeledTracking {
                 .map_err(|err| HeadingError::RotarySensor(err))?;
 
             (right_travel - left_travel) / track_width
-        } else if let Some(Err(_)) = imu_rotation {
-            // IMU failed and we have no viable sensors to determine heading. Nothing we can do to recover from this.
+        } else if let Some(Err(_)) = gyro_rotation {
+            // gyro failed and we have no viable sensors to determine heading. Nothing we can do to recover from this.
             return Err(HeadingError::Imu(None));
         } else {
             unreachable!() // handled by the assertion at the top of this function
         }
         .rad();
 
-        match imu_rotation {
-            // IMU failed but we have a wheeled heading source to fall back to.
+        match gyro_rotation {
+            // gyro failed but we have a wheeled heading source to fall back to.
             Some(Err(_)) => Err(HeadingError::Imu(Some(raw_heading))),
             _ => Ok(raw_heading),
         }
@@ -326,12 +327,13 @@ impl WheeledTracking {
     async fn task<
         T: RotarySensor,
         U: RotarySensor,
+        G: Gyro,
         const NUM_FORWARD: usize,
         const NUM_SIDEWAYS: usize,
     >(
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         sideways_wheels: [TrackingWheel<U>; NUM_SIDEWAYS],
-        mut imu: Option<InertialSensor>,
+        mut gyro: Option<G>,
         data: Rc<RefCell<TrackingData>>,
         parallel_forward_indicies: Option<(usize, usize)>,
         mut prev_forward_wheel_data: [Result<(f64, f64), <T as RotarySensor>::Error>; NUM_FORWARD],
@@ -356,11 +358,11 @@ impl WheeledTracking {
 
             // Calculate absolute robot orientation (heading).
             //
-            // This can be done in two possible ways - Either using an IMU (if it is available and actually
+            // This can be done in two possible ways - Either using a gyro (if it is available and actually
             // working) or through the use of two parallel forward trackers. The former is generally far more
             // reliable and isn't prone to wheel slip.
             data.raw_heading = match Self::compute_raw_heading(
-                imu.as_ref(),
+                gyro.as_ref(),
                 parallel_forward_indicies.map(|(left_index, right_index)| {
                     (&forward_wheels[left_index], &forward_wheels[right_index])
                 }),
@@ -368,13 +370,13 @@ impl WheeledTracking {
                 // Cool
                 Ok(raw_heading) => raw_heading,
 
-                // We got an error from the IMU, which means it likely disconnected. Once an IMU disconnects it
+                // We got an error from the gyro, which means it likely disconnected. Once a gyro disconnects it
                 // will reclibrate upon regaining power, which will mess tracking up badly, so we need to stop using
                 // it in this case and switched to a wheeled method of determining heading.
                 Err(HeadingError::Imu(raw_wheel_heading)) => {
-                    imu = None; // Set imu to `None` so we don't use it in the future.
+                    gyro = None; // Set gyro to `None` so we don't use it in the future.
 
-                    // Use the backup wheeled heading value in the IMU failed.
+                    // Use the backup wheeled heading value in the gyro failed.
                     if let Some(raw_wheel_heading) = raw_wheel_heading {
                         raw_wheel_heading
                     } else {
@@ -385,13 +387,13 @@ impl WheeledTracking {
                     }
                 }
 
-                // Occurs if both the IMU failed and the backup heading source failed.
-                Err(HeadingError::RotarySensor(_)) if imu.is_some() => {
-                    imu = None; // No more imu :(
+                // Occurs if both the gyro failed and the backup heading source failed.
+                Err(HeadingError::RotarySensor(_)) if gyro.is_some() => {
+                    gyro = None; // No more gyro :(
                     continue;
                 }
 
-                // One of the tracking wheels failed and we don't have an imu, so just wait for it to reconnect I guess.
+                // One of the tracking wheels failed and we don't have a gyro, so just wait for it to reconnect I guess.
                 _ => continue,
             };
 
@@ -505,11 +507,11 @@ impl WheeledTracking {
             data.linear_velocity = (data.forward_travel - prev_forward_travel) / dt.as_secs_f64();
             prev_forward_travel = data.forward_travel;
 
-            data.angular_velocity = imu
+            data.angular_velocity = gyro
                 .as_ref()
-                .and_then(|imu| imu.gyro_rate().ok())
+                .and_then(|gyro| gyro.heading().ok())
                 .map_or(delta_heading.as_radians() / dt.as_secs_f64(), |gyro_rate| {
-                    gyro_rate.z.to_radians()
+                    gyro_rate.as_radians()
                 });
 
             // Update global position by converting our local displacement vector into a global offset (by
