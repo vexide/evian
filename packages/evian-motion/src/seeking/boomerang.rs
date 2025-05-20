@@ -1,21 +1,12 @@
-use core::{
-    future::Future,
-    pin::Pin,
-    task::Poll,
-    time::Duration,
-};
+use core::{future::Future, pin::Pin, task::Poll, time::Duration};
 
-use vexide::{
-    devices::smart::Motor,
-    time::{Instant, Sleep, sleep},
-};
+use vexide::time::{Instant, Sleep, sleep};
 
 use evian_control::{
     Tolerances,
     loops::{AngularPid, Feedback, Pid},
 };
-use evian_drivetrain::Drivetrain;
-use evian_drivetrain::differential::{Differential, Voltages};
+use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::{Angle, IntoAngle, Vec2};
 use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
 
@@ -28,8 +19,9 @@ pub struct State {
 
 /// Boomerang move-to-pose algorithm.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct BoomerangFuture<'a, L, A, T>
+pub struct BoomerangFuture<'a, M, L, A, T>
 where
+    M: Arcade,
     L: Feedback<Input = f64, Output = f64> + Unpin,
     A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
@@ -41,15 +33,16 @@ where
     pub(crate) tolerances: Tolerances,
     pub(crate) linear_controller: L,
     pub(crate) angular_controller: A,
-    pub(crate) drivetrain: &'a mut Drivetrain<Differential, T>,
+    pub(crate) drivetrain: &'a mut Drivetrain<M, T>,
 
     pub(crate) state: Option<State>,
 }
 
 // MARK: Future Poll
 
-impl<L, A, T> Future for BoomerangFuture<'_, L, A, T>
+impl<M, L, A, T> Future for BoomerangFuture<'_, M, L, A, T>
 where
+    M: Arcade,
     L: Feedback<Input = f64, Output = f64> + Unpin,
     A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
@@ -100,23 +93,23 @@ where
                 .timeout
                 .is_some_and(|timeout| state.start_time.elapsed() > timeout)
         {
-            _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
+            _ = this.drivetrain.model.drive_arcade(0.0, 0.0);
             return Poll::Ready(());
         }
 
         let angular_output = if close {
             0.0
         } else {
-            this
-                .angular_controller
+            this.angular_controller
                 .update(-angular_error, Angle::ZERO, dt)
         };
         let linear_output =
             this.linear_controller.update(-linear_error, 0.0, dt) * angular_error.cos();
 
-        _ = this.drivetrain.motors.set_voltages(
-            Voltages::from_arcade(linear_output, angular_output).normalized(Motor::V5_MAX_VOLTAGE),
-        );
+        _ = this
+            .drivetrain
+            .model
+            .drive_arcade(linear_output, angular_output);
 
         state.sleep = sleep(Duration::from_millis(5));
         state.prev_time = Instant::now();
@@ -129,8 +122,9 @@ where
 
 // MARK: Generic Modifiers
 
-impl<L, A, T> BoomerangFuture<'_, L, A, T>
+impl<M, L, A, T> BoomerangFuture<'_, M, L, A, T>
 where
+    M: Arcade,
     L: Feedback<Input = f64, Output = f64> + Unpin,
     A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
@@ -204,8 +198,9 @@ where
 
 // MARK: Linear PID Modifiers
 
-impl<A, T> BoomerangFuture<'_, Pid, A, T>
+impl<M, A, T> BoomerangFuture<'_, M, Pid, A, T>
 where
+    M: Arcade,
     A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
@@ -261,8 +256,9 @@ where
 
 // MARK: Angular PID Modifiers
 
-impl<L, T> BoomerangFuture<'_, L, AngularPid, T>
+impl<M, L, T> BoomerangFuture<'_, M, L, AngularPid, T>
 where
+    M: Arcade,
     L: Feedback<Input = f64, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {

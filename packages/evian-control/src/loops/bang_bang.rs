@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use crate::loops::ControlLoop;
 
-use super::{FeedbackMarker, Feedback};
+use super::{Feedback, FeedbackMarker};
 
 /// Bang-bang controller.
 #[derive(Debug, Clone, Copy, PartialEq)]

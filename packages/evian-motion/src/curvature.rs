@@ -1,10 +1,8 @@
 use core::f64::consts::FRAC_PI_2;
-use vexide::{devices::smart::motor::MotorError, float::Float};
+use evian_tracking::Tracking;
+use vexide::float::Float;
 
-use evian_drivetrain::{
-    Drivetrain,
-    differential::{Differential, Voltages},
-};
+use evian_drivetrain::{Drivetrain, model::Arcade};
 
 /// Curvature Drive (aka Cheesy Drive) Controller
 ///
@@ -93,12 +91,12 @@ impl CurvatureDrive {
     ///     state.right_stick.x(),
     /// ).expect("couldn't set drivetrain voltages");
     /// ```
-    pub fn update<T>(
+    pub fn update<M: Arcade>(
         &mut self,
-        drivetrain: &mut Drivetrain<Differential, T>,
+        drivetrain: &mut Drivetrain<M, impl Tracking>,
         throttle: f64,
         turn: f64,
-    ) -> Result<(), MotorError> {
+    ) -> Result<(), M::Error> {
         let mut turn_in_place = false;
         let mut linear_power = throttle;
 
@@ -114,13 +112,9 @@ impl CurvatureDrive {
         }
 
         let remapped_turn = self.remap_turn(turn);
-        let left;
-        let right;
 
-        if turn_in_place {
-            // squared for finer control
-            left = remapped_turn * remapped_turn.abs();
-            right = -remapped_turn * remapped_turn.abs();
+        let (linear_power, angular_power) = if turn_in_place {
+            (remapped_turn * remapped_turn.abs(), 0.0)
         } else {
             let neg_inertia_power = (turn - self.prev_turn) * self.negative_inertia_scalar;
             self.negative_inertia_accumulator += neg_inertia_power;
@@ -130,17 +124,16 @@ impl CurvatureDrive {
                 * self.turn_sensitivity
                 - self.quick_stop_accumulator;
 
-            left = linear_power + angular_power;
-            right = linear_power - angular_power;
-
             Self::update_accumulator(&mut self.quick_stop_accumulator);
             Self::update_accumulator(&mut self.negative_inertia_accumulator);
-        }
+
+            (linear_power, angular_power)
+        };
 
         self.prev_turn = turn;
         self.prev_throttle = throttle;
 
-        drivetrain.motors.set_voltages(Voltages(left, right))
+        drivetrain.model.drive_arcade(linear_power, angular_power)
     }
 
     fn remap_turn(&self, turn: f64) -> f64 {

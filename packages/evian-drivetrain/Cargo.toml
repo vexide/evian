@@ -11,6 +11,8 @@ edition = "2024"
 
 [dependencies]
 vexide = { workspace = true }
+evian-tracking = { workspace = true }
+evian-math = { workspace = true }
 
 [lints]
 workspace = true

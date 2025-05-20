@@ -7,7 +7,7 @@ use crate::loops::ControlLoop;
 use super::{Feedforward, FeedforwardMarker};
 
 /// Desired setpoint of a DC motor.
-/// 
+///
 /// Describes the setpoint required to control a motor.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MotorFeedforwardSetpoint {
@@ -108,7 +108,7 @@ impl Feedforward for MotorFeedforward {
 }
 
 /// Desired setpoint of a rotating arm.
-/// 
+///
 /// Describes the setpoint required to control a rotating arm.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ArmFeedforwardSetpoint {

@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use evian_math::Angle;
 
-use super::{ControlLoop, FeedbackMarker, Feedback};
+use super::{ControlLoop, Feedback, FeedbackMarker};
 
 // MARK: Linear Controller
 
