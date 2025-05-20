@@ -13,7 +13,7 @@ use vexide::{
     time::Instant,
 };
 
-use crate::{Gyro, sensor::RotarySensor};
+use crate::sensor::{Gyro, RotarySensor};
 use crate::{TracksForwardTravel, TracksHeading, TracksPosition};
 
 use super::TracksVelocity;
