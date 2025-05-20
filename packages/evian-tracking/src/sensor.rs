@@ -125,14 +125,6 @@ impl<const N: usize, T: RotarySensor> RotarySensor for [T; N] {
     }
 }
 
-/// Blanket implementation for all `Rc<RefCell<T>>` wrappers of already implemented sensors.
-impl<T: RotarySensor> RotarySensor for Rc<RefCell<T>> {
-    type Error = <T as RotarySensor>::Error;
-
-    fn position(&self) -> Result<Position, Self::Error> {
-        self.borrow().position()
-    }
-}
 
 /// A "gyroscope," or a sensor that measures the robot's heading and angular velocity
 pub trait Gyro {
@@ -142,7 +134,6 @@ pub trait Gyro {
 
     /// Returns the heading of the robot as an [`Angle`]
     fn heading(&self) -> Result<Angle, Self::Error>;
-
     /// Returns the horizontal angular velocity
     fn angular_velocity(&self) -> Result<f64, Self::Error>;
 }
@@ -156,5 +147,14 @@ impl Gyro for InertialSensor {
 
     fn angular_velocity(&self) -> Result<f64, Self::Error> {
         InertialSensor::gyro_rate(self).map(|rate| rate.z)
+    }
+}
+
+/// Blanket implementation for all `Rc<RefCell<T>>` wrappers of already implemented sensors.
+impl<T: RotarySensor> RotarySensor for Rc<RefCell<T>> {
+    type Error = <T as RotarySensor>::Error;
+
+    fn position(&self) -> Result<Position, Self::Error> {
+        self.borrow().position()
     }
 }

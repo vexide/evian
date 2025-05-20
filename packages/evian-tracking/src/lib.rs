@@ -52,6 +52,10 @@ pub use sensor::{RotarySensor, Gyro};
 
 use evian_math::{Angle, Vec2};
 
+pub trait Tracking {}
+
+impl Tracking for () {}
+
 /// A tracking system that localizes a robot's 2D position.
 ///
 /// This trait defines a system for tracking and reporting the position of a mobile robot in a
@@ -63,7 +67,7 @@ use evian_math::{Angle, Vec2};
 /// Implementors of this trait MUST provide their position estimate in the [*cartesian coordinate
 /// system*](https://en.wikipedia.org/wiki/Cartesian_coordinate_system). Units are expected to be
 /// in *wheel units* — the same units that were used to measure the robot's wheel diameter.
-pub trait TracksPosition {
+pub trait TracksPosition: Tracking {
     /// Return's the robot's position on a 2D cartesian coordinate plane measured
     /// in wheel units.
     fn position(&self) -> Vec2<f64>;
@@ -80,7 +84,7 @@ pub trait TracksPosition {
 /// Implementors of this trait MUST provide their angles in a system compatible with cartesian
 /// coordinates in *standard position*. This means that anticlockwise motion is considered a
 /// positive rotation, and a rotation of zero degrees is inline with the x-axis.
-pub trait TracksHeading {
+pub trait TracksHeading: Tracking {
     /// Returns the robot's orientation bounded from [0, 2π] radians.
     fn heading(&self) -> Angle;
 }
@@ -93,7 +97,7 @@ pub trait TracksHeading {
 ///   refer to whatever units the user measured their wheel diameter with.
 ///
 /// - Angular velocity is measured in *radians per second*.
-pub trait TracksVelocity {
+pub trait TracksVelocity: Tracking {
     /// Returns the robot's estimated linear velocity in wheel units per second.
     fn linear_velocity(&self) -> f64;
 
@@ -107,10 +111,32 @@ pub trait TracksVelocity {
 ///
 /// Units are expected to be returned in *wheel units* — the same units that were used to measure the
 /// robot's wheel diameter.
-pub trait TracksForwardTravel {
+pub trait TracksForwardTravel: Tracking {
     /// Returns the signed forward wheel travel of the robot in wheel units.
     ///
     /// Positive values indicate forward movement from the origin of tracking, while negative
     /// values indicate backwards movement from the origin.
     fn forward_travel(&self) -> f64;
+}
+
+/// Creates a shared motor array.
+///
+/// This macro simplifies the creation of an `Rc<RefCell<[Motor; N]>>` array, which is a shareable
+/// wrapper around vexide's non-copyable [`Motor`](vexide::devices::smart::motor::Motor) struct.
+///
+/// # Examples
+///
+/// ```
+/// let motors = shared_motors![motor1, motor2, motor3];
+/// ```
+#[macro_export]
+macro_rules! shared_motors {
+    ( $( $item:expr ),* $(,)?) => {
+        {
+            use ::core::cell::RefCell;
+            use ::alloc::{rc::Rc, vec::Vec};
+
+            Rc::new(RefCell::new([$($item,)*]))
+        }
+    };
 }

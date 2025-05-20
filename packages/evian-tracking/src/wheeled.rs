@@ -13,8 +13,10 @@ use vexide::{
     time::Instant,
 };
 
-use crate::sensor::{Gyro, RotarySensor};
-use crate::{TracksForwardTravel, TracksHeading, TracksPosition};
+use crate::{
+    Tracking, TracksForwardTravel, TracksHeading, TracksPosition,
+    sensor::{Gyro, RotarySensor},
+};
 
 use super::TracksVelocity;
 
@@ -536,6 +538,8 @@ impl WheeledTracking {
         self.data.borrow_mut().position = position;
     }
 }
+
+impl Tracking for WheeledTracking {}
 
 impl TracksPosition for WheeledTracking {
     fn position(&self) -> Vec2<f64> {

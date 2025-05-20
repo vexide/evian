@@ -72,6 +72,8 @@ dependencies = [
 name = "evian-drivetrain"
 version = "0.0.1-rc.1"
 dependencies = [
+ "evian-math",
+ "evian-tracking",
  "vexide",
 ]
 

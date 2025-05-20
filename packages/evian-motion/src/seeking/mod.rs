@@ -3,8 +3,7 @@
 use core::time::Duration;
 
 use evian_control::{Tolerances, loops::Feedback};
-use evian_drivetrain::Drivetrain;
-use evian_drivetrain::differential::Differential;
+use evian_drivetrain::{model::{Arcade, Differential}, Drivetrain};
 use evian_math::{Angle, Vec2};
 use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
 
@@ -54,11 +53,11 @@ where
     ///
     /// The final heading of the robot after this motion executes is undefined.
     /// For full pose control, use [`Seeking::boomerang`].
-    pub fn move_to_point<'a, T: TracksPosition + TracksHeading + TracksVelocity>(
+    pub fn move_to_point<'a, M: Arcade, T: TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,
-        drivetrain: &'a mut Drivetrain<Differential, T>,
+        drivetrain: &'a mut Drivetrain<M, T>,
         point: impl Into<Vec2<f64>>,
-    ) -> MoveToPointFuture<'a, L, A, T> {
+    ) -> MoveToPointFuture<'a, M, L, A, T> {
         MoveToPointFuture {
             drivetrain,
             reverse: false,
@@ -78,13 +77,13 @@ where
     /// values will result in wider arcs, while smaller `lead` values will
     /// result in smaller arcs. You may need to tune the `lead` value in order
     /// to properly reach the desired heading by the end of the motion.
-    pub fn boomerang<'a, T: TracksPosition + TracksHeading + TracksVelocity>(
+    pub fn boomerang<'a, M: Arcade, T: TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,
-        drivetrain: &'a mut Drivetrain<Differential, T>,
+        drivetrain: &'a mut Drivetrain<M, T>,
         point: impl Into<Vec2<f64>>,
         heading: Angle,
         lead: f64,
-    ) -> BoomerangFuture<'a, L, A, T> {
+    ) -> BoomerangFuture<'a, M, L, A, T> {
         BoomerangFuture {
             drivetrain,
             target_heading: heading,
