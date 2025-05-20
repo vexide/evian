@@ -2,10 +2,7 @@ use core::f64::consts::FRAC_PI_2;
 use evian_tracking::Tracking;
 use vexide::float::Float;
 
-use evian_drivetrain::{
-    Drivetrain,
-    model::Arcade,
-};
+use evian_drivetrain::{Drivetrain, model::Arcade};
 
 /// Curvature Drive (aka Cheesy Drive) Controller
 ///
@@ -132,10 +129,10 @@ impl CurvatureDrive {
 
             (linear_power, angular_power)
         };
-        
+
         self.prev_turn = turn;
         self.prev_throttle = throttle;
-        
+
         drivetrain.model.drive_arcade(linear_power, angular_power)
     }
 

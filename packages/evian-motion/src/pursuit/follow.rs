@@ -4,10 +4,7 @@ use core::{
     time::Duration,
 };
 
-use evian_drivetrain::{
-    Drivetrain,
-    model::Tank,
-};
+use evian_drivetrain::{Drivetrain, model::Tank};
 use evian_math::{Angle, Vec2};
 use evian_tracking::{TracksHeading, TracksPosition};
 

@@ -4,7 +4,7 @@ use alloc::rc::Rc;
 use evian_math::Vec2;
 use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 
-use super::{Arcade, Holonomic, DrivetrainModel};
+use super::{Arcade, DrivetrainModel, Holonomic};
 
 pub struct Mecanum {
     pub front_left_motors: Rc<RefCell<dyn AsMut<[Motor]>>>,

@@ -3,7 +3,10 @@
 use core::time::Duration;
 
 use evian_control::{Tolerances, loops::Feedback};
-use evian_drivetrain::{model::{Differential, Arcade}, Drivetrain};
+use evian_drivetrain::{
+    Drivetrain,
+    model::{Arcade, Differential},
+};
 use evian_math::{Angle, Vec2};
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
 
@@ -71,7 +74,11 @@ where
     /// Moves the robot forwards by a given distance (measured in wheel units).
     ///
     /// Negative `distance` values will move the robot backwards.
-    pub fn drive_distance<'a, M: Arcade, T: TracksForwardTravel + TracksHeading + TracksVelocity>(
+    pub fn drive_distance<
+        'a,
+        M: Arcade,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity,
+    >(
         &mut self,
         drivetrain: &'a mut Drivetrain<M, T>,
         distance: f64,
@@ -80,8 +87,11 @@ where
     }
 
     /// Turns the robot in place to face a heading.
-    pub fn turn_to_heading<'a,          M: Arcade,
-    T: TracksForwardTravel + TracksHeading + TracksVelocity>(
+    pub fn turn_to_heading<
+        'a,
+        M: Arcade,
+        T: TracksForwardTravel + TracksHeading + TracksVelocity,
+    >(
         &mut self,
         drivetrain: &'a mut Drivetrain<M, T>,
         heading: Angle,

@@ -125,7 +125,6 @@ impl<const N: usize, T: RotarySensor> RotarySensor for [T; N] {
     }
 }
 
-
 /// A "gyroscope," or a sensor that measures the robot's heading and angular velocity
 pub trait Gyro {
     /// The error returned when [`Gyro::heading`] or [`Gyro::angular_velocity`] fails. This

@@ -48,7 +48,7 @@ extern crate alloc;
 mod sensor;
 pub mod wheeled;
 
-pub use sensor::{RotarySensor, Gyro};
+pub use sensor::{Gyro, RotarySensor};
 
 use evian_math::{Angle, Vec2};
 

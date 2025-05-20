@@ -11,7 +11,7 @@ use evian_control::{
     Tolerances,
     loops::{AngularPid, ControlLoop, Feedback, Pid},
 };
-use evian_drivetrain::{model::Arcade, Drivetrain};
+use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::{Angle, IntoAngle, Vec2};
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
 

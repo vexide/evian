@@ -1,5 +1,5 @@
 //! Drivetrain models.
-//! 
+//!
 //! This module provides types for modeling a robot's motion capabilities
 //! through various drivetrain configurations.
 
