@@ -2,6 +2,7 @@ use core::{future::Future, pin::Pin, task::Poll, time::Duration};
 
 use vexide::{
     devices::smart::Motor,
+    prelude::Float,
     time::{Instant, Sleep, sleep},
 };
 
@@ -75,15 +76,15 @@ where
         let position = this.drivetrain.tracking.position();
         let heading = this.drivetrain.tracking.heading();
 
+        let target_heading = this.target_heading.as_radians();
         let carrot = this.target_point
-            - Vec2::from_polar(
-                position.distance(this.target_point) * this.lead,
-                this.target_heading.as_radians(),
-            );
+            - Vec2::new(target_heading.cos(), target_heading.sin())
+                * position.distance(this.target_point)
+                * this.lead;
 
         let local_target = carrot - position;
 
-        let angular_error = (heading - local_target.angle().rad()).wrapped();
+        let angular_error = (heading - Angle::from_radians(local_target.to_angle())).wrapped();
         let linear_error = local_target.length();
 
         let close = linear_error < 7.5;

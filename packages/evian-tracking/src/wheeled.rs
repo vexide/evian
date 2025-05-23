@@ -1,6 +1,7 @@
 //! Wheeled odometry.
 
 use evian_math::{Angle, IntoAngle, Vec2};
+use vexide::prelude::Float;
 
 use alloc::rc::Rc;
 use core::{
@@ -519,7 +520,9 @@ impl WheeledTracking {
             // in position to get a new estimate of the global position.
             //
             // If all this seems like gibberish to you, check out <https://www.youtube.com/watch?v=ZW7T6EFyYnc>.
-            data.position += local_displacement.rotated(avg_heading.as_radians());
+            let angle = avg_heading.as_radians();
+            let rotation = Vec2::new(angle.cos(), angle.sin());
+            data.position += rotation.rotate(local_displacement);
         }
     }
 

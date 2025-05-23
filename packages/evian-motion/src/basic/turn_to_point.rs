@@ -83,7 +83,7 @@ where
         let forward_travel = this.drivetrain.tracking.forward_travel();
         let position = this.drivetrain.tracking.position();
         let heading = this.drivetrain.tracking.heading();
-        let target_heading = (this.point - position).angle().rad();
+        let target_heading = Angle::from_radians((this.point - position).to_angle());
 
         let linear_error = state.initial_forward_travel - forward_travel;
         let angular_error = (heading - target_heading).wrapped();

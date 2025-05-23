@@ -263,7 +263,7 @@ fn line_segment_circle_intersections(
         (delta.x, delta.y)
     };
     let dr = offset_1.distance(offset_2);
-    let d = offset_1.cross(offset_2);
+    let d = offset_1.x * offset_2.y - offset_1.y * offset_2.x;
     let discriminant = (radius * radius) * (dr * dr) - (d * d);
 
     let mut solutions = (None, None);

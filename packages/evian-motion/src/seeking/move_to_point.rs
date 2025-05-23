@@ -82,7 +82,7 @@ where
             state.close = true;
         }
 
-        let mut angle_error = (heading - local_target.angle().rad()).wrapped();
+        let mut angle_error = (heading - Angle::from_radians(local_target.to_angle())).wrapped();
 
         if this.reverse {
             distance_error *= -1.0;

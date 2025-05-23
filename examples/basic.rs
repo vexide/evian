@@ -98,7 +98,7 @@ async fn main(peripherals: Peripherals) {
                 TrackingWheel::new(left_motors, 2.75, -5.75, None),
                 TrackingWheel::new(right_motors, 2.75, 5.25, None),
             ],
-            None,
+            None::<InertialSensor>,
         ),
     );
 
