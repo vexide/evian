@@ -94,7 +94,7 @@ where
     >(
         &mut self,
         drivetrain: &'a mut Drivetrain<Differential, T>,
-        point: impl Into<Vec2<f64>>,
+        point: impl Into<Vec2>,
     ) -> TurnToPointFuture<'a, L, A, T> {
         TurnToPointFuture {
             point: point.into(),

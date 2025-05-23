@@ -1,9 +1,4 @@
-use core::{
-    future::Future,
-    pin::Pin,
-    task::Poll,
-    time::Duration,
-};
+use core::{future::Future, pin::Pin, task::Poll, time::Duration};
 
 use vexide::{
     devices::smart::Motor,
@@ -23,7 +18,7 @@ pub struct State {
     sleep: Sleep,
     prev_time: Instant,
     start_time: Instant,
-    prev_position: Vec2<f64>,
+    prev_position: Vec2,
 }
 
 /// Boomerang move-to-pose algorithm.
@@ -34,7 +29,7 @@ where
     A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
-    pub(crate) target_point: Vec2<f64>,
+    pub(crate) target_point: Vec2,
     pub(crate) target_heading: Angle,
     pub(crate) lead: f64,
     pub(crate) timeout: Option<Duration>,
@@ -107,8 +102,7 @@ where
         let angular_output = if close {
             0.0
         } else {
-            this
-                .angular_controller
+            this.angular_controller
                 .update(-angular_error, Angle::ZERO, dt)
         };
         let linear_output =

@@ -38,7 +38,7 @@ where
     A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
-    pub(crate) point: Vec2<f64>,
+    pub(crate) point: Vec2,
     pub(crate) timeout: Option<Duration>,
     pub(crate) linear_tolerances: Tolerances,
     pub(crate) angular_tolerances: Tolerances,

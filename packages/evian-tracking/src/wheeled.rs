@@ -92,7 +92,7 @@ enum HeadingError<T: RotarySensor> {
 /// Generic tracking data returned by [`ParallelWheelTracking`] and [`PerpendicularWheelTracking`].
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub(crate) struct TrackingData {
-    position: Vec2<f64>,
+    position: Vec2,
     raw_heading: Angle,
     heading_offset: Angle,
     forward_travel: f64,
@@ -118,7 +118,7 @@ impl WheeledTracking {
         const NUM_FORWARD: usize,
         const NUM_SIDEWAYS: usize,
     >(
-        origin: impl Into<Vec2<f64>>,
+        origin: impl Into<Vec2>,
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         sideways_wheels: [TrackingWheel<U>; NUM_SIDEWAYS],
@@ -231,7 +231,7 @@ impl WheeledTracking {
 
     /// Creates a new wheeled tracking system with no sideways tracking wheels.
     pub fn forward_only<T: RotarySensor + 'static, G: Gyro + 'static, const NUM_FORWARD: usize>(
-        origin: impl Into<Vec2<f64>>,
+        origin: impl Into<Vec2>,
         heading: Angle,
         forward_wheels: [TrackingWheel<T>; NUM_FORWARD],
         gyro: Option<G>,
@@ -407,7 +407,7 @@ impl WheeledTracking {
             let avg_heading = ((data.raw_heading + prev_raw_heading) / 2.0) + data.heading_offset;
             prev_raw_heading = data.raw_heading;
 
-            let mut local_displacement: Vec2<f64> = Vec2::default();
+            let mut local_displacement: Vec2 = Vec2::default();
             let unit_chord = 2.0 * (delta_heading / 2.0).sin();
 
             // MARK: Sideways Wheels
@@ -532,13 +532,13 @@ impl WheeledTracking {
     }
 
     /// Sets the currently tracked position to a new point.
-    pub fn set_position(&mut self, position: Vec2<f64>) {
+    pub fn set_position(&mut self, position: Vec2) {
         self.data.borrow_mut().position = position;
     }
 }
 
 impl TracksPosition for WheeledTracking {
-    fn position(&self) -> Vec2<f64> {
+    fn position(&self) -> Vec2 {
         self.data.borrow().position
     }
 }

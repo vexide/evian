@@ -29,7 +29,7 @@ where
     A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
-    pub(crate) target_point: Vec2<f64>,
+    pub(crate) target_point: Vec2,
     pub(crate) reverse: bool,
     pub(crate) timeout: Option<Duration>,
     pub(crate) tolerances: Tolerances,

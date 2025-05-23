@@ -58,7 +58,7 @@ pub fn parse_lemlib_path(buf: &[u8]) -> Vec<Waypoint> {
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Waypoint {
     /// Position of the robot at this point along the path.
-    pub position: Vec2<f64>,
+    pub position: Vec2,
 
     /// Linear velocity of the robot at this point along the path.
     pub velocity: f64,

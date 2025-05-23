@@ -48,7 +48,7 @@ extern crate alloc;
 mod sensor;
 pub mod wheeled;
 
-pub use sensor::{RotarySensor, Gyro};
+pub use sensor::{Gyro, RotarySensor};
 
 use evian_math::{Angle, Vec2};
 
@@ -66,7 +66,7 @@ use evian_math::{Angle, Vec2};
 pub trait TracksPosition {
     /// Return's the robot's position on a 2D cartesian coordinate plane measured
     /// in wheel units.
-    fn position(&self) -> Vec2<f64>;
+    fn position(&self) -> Vec2;
 }
 
 /// A tracking system that tracks a robot's absolute orientation.

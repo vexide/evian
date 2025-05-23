@@ -79,6 +79,7 @@ dependencies = [
 name = "evian-math"
 version = "0.0.1-rc.1"
 dependencies = [
+ "glam",
  "vexide",
 ]
 
@@ -114,6 +115,15 @@ name = "futures-core"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05f29059c0c2090612e8d742178b0580d2dc940c837851ad723096f87af6663e"
+
+[[package]]
+name = "glam"
+version = "0.30.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b46b9ca4690308844c644e7c634d68792467260e051c8543e0c7871662b3ba7"
+dependencies = [
+ "libm",
+]
 
 [[package]]
 name = "heck"

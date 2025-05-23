@@ -26,7 +26,7 @@ evian is first and foremost built to be *extended*. It is designed in a manner t
 pub struct MyLocalization {}
 
 impl TracksPosition for MyLocalization {
-    fn position(&mut self) -> Vec2<f64> {
+    fn position(&mut self) -> Vec2 {
         // Custom position tracking logic!
     }
 }

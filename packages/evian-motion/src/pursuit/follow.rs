@@ -22,7 +22,7 @@ use super::Waypoint;
 pub struct State {
     current: Waypoint,
     next: Waypoint,
-    lookahead_point: Vec2<f64>,
+    lookahead_point: Vec2,
     start_time: Instant,
     sleep: Sleep,
 }
@@ -235,7 +235,7 @@ where
 
 // MARK: Math Functions
 
-fn signed_arc_curvature(start: Vec2<f64>, start_angle: Angle, end: Vec2<f64>) -> f64 {
+fn signed_arc_curvature(start: Vec2, start_angle: Angle, end: Vec2) -> f64 {
     let delta = end - start;
     let side = (start_angle.sin() * delta.x - start_angle.cos() * delta.y).signum();
 
@@ -249,11 +249,11 @@ fn signed_arc_curvature(start: Vec2<f64>, start_angle: Angle, end: Vec2<f64>) ->
 
 /// Finds the intersection points between a line segment and a circle.
 fn line_segment_circle_intersections(
-    center: Vec2<f64>,
+    center: Vec2,
     radius: f64,
-    start: Vec2<f64>,
-    end: Vec2<f64>,
-) -> (Option<Vec2<f64>>, Option<Vec2<f64>>) {
+    start: Vec2,
+    end: Vec2,
+) -> (Option<Vec2>, Option<Vec2>) {
     // Subtract the circle's center to offset the system to origin.
     let offset_1 = start - center;
     let offset_2 = end - center;

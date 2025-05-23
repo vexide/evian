@@ -10,6 +10,7 @@ version = "0.0.1-rc.1"
 edition = "2024"
 
 [dependencies]
+glam = { version = "0.30.3", default-features = false, features = ["nostd-libm", "scalar-math"] }
 vexide = { workspace = true }
 
 [lints]

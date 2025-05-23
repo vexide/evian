@@ -57,7 +57,7 @@ where
     pub fn move_to_point<'a, T: TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &'a mut Drivetrain<Differential, T>,
-        point: impl Into<Vec2<f64>>,
+        point: impl Into<Vec2>,
     ) -> MoveToPointFuture<'a, L, A, T> {
         MoveToPointFuture {
             drivetrain,
@@ -81,7 +81,7 @@ where
     pub fn boomerang<'a, T: TracksPosition + TracksHeading + TracksVelocity>(
         &mut self,
         drivetrain: &'a mut Drivetrain<Differential, T>,
-        point: impl Into<Vec2<f64>>,
+        point: impl Into<Vec2>,
         heading: Angle,
         lead: f64,
     ) -> BoomerangFuture<'a, L, A, T> {

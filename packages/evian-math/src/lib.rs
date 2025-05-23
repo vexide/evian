@@ -3,9 +3,8 @@
 #![no_std]
 
 mod angle;
-mod vec2;
 
 pub mod curve;
 
 pub use angle::{Angle, IntoAngle};
-pub use vec2::Vec2;
+pub use glam::DVec2 as Vec2;
