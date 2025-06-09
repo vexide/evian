@@ -151,7 +151,7 @@ impl Gyro for InertialSensor {
     type Error = InertialError;
 
     fn heading(&self) -> Result<Angle, Self::Error> {
-        InertialSensor::heading(self).map(Angle::from_radians)
+        InertialSensor::heading(self).map(Angle::from_degrees)
     }
 
     fn angular_velocity(&self) -> Result<f64, Self::Error> {
