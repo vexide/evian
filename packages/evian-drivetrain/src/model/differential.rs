@@ -117,7 +117,7 @@ impl Tank for Differential {
         let mut rtn = Ok(());
 
         for motor in self.left.borrow_mut().as_mut() {
-            let result = motor.set_voltage(left);
+            let result = motor.set_voltage(left * motor.max_voltage());
 
             if result.is_err() {
                 rtn = result;
@@ -125,7 +125,7 @@ impl Tank for Differential {
         }
 
         for motor in self.right.borrow_mut().as_mut() {
-            let result = motor.set_voltage(right);
+            let result = motor.set_voltage(right * motor.max_voltage());
 
             if result.is_err() {
                 rtn = result;

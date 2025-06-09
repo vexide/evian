@@ -52,6 +52,7 @@ pub use sensor::{Gyro, RotarySensor};
 
 use evian_math::{Angle, Vec2};
 
+/// Marker trait for a tracking system.
 pub trait Tracking {}
 
 impl Tracking for () {}

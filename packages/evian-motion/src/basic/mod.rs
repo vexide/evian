@@ -3,10 +3,7 @@
 use core::time::Duration;
 
 use evian_control::{Tolerances, loops::Feedback};
-use evian_drivetrain::{
-    Drivetrain,
-    model::{Arcade, Differential},
-};
+use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::{Angle, Vec2};
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
 

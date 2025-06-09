@@ -101,7 +101,7 @@ where
                 .timeout
                 .is_some_and(|timeout| state.start_time.elapsed() > timeout)
         {
-            _ = this.drivetrain.model.drive_arcade(0.0, 0.0);
+            drop(this.drivetrain.model.drive_arcade(0.0, 0.0));
             return Poll::Ready(());
         }
 
@@ -114,10 +114,10 @@ where
             .angular_controller
             .update(heading, this.target_heading, dt);
 
-        _ = this
+        drop(this
             .drivetrain
             .model
-            .drive_arcade(linear_output, angular_output);
+            .drive_arcade(linear_output, angular_output));
 
         state.sleep = sleep(Duration::from_millis(5));
         state.prev_time = Instant::now();
