@@ -5,19 +5,13 @@ use core::{
     time::Duration,
 };
 
-use vexide::{
-    devices::smart::Motor,
-    time::{Instant, Sleep, sleep},
-};
+use vexide::time::{Instant, Sleep, sleep};
 
 use evian_control::{
     Tolerances,
     loops::{AngularPid, ControlLoop, Feedback, Pid},
 };
-use evian_drivetrain::{
-    Drivetrain,
-    differential::{Differential, Voltages},
-};
+use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::{Angle, IntoAngle, Vec2};
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
 
@@ -32,8 +26,9 @@ pub(crate) struct State {
 
 /// Turns the robot to face a point on the field.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct TurnToPointFuture<'a, L, A, T>
+pub struct TurnToPointFuture<'a, M, L, A, T>
 where
+    M: Arcade,
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
     A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
@@ -44,7 +39,7 @@ where
     pub(crate) angular_tolerances: Tolerances,
     pub(crate) linear_controller: L,
     pub(crate) angular_controller: A,
-    pub(crate) drivetrain: &'a mut Drivetrain<Differential, T>,
+    pub(crate) drivetrain: &'a mut Drivetrain<M, T>,
 
     /// Internal future state ("local variables").
     pub(crate) state: Option<State>,
@@ -52,8 +47,9 @@ where
 
 // MARK: Future Poll
 
-impl<L, A, T> Future for TurnToPointFuture<'_, L, A, T>
+impl<M, L, A, T> Future for TurnToPointFuture<'_, M, L, A, T>
 where
+    M: Arcade,
     L: Feedback<Input = f64, Output = f64> + Unpin,
     A: Feedback<Input = Angle, Output = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
@@ -106,7 +102,7 @@ where
                 .timeout
                 .is_some_and(|timeout| state.start_time.elapsed() > timeout)
         {
-            _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
+            drop(this.drivetrain.model.drive_arcade(0.0, 0.0));
             return Poll::Ready(());
         }
 
@@ -117,12 +113,10 @@ where
             .angular_controller
             .update(-angular_error, Angle::ZERO, dt);
 
-        _ = this.drivetrain.motors.set_voltages(
-            Voltages(
-                linear_output + angular_output,
-                linear_output - angular_output,
-            )
-            .normalized(Motor::V5_MAX_VOLTAGE),
+        drop(
+            this.drivetrain
+                .model
+                .drive_arcade(linear_output, angular_output),
         );
 
         state.sleep = sleep(Duration::from_millis(5));
@@ -135,8 +129,9 @@ where
 
 // MARK: Generic Modifiers
 
-impl<L, A, T> TurnToPointFuture<'_, L, A, T>
+impl<M, L, A, T> TurnToPointFuture<'_, M, L, A, T>
 where
+    M: Arcade,
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
     A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
@@ -259,8 +254,9 @@ where
 
 // MARK: Linear PID Modifiers
 
-impl<A, T> TurnToPointFuture<'_, Pid, A, T>
+impl<M, A, T> TurnToPointFuture<'_, M, Pid, A, T>
 where
+    M: Arcade,
     A: ControlLoop<Input = Angle, Output = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
@@ -316,8 +312,9 @@ where
 
 // MARK: Angular PID Modifiers
 
-impl<L, T> TurnToPointFuture<'_, L, AngularPid, T>
+impl<M, L, T> TurnToPointFuture<'_, M, L, AngularPid, T>
 where
+    M: Arcade,
     L: ControlLoop<Input = f64, Output = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {

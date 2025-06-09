@@ -4,16 +4,12 @@ use core::{
     time::Duration,
 };
 
-use evian_drivetrain::{
-    Drivetrain,
-    differential::{Differential, Voltages},
-};
+use evian_drivetrain::{Drivetrain, model::Tank};
 use evian_math::{Angle, Vec2};
 use evian_tracking::{TracksHeading, TracksPosition};
 
 use vexide::{
     float::Float,
-    prelude::Motor,
     time::{Instant, Sleep, sleep},
 };
 
@@ -29,12 +25,13 @@ pub struct State {
 
 /// Moves a drivetrain along a set of discrete waypoints using pure pursuit.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct PurePursuitFuture<'a, T, I>
+pub struct PurePursuitFuture<'a, M, T, I>
 where
+    M: Tank,
     T: TracksPosition + TracksHeading,
     I: Iterator<Item = Waypoint> + Unpin,
 {
-    pub(crate) drivetrain: &'a mut Drivetrain<Differential, T>,
+    pub(crate) drivetrain: &'a mut Drivetrain<M, T>,
 
     /// Internal future state ("local variables").
     pub(crate) state: Option<State>,
@@ -47,8 +44,9 @@ where
 
 // MARK: Future Poll
 
-impl<T, I> Future for PurePursuitFuture<'_, T, I>
+impl<M, T, I> Future for PurePursuitFuture<'_, M, T, I>
 where
+    M: Tank,
     T: TracksPosition + TracksHeading,
     I: Iterator<Item = Waypoint> + Unpin,
 {
@@ -130,7 +128,7 @@ where
             .timeout
             .is_some_and(|timeout| state.start_time.elapsed() > timeout)
         {
-            _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
+            drop(this.drivetrain.model.drive_tank(0.0, 0.0));
             return Poll::Ready(());
         }
 
@@ -149,7 +147,7 @@ where
                 next_waypoint
             } else {
                 // We're out of waypoints, meaning the end of path has been reached.
-                _ = this.drivetrain.motors.set_voltages((0.0, 0.0));
+                drop(this.drivetrain.model.drive_tank(0.0, 0.0));
                 return Poll::Ready(());
             };
         }
@@ -189,13 +187,10 @@ where
 
         let curvature = signed_arc_curvature(position, heading, state.lookahead_point);
 
-        _ = this.drivetrain.motors.set_voltages(
-            Voltages(
-                velocity * (2.0 + curvature * this.track_width) / 2.0,
-                velocity * (2.0 - curvature * this.track_width) / 2.0,
-            )
-            .normalized(Motor::V5_MAX_VOLTAGE),
-        );
+        drop(this.drivetrain.model.drive_tank(
+            velocity * (2.0 + curvature * this.track_width) / 2.0,
+            velocity * (2.0 - curvature * this.track_width) / 2.0,
+        ));
 
         cx.waker().wake_by_ref();
         Poll::Pending
@@ -204,8 +199,9 @@ where
 
 // MARK: Modifiers
 
-impl<T, I> PurePursuitFuture<'_, T, I>
+impl<M, T, I> PurePursuitFuture<'_, M, T, I>
 where
+    M: Tank,
     T: TracksPosition + TracksHeading,
     I: Iterator<Item = Waypoint> + Unpin,
 {

@@ -5,7 +5,7 @@ extern crate alloc;
 use core::time::Duration;
 
 use alloc::vec::Vec;
-use evian_drivetrain::{Drivetrain, differential::Differential};
+use evian_drivetrain::{Drivetrain, model::Tank};
 use evian_math::Vec2;
 use evian_tracking::{TracksHeading, TracksPosition};
 
@@ -79,11 +79,16 @@ pub struct PurePursuit {
 
 impl PurePursuit {
     /// Moves a drivetrain along a set of discrete waypoints using pure pursuit.
-    pub fn follow<'a, I: Iterator<Item = Waypoint> + Unpin, T: TracksPosition + TracksHeading>(
+    pub fn follow<
+        'a,
+        M: Tank,
+        I: Iterator<Item = Waypoint> + Unpin,
+        T: TracksPosition + TracksHeading,
+    >(
         &self,
-        drivetrain: &'a mut Drivetrain<Differential, T>,
+        drivetrain: &'a mut Drivetrain<M, T>,
         waypoints: impl IntoIterator<Item = Waypoint, IntoIter = I>,
-    ) -> PurePursuitFuture<'a, T, I> {
+    ) -> PurePursuitFuture<'a, M, T, I> {
         PurePursuitFuture {
             drivetrain,
             state: None,

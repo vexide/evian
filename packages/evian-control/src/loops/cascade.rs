@@ -32,10 +32,10 @@ pub struct Cascade<P: ControlLoop, S: ControlLoop> {
 
 impl<P: Feedback, S: Feedback<Input = P::Output>> Cascade<P, S> {
     /// Creates a new cascading control loop from two feedback controllers.
-    /// 
+    ///
     /// The output of the `primary` feedback controller will be passed as the
     /// setpoint of the `secondary` feedback controller.
-    /// 
+    ///
     /// Note that this variant of `Cascade` (with two feedback controllers) does
     /// *NOT* implement the [`ControlLoop`] trait, because it requires passing two
     /// measurements to `update` (one measurement for the primary loop and another

@@ -155,14 +155,13 @@ pub mod prelude {
     #[cfg(feature = "drivetrain")]
     pub use crate::drivetrain::{
         Drivetrain,
-        differential::{Differential, Voltages},
-        shared_motors,
+        model::{Arcade, Holonomic, Tank},
     };
     #[cfg(feature = "math")]
     pub use crate::math::{Angle, IntoAngle, Vec2, curve::CubicBezier};
     #[cfg(feature = "tracking")]
     pub use crate::tracking::{
-        TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity,
+        TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity, shared_motors,
         wheeled::{TrackingWheel, WheeledTracking},
     };
 }
