@@ -202,7 +202,7 @@ impl ControlLoop for Pid {
 }
 
 impl Feedback for Pid {
-    fn update(&mut self, measurement: f64, setpoint: f64, dt: Duration) -> f64 {
+    fn update(&mut self, measurement: f64, setpoint: f64, dt: Option<Duration>) -> f64 {
         let error = setpoint - measurement;
 
         // If an integration range is used and we are within it, add to the integral.
@@ -212,13 +212,16 @@ impl Feedback for Pid {
             .is_none_or(|range| error.abs() < range)
             && error.signum() == self.prev_error.signum()
         {
-            self.integral += error * dt.as_secs_f64();
+            self.integral += error * dt.map(|dt| dt.as_secs_f64()).unwrap_or(0.0);
         } else {
             self.integral = 0.0;
         }
 
         // Calculate derivative (change in error / change in time)
-        let derivative = (error - self.prev_error) / dt.as_secs_f64();
+        let derivative = match dt {
+            Some(dt) => (error - self.prev_error) / dt.as_secs_f64(),
+            None => 0.0,
+        };
         self.prev_error = error;
 
         // Control signal = error * kp + integral + ki + derivative * kd.
@@ -359,7 +362,7 @@ impl ControlLoop for AngularPid {
 }
 
 impl Feedback for AngularPid {
-    fn update(&mut self, measurement: Angle, setpoint: Angle, dt: Duration) -> f64 {
+    fn update(&mut self, measurement: Angle, setpoint: Angle, dt: Option<Duration>) -> f64 {
         let error = (setpoint - measurement).wrapped();
 
         // If an integration range is used and we are within it, add to the integral.
@@ -370,13 +373,16 @@ impl Feedback for AngularPid {
             .is_none_or(|range| error.as_radians().abs() < range.as_radians())
             && error.signum() == self.prev_error.signum()
         {
-            self.integral += error.as_radians() * dt.as_secs_f64();
+            self.integral += error.as_radians() * dt.map(|dt| dt.as_secs_f64()).unwrap_or(0.0);
         } else {
             self.integral = 0.0;
         }
 
         // Calculate derivative (change in error / change in time)
-        let derivative = (error - self.prev_error).as_radians() / dt.as_secs_f64();
+        let derivative = match dt {
+            Some(dt) => (error - self.prev_error).as_radians() / dt.as_secs_f64(),
+            None => 0.0,
+        };
         self.prev_error = error;
 
         let mut output =

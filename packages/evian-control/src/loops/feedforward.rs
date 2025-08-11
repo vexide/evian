@@ -100,7 +100,11 @@ impl ControlLoop for MotorFeedforward {
 }
 
 impl Feedforward for MotorFeedforward {
-    fn update(&mut self, setpoint: MotorFeedforwardSetpoint, _dt: core::time::Duration) -> f64 {
+    fn update(
+        &mut self,
+        setpoint: MotorFeedforwardSetpoint,
+        _dt: Option<core::time::Duration>,
+    ) -> f64 {
         self.ks * setpoint.velocity.signum()
             + self.kv * setpoint.velocity
             + self.ka * setpoint.acceleration
@@ -202,7 +206,11 @@ impl ControlLoop for ArmFeedforward {
 }
 
 impl Feedforward for ArmFeedforward {
-    fn update(&mut self, setpoint: ArmFeedforwardSetpoint, _dt: core::time::Duration) -> f64 {
+    fn update(
+        &mut self,
+        setpoint: ArmFeedforwardSetpoint,
+        _dt: Option<core::time::Duration>,
+    ) -> f64 {
         self.kg * setpoint.position.cos()
             + self.ks * setpoint.velocity.signum()
             + self.kv * setpoint.velocity
@@ -296,7 +304,11 @@ impl ControlLoop for ElevatorFeedforward {
 }
 
 impl Feedforward for ElevatorFeedforward {
-    fn update(&mut self, setpoint: ElevatorFeedforwardSetpoint, _dt: core::time::Duration) -> f64 {
+    fn update(
+        &mut self,
+        setpoint: ElevatorFeedforwardSetpoint,
+        _dt: Option<core::time::Duration>,
+    ) -> f64 {
         self.kg
             + self.ks * setpoint.velocity.signum()
             + self.kv * setpoint.velocity

@@ -19,7 +19,7 @@ pub(crate) struct State {
     sleep: Sleep,
     initial_forward_travel: f64,
     start_time: Instant,
-    prev_time: Instant,
+    prev_time: Option<Instant>,
     linear_settled: bool,
     angular_settled: bool,
 }
@@ -65,7 +65,7 @@ where
                 sleep: sleep(Duration::from_millis(5)),
                 initial_forward_travel: this.drivetrain.tracking.forward_travel(),
                 start_time: now,
-                prev_time: now,
+                prev_time: None,
                 linear_settled: false,
                 angular_settled: false,
             }
@@ -75,7 +75,7 @@ where
             return Poll::Pending;
         }
 
-        let dt = state.prev_time.elapsed();
+        let dt = state.prev_time.map(|pt| pt.elapsed());
 
         let forward_travel = this.drivetrain.tracking.forward_travel();
         let heading = this.drivetrain.tracking.heading();
@@ -114,13 +114,14 @@ where
             .angular_controller
             .update(heading, this.target_heading, dt);
 
-        drop(this
-            .drivetrain
-            .model
-            .drive_arcade(linear_output, angular_output));
+        drop(
+            this.drivetrain
+                .model
+                .drive_arcade(linear_output, angular_output),
+        );
 
         state.sleep = sleep(Duration::from_millis(5));
-        state.prev_time = Instant::now();
+        state.prev_time = Some(Instant::now());
 
         cx.waker().wake_by_ref();
         Poll::Pending

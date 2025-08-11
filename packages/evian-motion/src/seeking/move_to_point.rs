@@ -13,7 +13,7 @@ use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
 pub(crate) struct State {
     sleep: Sleep,
     close: bool,
-    prev_time: Instant,
+    prev_time: Option<Instant>,
     start_time: Instant,
 }
 
@@ -58,7 +58,7 @@ where
             State {
                 sleep: sleep(Duration::from_millis(5)),
                 start_time: now,
-                prev_time: now,
+                prev_time: None,
                 close: false,
             }
         });
@@ -67,7 +67,7 @@ where
             return Poll::Pending;
         }
 
-        let dt = state.prev_time.elapsed();
+        let dt = state.prev_time.map(|pt| pt.elapsed());
 
         let position = this.drivetrain.tracking.position();
         let heading = this.drivetrain.tracking.heading();
@@ -113,7 +113,7 @@ where
             .drive_arcade(linear_output, angular_output);
 
         state.sleep = sleep(Duration::from_millis(5));
-        state.prev_time = Instant::now();
+        state.prev_time = Some(Instant::now());
 
         cx.waker().wake_by_ref();
         Poll::Pending

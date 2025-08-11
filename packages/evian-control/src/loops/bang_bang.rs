@@ -34,7 +34,7 @@ impl ControlLoop for BangBang {
 }
 
 impl Feedback for BangBang {
-    fn update(&mut self, measurement: f64, setpoint: f64, _dt: Duration) -> f64 {
+    fn update(&mut self, measurement: f64, setpoint: f64, _dt: Option<Duration>) -> f64 {
         if measurement < setpoint {
             self.magnitude
         } else {

@@ -60,7 +60,7 @@ impl<P: Feedback, S: Feedback<Input = P::Output>> Cascade<P, S> {
         primary_measurement: P::Input,
         secondary_measurement: S::Input,
         setpoint: P::Input,
-        dt: Duration,
+        dt: Option<Duration>,
     ) -> S::Output {
         self.secondary.update(
             secondary_measurement,
@@ -149,7 +149,12 @@ impl<Fb: Feedback, Ff: Feedforward> Feedback for Cascade<Fb, Ff>
 where
     Fb::Input: Clone,
 {
-    fn update(&mut self, measurement: Fb::Input, setpoint: Fb::Input, dt: Duration) -> Ff::Output {
+    fn update(
+        &mut self,
+        measurement: Fb::Input,
+        setpoint: Fb::Input,
+        dt: Option<Duration>,
+    ) -> Ff::Output {
         self.secondary.update(
             // SAFETY: This variant of the struct may only be constructed with Some(fn).
             (unsafe { self.map_fn.unwrap_unchecked() })(

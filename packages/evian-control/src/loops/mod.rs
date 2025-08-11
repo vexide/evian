@@ -64,12 +64,12 @@ pub trait Feedback: ControlLoop<Marker = FeedbackMarker> {
         &mut self,
         measurement: Self::Input,
         setpoint: Self::Input,
-        dt: Duration,
+        dt: Option<Duration>,
     ) -> Self::Output;
 }
 
 /// Feedforward ("open-loop") controller.
 pub trait Feedforward: ControlLoop<Marker = FeedforwardMarker> {
     /// Updates the feedforward controller's setpoint, producing a new control signal.
-    fn update(&mut self, setpoint: Self::Input, dt: Duration) -> Self::Output;
+    fn update(&mut self, setpoint: Self::Input, dt: Option<Duration>) -> Self::Output;
 }
