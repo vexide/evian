@@ -176,8 +176,8 @@ impl ArmFeedforward {
     }
 
     /// Sets the controller's gravity compensation constant (`kg`).
-    pub const fn set_kg(&mut self, ks: f64) {
-        self.ks = ks;
+    pub const fn set_kg(&mut self, kg: f64) {
+        self.kg = kg;
     }
 
     /// Sets the controller's velocity constant (`kv`).
@@ -271,8 +271,8 @@ impl ElevatorFeedforward {
     }
 
     /// Sets the controller's gravity compensation constant (`kg`).
-    pub const fn set_kg(&mut self, ks: f64) {
-        self.ks = ks;
+    pub const fn set_kg(&mut self, kg: f64) {
+        self.kg = kg;
     }
 
     /// Sets the controller's velocity constant (`kv`).
