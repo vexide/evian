@@ -107,6 +107,8 @@ pub struct WheeledTracking {
 
 impl WheeledTracking {
     /// Creates a new wheeled tracking system.
+    ///
+    /// `origin` and `heading` specify the initial pose.
     pub fn new<
         T: RotarySensor + 'static,
         U: RotarySensor + 'static,
@@ -226,6 +228,8 @@ impl WheeledTracking {
     }
 
     /// Creates a new wheeled tracking system with no sideways tracking wheels.
+    ///
+    /// `origin` and `heading` specify the initial pose.
     pub fn forward_only<T: RotarySensor + 'static, G: Gyro + 'static, const NUM_FORWARD: usize>(
         origin: impl Into<Vec2<f64>>,
         heading: Angle,
