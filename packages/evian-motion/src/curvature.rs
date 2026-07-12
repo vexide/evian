@@ -35,7 +35,6 @@ pub struct CurvatureDrive {
     prev_turn: f64,
     prev_throttle: f64,
     negative_inertia_accumulator: f64,
-    quick_stop_accumulator: f64,
 }
 
 impl CurvatureDrive {
@@ -69,7 +68,6 @@ impl CurvatureDrive {
             prev_turn: 0.0,
             prev_throttle: 0.0,
             negative_inertia_accumulator: 0.0,
-            quick_stop_accumulator: 0.0,
         }
     }
 
@@ -113,17 +111,17 @@ impl CurvatureDrive {
         let remapped_turn = self.remap_turn(turn);
 
         let (linear_power, angular_power) = if turn_in_place {
-            (remapped_turn * remapped_turn.abs(), 0.0)
+            // sign-preserving square function
+            (0.0, remapped_turn * remapped_turn.abs())
         } else {
-            let neg_inertia_power = (turn - self.prev_turn) * self.negative_inertia_scalar;
+            let delta_turn = turn - self.prev_turn;
+            let neg_inertia_power = delta_turn * self.negative_inertia_scalar;
             self.negative_inertia_accumulator += neg_inertia_power;
 
-            let angular_power = linear_power.abs()
-                * (remapped_turn + self.negative_inertia_accumulator)
-                * self.turn_sensitivity
-                - self.quick_stop_accumulator;
+            let angular_power = (remapped_turn + self.negative_inertia_accumulator)
+                * linear_power.abs() // scaled by throttle,
+                * self.turn_sensitivity; // and scaled by sensitivity constant (driver preference)
 
-            Self::update_accumulator(&mut self.quick_stop_accumulator);
             Self::update_accumulator(&mut self.negative_inertia_accumulator);
 
             (linear_power, angular_power)
@@ -136,9 +134,9 @@ impl CurvatureDrive {
     }
 
     fn remap_turn(&self, turn: f64) -> f64 {
-        let denominator = (FRAC_PI_2 * self.turn_nonlinearity).sin();
-        let first_remap = (FRAC_PI_2 * self.turn_nonlinearity * turn).sin() / denominator;
-        (FRAC_PI_2 * self.turn_nonlinearity * first_remap) / denominator
+        let denominator = f64::sin(FRAC_PI_2 * self.turn_nonlinearity);
+        let first_remap = f64::sin(FRAC_PI_2 * self.turn_nonlinearity * turn) / denominator;
+        f64::sin(FRAC_PI_2 * self.turn_nonlinearity * first_remap) / denominator
     }
 
     // On each iteration of the drive loop where we aren't point turning, the accumulators are
