@@ -1,5 +1,5 @@
-use std::f64::consts::FRAC_PI_2;
 use evian_tracking::Tracking;
+use std::f64::consts::FRAC_PI_2;
 
 use evian_drivetrain::{Drivetrain, model::Arcade};
 
@@ -18,11 +18,14 @@ pub struct CurvatureDrive {
     /// its nonlinearity.
     pub turn_nonlinearity: f64,
 
-    /// Minimum value for `turn` and `throttle` to not ignore and round down to
-    /// zero, creates a deadzone at the center of the joystick
+    /// Rounds `turn` and `throttle` values down to zero if less than this value, creating a
+    /// deadzone at the center of the joystick.
     pub deadzone: f64,
 
-    /// Tunes throttle
+    /// Maximum change in throttle, i.e. acceleration. Attempts to accelerate faster than this
+    /// value will be capped at `prev_throttle + slew`. For sudden accelerations in the opposite
+    /// direction (e.g. driving forward then rapidly reversing), this value is doubled to allow for
+    /// faster stopping.
     pub slew: f64,
 
     /// Used to counteract robot inertia while turning to prevent overshooting.
@@ -35,21 +38,23 @@ pub struct CurvatureDrive {
     prev_turn: f64,
     prev_throttle: f64,
     negative_inertia_accumulator: f64,
-    quick_stop_accumulator: f64,
 }
 
 impl CurvatureDrive {
-    /// Constructs a fresh instance of [`CurvatureDrive`] with the provided constants.
+    /// Constructs a new instance of [`CurvatureDrive`] with the provided constants.
     ///
     /// # Constants
     ///
-    /// * `turn_nonlinearity` - Determines how fast the robot's turn traverses a sine curve, and
-    ///   affects its nonlinearity
-    /// * `deadzone` - Minimum value for `turn` and `throttle` to not ignore and round down to
-    ///   zero, creates a deadzone at the center of the joystick
-    /// * `slew` - Tunes throttle
+    /// * `turn_nonlinearity` - Controls how the robot's turn is remapped. High values will cause
+    ///   slow turns to remapped into faster ones. Values should be in the range (0, 1].
+    /// * `deadzone` - Rounds `turn` and `throttle` values down to zero if less than this value,
+    ///   creating a deadzone at the center of the joystick.
+    /// * `slew` - Maximum change in throttle, i.e. acceleration. Attempts to accelerate faster than this
+    ///   value will be capped at `prev_throttle + slew`. For sudden accelerations in the opposite
+    ///   direction (e.g. driving forward then rapidly reversing), this value is doubled to allow for
+    ///   faster stopping.
     /// * `negative_inertia_scalar` - Used to counteract robot inertia while turning to prevent
-    ///   overshooting
+    ///   overshooting.
     /// * `turn_sensitivity` - Affects sensitivity of turning power, can be used to slow down or
     ///   speed up turning.
     pub fn new(
@@ -59,6 +64,11 @@ impl CurvatureDrive {
         negative_inertia_scalar: f64,
         turn_sensitivity: f64,
     ) -> Self {
+        assert!(
+            turn_nonlinearity > 0.0 && turn_nonlinearity <= 1.0,
+            "`turn_nonlinearity` must be in the range (0, 1] for proper behavior"
+        );
+
         Self {
             turn_nonlinearity,
             deadzone,
@@ -69,7 +79,6 @@ impl CurvatureDrive {
             prev_turn: 0.0,
             prev_throttle: 0.0,
             negative_inertia_accumulator: 0.0,
-            quick_stop_accumulator: 0.0,
         }
     }
 
@@ -99,31 +108,34 @@ impl CurvatureDrive {
         let mut turn_in_place = false;
         let mut linear_power = throttle;
 
+        let delta_throttle = throttle - self.prev_throttle;
+
         if throttle.abs() < self.deadzone && turn.abs() > self.deadzone {
             // deadzone checking
             linear_power = 0.0;
             turn_in_place = true;
-        } else if throttle - self.prev_throttle > self.slew {
+        } else if delta_throttle > self.slew {
             linear_power = self.prev_throttle + self.slew;
-        } else if throttle - self.prev_throttle < -(self.slew * 2.0) {
+        } else if delta_throttle < -(self.slew * 2.0) {
             // slew rate is doubled in the opposite direction for faster stopping
             linear_power = self.prev_throttle - (self.slew * 2.0);
         }
 
+        // turn is remapped by a sine function whose waviness is determined by turn nonlinearity
         let remapped_turn = self.remap_turn(turn);
 
         let (linear_power, angular_power) = if turn_in_place {
-            (remapped_turn * remapped_turn.abs(), 0.0)
+            // sign-preserving square function
+            (0.0, remapped_turn * remapped_turn.abs())
         } else {
-            let neg_inertia_power = (turn - self.prev_turn) * self.negative_inertia_scalar;
+            let delta_turn = turn - self.prev_turn;
+            let neg_inertia_power = delta_turn * self.negative_inertia_scalar;
             self.negative_inertia_accumulator += neg_inertia_power;
 
-            let angular_power = linear_power.abs()
-                * (remapped_turn + self.negative_inertia_accumulator)
-                * self.turn_sensitivity
-                - self.quick_stop_accumulator;
+            let angular_power = (remapped_turn + self.negative_inertia_accumulator)
+                * linear_power.abs() // scaled by throttle,
+                * self.turn_sensitivity; // and scaled by sensitivity constant (driver preference)
 
-            Self::update_accumulator(&mut self.quick_stop_accumulator);
             Self::update_accumulator(&mut self.negative_inertia_accumulator);
 
             (linear_power, angular_power)
@@ -136,9 +148,9 @@ impl CurvatureDrive {
     }
 
     fn remap_turn(&self, turn: f64) -> f64 {
-        let denominator = (FRAC_PI_2 * self.turn_nonlinearity).sin();
-        let first_remap = (FRAC_PI_2 * self.turn_nonlinearity * turn).sin() / denominator;
-        (FRAC_PI_2 * self.turn_nonlinearity * first_remap) / denominator
+        let denominator = f64::sin(FRAC_PI_2 * self.turn_nonlinearity);
+        let first_remap = f64::sin(FRAC_PI_2 * self.turn_nonlinearity * turn) / denominator;
+        f64::sin(FRAC_PI_2 * self.turn_nonlinearity * first_remap) / denominator
     }
 
     // On each iteration of the drive loop where we aren't point turning, the accumulators are
