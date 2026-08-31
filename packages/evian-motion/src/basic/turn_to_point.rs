@@ -9,7 +9,7 @@ use vexide::time::{Sleep, sleep};
 
 use evian_control::{
     Tolerances,
-    loops::{AngularPid, Feedback, Pid},
+    loops::{Feedback, Pid},
 };
 use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::{Angle, IntoAngle, Vec2};
@@ -30,7 +30,7 @@ pub struct TurnToPointFuture<'a, M, L, A, T>
 where
     M: Arcade,
     L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     pub(crate) point: Vec2<f64>,
@@ -51,7 +51,7 @@ impl<M, L, A, T> Future for TurnToPointFuture<'_, M, L, A, T>
 where
     M: Arcade,
     L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
 {
     type Output = ();
@@ -109,9 +109,11 @@ where
         let linear_output =
             this.linear_controller
                 .update(forward_travel, state.initial_forward_travel, dt);
-        let angular_output = this
-            .angular_controller
-            .update(-angular_error, Angle::ZERO, dt);
+        let angular_output = this.angular_controller.update(
+            -angular_error.as_radians(),
+            Angle::ZERO.as_radians(),
+            dt,
+        );
 
         drop(
             this.drivetrain
@@ -133,7 +135,7 @@ impl<M, L, A, T> TurnToPointFuture<'_, M, L, A, T>
 where
     M: Arcade,
     L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear feedback controller.
@@ -257,7 +259,7 @@ where
 impl<M, A, T> TurnToPointFuture<'_, M, Pid, A, T>
 where
     M: Arcade,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -312,7 +314,7 @@ where
 
 // MARK: Angular PID Modifiers
 
-impl<M, L, T> TurnToPointFuture<'_, M, L, AngularPid, T>
+impl<M, L, T> TurnToPointFuture<'_, M, L, Pid, T>
 where
     M: Arcade,
     L: Feedback<State = f64, Signal = f64> + Unpin,
@@ -345,7 +347,7 @@ where
     /// Modifies this motion's angular integration range.
     pub const fn with_angular_integration_range(&mut self, integration_range: Angle) -> &mut Self {
         self.angular_controller
-            .set_integration_range(Some(integration_range));
+            .set_integration_range(Some(integration_range.as_radians()));
         self
     }
 

@@ -18,7 +18,7 @@ pub use turn_to_point::TurnToPointFuture;
 pub struct Basic<L, A>
 where
     L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
-    A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
+    A: Feedback<State = f64, Signal = f64> + Unpin + Clone,
 {
     /// Linear (forward driving) feedback controller.
     pub linear_controller: L,
@@ -39,7 +39,7 @@ where
 impl<L, A> Basic<L, A>
 where
     L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
-    A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
+    A: Feedback<State = f64, Signal = f64> + Unpin + Clone,
 {
     /// Moves the robot forwards by a given distance (measured in wheel units) while
     /// turning to face a heading.

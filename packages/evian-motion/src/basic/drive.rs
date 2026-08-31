@@ -9,7 +9,7 @@ use vexide::time::{Sleep, sleep};
 
 use evian_control::{
     Tolerances,
-    loops::{AngularPid, Feedback, Pid},
+    loops::{Feedback, Pid},
 };
 use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::Angle;
@@ -30,7 +30,7 @@ pub struct DriveFuture<'a, M, L, A, T>
 where
     M: Arcade,
     L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     pub(crate) target_distance: f64,
@@ -52,7 +52,7 @@ impl<M, L, A, T> Future for DriveFuture<'_, M, L, A, T>
 where
     M: Arcade,
     L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     type Output = ();
@@ -74,16 +74,14 @@ where
         if Pin::new(&mut state.sleep).poll(cx).is_pending() {
             return Poll::Pending;
         }
-        
+
         let dt = state.prev_time.elapsed();
-        
+
         let forward_travel = this.drivetrain.tracking.forward_travel();
         let heading = this.drivetrain.tracking.heading();
 
         let linear_error = (this.target_distance + state.initial_forward_travel) - forward_travel;
         let angular_error = (this.target_heading - heading).wrapped_half();
-        
-        // println!("{}", linear_error);
 
         if this
             .linear_tolerances
@@ -112,9 +110,11 @@ where
             this.target_distance + state.initial_forward_travel,
             dt,
         );
-        let angular_output = this
-            .angular_controller
-            .update(heading, this.target_heading, dt);
+        let angular_output = this.angular_controller.update(
+            heading.as_radians(),
+            this.target_heading.as_radians(),
+            dt,
+        );
 
         drop(
             this.drivetrain
@@ -136,7 +136,7 @@ impl<M, L, A, T> DriveFuture<'_, M, L, A, T>
 where
     M: Arcade,
     L: Feedback<State = f64, Signal = f64> + Unpin,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear feedback controller.
@@ -260,7 +260,7 @@ where
 impl<M, A, T> DriveFuture<'_, M, Pid, A, T>
 where
     M: Arcade,
-    A: Feedback<State = Angle, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -315,7 +315,7 @@ where
 
 // MARK: Angular PID Modifiers
 
-impl<M, L, T> DriveFuture<'_, M, L, AngularPid, T>
+impl<M, L, T> DriveFuture<'_, M, L, Pid, T>
 where
     M: Arcade,
     L: Feedback<State = f64, Signal = f64> + Unpin,
@@ -348,7 +348,7 @@ where
     /// Modifies this motion's angular integration range.
     pub const fn with_angular_integration_range(&mut self, integration_range: Angle) -> &mut Self {
         self.angular_controller
-            .set_integration_range(Some(integration_range));
+            .set_integration_range(Some(integration_range.as_radians()));
         self
     }
 
