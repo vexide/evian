@@ -12,7 +12,7 @@ pub use feedforward::{
     ArmFeedforward, ArmFeedforwardSetpoint, ElevatorFeedforward, ElevatorFeedforwardSetpoint,
     MotorFeedforward, MotorFeedforwardSetpoint,
 };
-pub use pid::{AngularPid, Pid};
+pub use pid::{AngularPid, Pid, PidMode};
 pub use tbh::TakeBackHalf;
 
 /// Feedback ("closed-loop") controller.
