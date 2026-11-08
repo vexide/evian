@@ -98,11 +98,11 @@ struct Sample {
 /// 2. **Integration bounds:** An optional `integration_range` value can be passed to the
 ///    controller, which defines a range of error where integration will occur. When
 ///    `|error| > integration_range`, no integration will occur if used.
-/// 3. **Conditional integration:** While the output is saturated at `output_limit`, the integral
+/// 3. **Integral clamp:** The accumulated integral (error × seconds, before `ki` is applied) is
+///    clamped to `±max_integral` in any mode, if set.
+/// 4. **Conditional integration:** While the output is saturated at `output_limit`, the integral
 ///    holds its previous value instead of accumulating when doing so would push the output further
 ///    past the limit.
-/// 4. **Integral clamp:** The accumulated integral is clamped to `±max_integral` in any mode, if
-///    set.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Pid {
     kp: f64,
@@ -292,9 +292,16 @@ impl Feedback for Pid {
         if out_of_band || overshoot {
             self.integral = 0.0;
         } else {
-            // 3. Conditional integration. Accumulate unless the output is saturated and the new
+            let mut candidate = self.integral + error * dt.as_secs_f64();
+
+            // 3. Windup clamp. Bound the integral magnitude in any mode, if a limit is set. Done
+            //    before the saturation check so it sees the integral that would actually be used.
+            if let Some(limit) = self.max_integral {
+                candidate = candidate.clamp(-limit, limit);
+            }
+
+            // 4. Conditional integration. Accumulate unless the output is saturated and the new
             //    integral would push it further past the limit.
-            let candidate = self.integral + error * dt.as_secs_f64();
             let tentative = p_d + (candidate * self.ki);
             let winding_up = self
                 .output_limit
@@ -304,11 +311,6 @@ impl Feedback for Pid {
             if !winding_up {
                 self.integral = candidate;
             }
-        }
-
-        // 4. Windup clamp. Bound the integral magnitude in any mode, if a limit is set.
-        if let Some(limit) = self.max_integral {
-            self.integral = self.integral.clamp(-limit, limit);
         }
 
         self.prev = Some(Sample { error, measurement });
