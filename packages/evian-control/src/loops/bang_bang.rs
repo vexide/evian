@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::{Feedback};
+use super::Feedback;
 
 /// Bang-bang controller.
 #[derive(Debug, Clone, Copy, PartialEq)]

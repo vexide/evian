@@ -2,7 +2,7 @@
 
 use evian_math::Angle;
 
-use super::{Feedforward};
+use super::Feedforward;
 
 /// Desired setpoint of a DC motor.
 ///

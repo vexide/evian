@@ -1,8 +1,24 @@
 use std::time::Duration;
 
-use evian_math::Angle;
+use super::Feedback;
 
-use super::{Feedback};
+/// The kind of quantity a [`Pid`] controller regulates.
+///
+/// Sign-based integral reset applies only in [`Position`](PidMode::Position) mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PidMode {
+    /// Regulates a position. Sign-based integral reset is enabled.
+    Position,
+    /// Regulates a velocity. Sign-based integral reset is disabled.
+    Velocity,
+}
+
+/// Error and measurement from a controller's previous update.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Sample {
+    error: f64,
+    measurement: f64,
+}
 
 // MARK: Linear Controller
 
@@ -46,7 +62,7 @@ use super::{Feedback};
 /// 2. Tune proportional gain first:
 ///    - Gradually increase `kp` until the system starts to oscillate around the setpoint.
 ///    - *Oscillation* occurs when the system reaches and overshoots the setpoint, then repeatedly
-///      overadjusts itself around the setpoint, resulting in a "back-and-fourth" motion around the
+///      overadjusts itself around the setpoint, resulting in a "back-and-forth" motion around the
 ///      setpoint.
 ///
 /// 3. Tune the derivative gain:
@@ -74,37 +90,50 @@ use super::{Feedback};
 /// In some scenarios, a PID controller may be prone to *integral windup*, where a controlled system
 /// reaches a saturation point preventing the error from decreasing. In this case, integral will
 /// rapidly accumulate, causing large and unpredictable control signals. This specific
-/// implementation provides two mitigations for integral windup:
+/// implementation provides four mitigations for integral windup:
 ///
 /// 1. **Sign-based reset:** When the sign of error changes (in other words, when the controller has
 ///    crossed/overshot its target), the integral value is reset to prevent overshoot of the target.
+///    Applies only in [`Position`](PidMode::Position) mode.
 /// 2. **Integration bounds:** An optional `integration_range` value can be passed to the
 ///    controller, which defines a range of error where integration will occur. When
 ///    `|error| > integration_range`, no integration will occur if used.
+/// 3. **Integral clamp:** The accumulated integral (error × seconds, before `ki` is applied) is
+///    clamped to `±max_integral` in any mode, if set.
+/// 4. **Conditional integration:** While the output is saturated at `output_limit`, the integral
+///    holds its previous value instead of accumulating when doing so would push the output further
+///    past the limit.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Pid {
     kp: f64,
     ki: f64,
     kd: f64,
 
+    mode: PidMode,
     integral: f64,
     integration_range: Option<f64>,
+    max_integral: Option<f64>,
     output_limit: Option<f64>,
-    prev_error: f64,
+    prev: Option<Sample>,
 }
 
 impl Pid {
     /// Construct a new PID controller from gain constants and an optional integration range.
+    ///
+    /// The integral is unbounded by default; set a limit with
+    /// [`set_max_integral`](Self::set_max_integral).
     #[must_use]
     pub const fn new(kp: f64, ki: f64, kd: f64, integration_range: Option<f64>) -> Self {
         Self {
             kp,
             ki,
             kd,
+            mode: PidMode::Position,
             integration_range,
+            max_integral: None,
             output_limit: None,
             integral: 0.0,
-            prev_error: 0.0,
+            prev: None,
         }
     }
 
@@ -132,6 +161,12 @@ impl Pid {
         self.kd
     }
 
+    /// Returns the controller's mode.
+    #[must_use]
+    pub const fn mode(&self) -> PidMode {
+        self.mode
+    }
+
     /// Returns the controller's integration range.
     ///
     /// Integration range is the minimum error range required to start integrating error. This is
@@ -141,6 +176,14 @@ impl Pid {
     #[must_use]
     pub const fn integration_range(&self) -> Option<f64> {
         self.integration_range
+    }
+
+    /// Returns the controller's integral limit, or `None` if there is no limit applied.
+    ///
+    /// See [`set_max_integral`](Self::set_max_integral) for the limit's units.
+    #[must_use]
+    pub const fn max_integral(&self) -> Option<f64> {
+        self.max_integral
     }
 
     /// Returns the controller's output limit, or `None` if there is no
@@ -172,6 +215,18 @@ impl Pid {
         self.kd = kd;
     }
 
+    /// Sets the controller's mode.
+    pub const fn set_mode(&mut self, mode: PidMode) {
+        self.mode = mode;
+    }
+
+    /// Returns the controller with its mode set, for chaining onto [`new`](Self::new).
+    #[must_use]
+    pub const fn with_mode(mut self, mode: PidMode) -> Self {
+        self.mode = mode;
+        self
+    }
+
     /// Sets the controller's integration range.
     ///
     /// Integration range is the minimum error range required to start integrating error. This is
@@ -182,6 +237,18 @@ impl Pid {
         self.integration_range = range;
     }
 
+    /// Sets the controller's integral limit, or `None` for no limit. Negative limits are treated as
+    /// their magnitude.
+    ///
+    /// This bounds the accumulated integral (error × seconds), not its contribution to the output.
+    /// The most the integral term can add to the output is `ki * max_integral`.
+    pub const fn set_max_integral(&mut self, limit: Option<f64>) {
+        self.max_integral = match limit {
+            Some(limit) => Some(limit.abs()),
+            None => None,
+        };
+    }
+
     /// Sets the controller's output limit.
     ///
     /// This sets a maximum range for the controller's output signal. It will effectively limit how
@@ -189,6 +256,15 @@ impl Pid {
     /// limiting the maximum speed of a robot's motion).
     pub const fn set_output_limit(&mut self, range: Option<f64>) {
         self.output_limit = range;
+    }
+
+    /// Resets controller state between movements.
+    ///
+    /// Clears the integral and the previous sample, so the next [`update`](Feedback::update)
+    /// reseeds its derivative/error history instead of producing a spurious first-tick derivative.
+    pub const fn reset(&mut self) {
+        self.integral = 0.0;
+        self.prev = None;
     }
 }
 
@@ -201,24 +277,51 @@ impl Feedback for Pid {
     fn update(&mut self, measurement: f64, setpoint: f64, dt: Duration) -> f64 {
         let error = setpoint - measurement;
 
-        // If an integration range is used and we are within it, add to the integral.
-        // If we are outside of the range, or if we have crossed the setpoint, reset integration.
-        if self
+        // The first update after construction or a reset has no previous sample. Use the current
+        // values instead so this tick's derivative is 0 and the overshoot reset is a no-op.
+        let prev = self.prev.unwrap_or(Sample { error, measurement });
+
+        // Derivative of the measurement, not the error, to avoid derivative kick on setpoint changes.
+        let derivative = (prev.measurement - measurement) / dt.as_secs_f64();
+        let p_d = (error * self.kp) + (derivative * self.kd);
+
+        // 1. Band gate. Reset outside the integration range.
+        let out_of_band = self
             .integration_range
-            .is_none_or(|range| error.abs() < range)
-            && error.signum() == self.prev_error.signum()
-        {
-            self.integral += error * dt.as_secs_f64();
-        } else {
+            .is_some_and(|range| error.abs() >= range);
+
+        // 2. Overshoot reset, position mode only. A velocity controller's error sign flips
+        //    constantly while tracking, which would wreck the integral.
+        let overshoot = self.mode == PidMode::Position && error.signum() != prev.error.signum();
+
+        if out_of_band || overshoot {
             self.integral = 0.0;
+        } else {
+            let mut candidate = self.integral + error * dt.as_secs_f64();
+
+            // 3. Windup clamp. Bound the integral magnitude in any mode, if a limit is set. Done
+            //    before the saturation check so it sees the integral that would actually be used.
+            if let Some(limit) = self.max_integral {
+                candidate = candidate.clamp(-limit, limit);
+            }
+
+            // 4. Conditional integration. Accumulate unless the output is saturated and the new
+            //    integral would push it further past the limit.
+            let tentative = p_d + (candidate * self.ki);
+            let winding_up = self
+                .output_limit
+                .is_some_and(|limit| tentative.abs() >= limit)
+                && tentative.signum() == error.signum();
+
+            if !winding_up {
+                self.integral = candidate;
+            }
         }
 
-        // Calculate derivative (change in error / change in time)
-        let derivative = (error - self.prev_error) / dt.as_secs_f64();
-        self.prev_error = error;
+        self.prev = Some(Sample { error, measurement });
 
-        // Control signal = error * kp + integral + ki + derivative * kd.
-        let mut output = (error * self.kp) + (self.integral * self.ki) + (derivative * self.kd);
+        // Control signal = error * kp + integral * ki + derivative * kd.
+        let mut output = p_d + (self.integral * self.ki);
 
         if let Some(range) = self.output_limit {
             output = output.clamp(-range, range);
