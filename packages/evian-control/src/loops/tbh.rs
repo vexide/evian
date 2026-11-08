@@ -36,7 +36,7 @@ impl TakeBackHalf {
 impl Feedback for TakeBackHalf {
     type State = f64;
     type Signal = f64;
-    
+
     fn update(&mut self, measurement: f64, setpoint: f64, _dt: Duration) -> f64 {
         let error = setpoint - measurement;
 
