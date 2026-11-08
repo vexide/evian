@@ -179,6 +179,8 @@ impl Pid {
     }
 
     /// Returns the controller's integral limit, or `None` if there is no limit applied.
+    ///
+    /// See [`set_max_integral`](Self::set_max_integral) for the limit's units.
     #[must_use]
     pub const fn max_integral(&self) -> Option<f64> {
         self.max_integral
@@ -237,6 +239,9 @@ impl Pid {
 
     /// Sets the controller's integral limit, or `None` for no limit. Negative limits are treated as
     /// their magnitude.
+    ///
+    /// This bounds the accumulated integral (error × seconds), not its contribution to the output.
+    /// The most the integral term can add to the output is `ki * max_integral`.
     pub const fn set_max_integral(&mut self, limit: Option<f64>) {
         self.max_integral = match limit {
             Some(limit) => Some(limit.abs()),
