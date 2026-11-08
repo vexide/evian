@@ -110,11 +110,9 @@ where
             this.target_distance + state.initial_forward_travel,
             dt,
         );
-        let angular_output = this.angular_controller.update(
-            heading.as_radians(),
-            this.target_heading.as_radians(),
-            dt,
-        );
+        let angular_output = this
+            .angular_controller
+            .update(-angular_error.as_radians(), 0.0, dt);
 
         drop(
             this.drivetrain
