@@ -109,11 +109,9 @@ where
         let linear_output =
             this.linear_controller
                 .update(forward_travel, state.initial_forward_travel, dt);
-        let angular_output = this.angular_controller.update(
-            -angular_error.as_radians(),
-            Angle::ZERO.as_radians(),
-            dt,
-        );
+        let angular_output = this
+            .angular_controller
+            .update(angular_error.as_radians(), 0.0, dt);
 
         drop(
             this.drivetrain
